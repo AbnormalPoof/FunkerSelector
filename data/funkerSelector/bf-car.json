@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "characterID": "bf-car",
+  "characterType": "bf",
+  "description": {
+    "text": "Boyfriend with his hair blowing in... wind? Featured in Week 4. He isn't on top of a moving car, though, so where is all that wind coming from?"
+  },
+  "characterMenu":
+  {
+    "position": [150, 250],
+    "scale": 1
+  }
+}

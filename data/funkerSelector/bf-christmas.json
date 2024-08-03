@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "characterID": "bf-christmas",
+  "characterType": "bf",
+  "description": {
+    "text": "Boyfriend wearing a special attire just for the Holidays! Featured in Week 5."
+  },
+  "characterMenu":
+  {
+    "position": [150, 250],
+    "scale": 1
+  }
+}

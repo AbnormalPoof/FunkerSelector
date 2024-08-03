@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "characterID": "gf",
+  "characterType": "gf",
+  "description": {
+    "text": "The Girlfriend of... well... Boyfriend. She is also the daughter of the Dearest family!"
+  },
+  "characterMenu":
+  {
+    "position": [50, 100],
+    "scale": 0.7,
+    "selectedAnim": "cheer"
+  }
+}

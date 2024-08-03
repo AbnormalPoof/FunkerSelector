@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "characterID": "bf-holding-gf",
+  "characterType": "bf",
+  "description": {
+    "text": "Boyfriend holding Girlfriend in his arms, used for the song 'Stress' in Week 7."
+  },
+  "characterMenu":
+  {
+    "position": [155, 230],
+    "scale": 1
+  }
+}

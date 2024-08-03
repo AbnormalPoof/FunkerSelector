@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "characterID": "bf-pixel",
+  "characterType": "bf",
+  "description": {
+    "text": "Boyfriend in a pixelated artstyle, featured in Week 6! Spritework was done by Moawling, with animation by JohnnyUtah."
+  },
+  "characterMenu":
+  {
+    "position": [340, 560],
+    "scale": 1.15,
+    "isPixel": true
+  }
+}

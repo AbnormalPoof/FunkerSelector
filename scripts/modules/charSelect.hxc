@@ -1,0 +1,314 @@
+import funkin.modding.module.Module;
+import funkin.ui.freeplay.FreeplayState;
+import funkin.ui.AtlasText;
+import funkin.play.PlayState;
+import funkin.play.PlayStatePlaylist;
+import funkin.graphics.FunkinSprite;
+import funkin.modding.base.ScriptedMusicBeatSubState;
+import funkin.play.character.CharacterDataParser;
+import funkin.play.character.CharacterType;
+import funkin.ui.options.OptionsState;
+import funkin.play.PauseSubState;
+import funkin.play.GameOverSubState;
+import funkin.Paths;
+import funkin.data.song.SongRegistry;
+import flixel.FlxG;
+import flixel.util.FlxSave;
+import openfl.utils.Assets;
+import funkin.save.Save;
+import haxe.Json;
+import StringTools;
+import Std;
+
+/**
+ * Module that handles the Character Select button in Freeplay.
+ * This also handles switching out Characters in PlayState!
+ */
+class CharacterSelect extends Module 
+{
+	var charText:AtlasText;
+	var charSelectIcon:FunkinSprite;
+	var characterIDs:Dynamic = {
+		bf: 'default',
+		gf: 'default',
+		dad: 'default'
+	}
+	var funkerSettings:Dynamic = {
+		potatoMode: false,
+		preloadSprites: true
+	}
+	var save:FlxSave;
+
+	function new() {
+		super("CharacterSelect");
+		save = new FlxSave();
+		if (Save.instance.modOptions.get("FunkerSelector") == null) {
+				Save.instance.modOptions.set("FunkerSelector", characterIDs);
+				Save.instance.flush();
+		} else {
+				characterIDs = Save.instance.modOptions.get("FunkerSelector");
+		}
+		if (Save.instance.modOptions.get("FunkerSelectorSettings") == null) {
+			Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
+			Save.instance.flush();
+		} else {
+				funkerSettings = Save.instance.modOptions.get("FunkerSelectorSettings");
+		}
+		// Backwards compatability with the old save system.
+		if (save.bind("characterselect", "kagaminerinlen")) {
+			if (save.data.characterselect != null) {
+				characterIDs.bf = save.data.characterselect;
+				save.data.characterselect = null;
+				save.flush();
+				Save.instance.modOptions.set("FunkerSelector", characterIDs);
+				Save.instance.flush();
+			}
+		}
+		if (!funkerSettings.potatoMode || !funkerSettings.preloadSprites)
+				cacheJSONSparrows();
+	}
+
+	function onUpdate(event) {
+		super.onUpdate(event);
+		if (Std.isOfType(FlxG.state.subState, FreeplayState)) {
+			if (charSelectIcon != null && charText != null) {
+				charSelectIcon.visible = FlxG.state.subState.alsoOrangeLOL.visible;
+				charText.visible = FlxG.state.subState.alsoOrangeLOL.visible;
+			}
+			// Open the CharacterMenu substate.
+			// We need to make a new one everytime since it gets destroyed when it's closed.
+			if (FlxG.keys.justPressed.G && charText.visible) {
+				var charSelect:FlxSubState = ScriptedMusicBeatSubState.init("CharacterMenu");
+				charSelect.camera = FlxG.state.subState.funnyCam;
+				FlxG.state.subState.persistentUpdate = false;
+				FlxG.state.subState.openSubState(charSelect);
+			}
+		}
+	}
+
+	/**
+	 * UI stuff for Freeplay.
+	 * Sets up the Character Select button.
+	 */
+	function onSubStateOpenEnd(event) {
+		super.onSubStateOpenEnd(event);
+		var state = event.targetState;
+		if (Std.isOfType(state, FreeplayState)) {
+			charSelectIcon = new FunkinSprite(0, 0);
+			charSelectIcon.frames = Paths.getSparrowAtlas('freeplay/char_select');
+			charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
+			charSelectIcon.animation.addByPrefix('idle', 'idle', 24, true);
+			charSelectIcon.zIndex = 1000;
+			charSelectIcon.x = 10;
+			charSelectIcon.y = 120;
+			charSelectIcon.scale.set(0.7, 0.7);
+			charSelectIcon.camera = state.funnyCam;
+			charSelectIcon.visible = false;
+			charText = new AtlasText(170, 270, 'G', 'bold');
+			charText.visible = false;
+			charText.zIndex = 1001;
+			charText.camera = state.funnyCam;
+			state.add(charSelectIcon);
+			state.add(charText);
+			state.dj.onIntroDone.add(function() {
+				charSelectIcon.visible = true;
+				charSelectIcon.animation.play('intro');
+				charSelectIcon.animation.finishCallback = function(_) { 
+					charSelectIcon.animation.play('idle');
+					charText.visible = true;
+					if (charSelectIcon.animation.curAnim.name == 'idle')
+							charSelectIcon.offset.set(-15, 14);
+					else
+							charSelectIcon.offset.set();
+				};
+			});
+		}
+	}
+
+	/**
+	 * Resetting Game Over and Pause Menu suffixes.
+	 * We put this in onStateChangeBegin instead of onStateChangeEnd, otherwise,
+	 * scripted characters will have their suffixes overridden!
+	 */
+	override function onStateChangeBegin(event) {
+		super.onStateChangeBegin(event);
+		if (Std.isOfType(event.targetState, PlayState)) {
+			PauseSubState.musicSuffix = '';
+			GameOverSubState.musicSuffix = '';
+			GameOverSubState.blueBallSuffix = '';
+		}
+	}
+	
+	override function onStateChangeEnd(event) {
+		super.onStateChangeEnd(event);
+		if (Std.isOfType(event.targetState, PlayState)) {
+			// Reloading song entries in order to reset the characters!
+	 		// The vocals will not reset if they're changed without this.
+			SongRegistry.instance.loadEntries();
+		}
+		// Options Menu stuff
+		if (Std.isOfType(event.targetState, OptionsState)) {
+			var prefs = event.targetState.pages.get("preferences");
+			if (prefs != null) {
+				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length + 30, "-- FUNKER SELECTOR --", "bold"));
+
+				prefs.createPrefItemCheckbox("Simplify UI", "Is the new Fancy UI too much for your device? No problem!", (value) -> {
+					funkerSettings.potatoMode = value;
+					Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
+					Save.instance.flush();
+				}, funkerSettings.potatoMode);
+
+				prefs.createPrefItemCheckbox("Preload Sprites", "Wether to preload the character sprites or not. Will cause lag on the Character Selection Menu if off!", (value) -> {
+					funkerSettings.preloadSprites = value;
+					Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
+					Save.instance.flush();
+					if (value) cacheJSONSparrows();
+				}, funkerSettings.preloadSprites);
+
+				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold"));
+			}
+		}
+	}
+
+	/**
+	 * Parse a Funker Selector JSON file and return the data.
+	 * @param characterID 
+	 */
+	function parseJSONData(characterID:String = 'default'):Void {
+		if (Assets.exists(Paths.json('funkerSelector/' + characterID))) {
+				var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + characterID)));
+				return data;
+		} else {
+				return null;
+		}
+	}
+
+	/**
+	 * We preload the sprites for the JSON characters
+	 * when the Module is created in order to reduce lag when
+	 * they're shown in the Character Selection screen!
+	 * 
+	 * If "Simplify UI" is enabled, the sprites are not
+	 * cached as they won't show up in the menu.
+	 */
+	function cacheJSONSparrows():Void {
+		var funkerJSONs = Assets.list().filter(function(file):Bool {
+				return StringTools.startsWith(file, 'assets/data/funkerSelector/') && StringTools.endsWith(file, '.json');
+		}); 
+		for (funker in funkerJSONs) {
+			funker = funker.substring('assets/data/funkerSelector/'.length, funker.length - 5);
+			var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
+			if (data.characterID != null) {
+					if (Assets.exists(Paths.json('characters/' + data.characterID))) {
+							FunkinSprite.cacheSparrow(CharacterDataParser.parseCharacterData(data.characterID).assetPath);
+					} else {
+							trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
+					}
+			} else {
+					trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '! The "characterID" field does not exist.');
+			}
+		}
+	}
+
+	/**
+	 * Swapping out the characters before the song starts.
+	 * The IDs are passed through a helper function which
+	 * is the one doing the actual replacement!
+	 */
+	override function onCountdownStart(event) {
+		super.onCountdownStart(event);
+		if (PlayState.instance == null || PlayState.instance.currentStage == null || PlayStatePlaylist.isStoryMode || PlayState.instance.isMinimalMode || PlayState.instance.isChartingMode) return;
+		replaceChar(characterIDs.bf, 'bf');
+		replaceChar(characterIDs.gf, 'gf');
+		replaceChar(characterIDs.dad, 'dad');
+	}
+
+	/**
+	 * The actual logic for character replacement.
+	 * For Boyfriend and Dad, it checks to see if a vocal
+	 * file of the current song exists for the specified character,
+	 * and replaces the original character's vocals with that!
+	 * 
+	 * @param id The character ID to change into. 
+	 * @param type The character type we're replacing.
+	 */
+	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
+		switch (type) {
+			case 'bf':
+				if (PlayState.instance.currentStage.getBoyfriend() != null) {
+					if (PlayState.instance.currentStage.getBoyfriend().characterId != characterIDs.bf && characterIDs.bf != 'default') {
+						var charZIndex:Int = PlayState.instance.currentStage.getBoyfriend().zIndex;
+						var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-' + PlayState.instance.currentVariation : '';
+						var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
+						var character = CharacterDataParser.fetchCharacter(id);
+						if (character != null) {
+								PlayState.instance.currentStage.getBoyfriend().destroy();
+								character.set_characterType(CharacterType.BF);
+								character.initHealthIcon(false);
+								character.zIndex = charZIndex;
+								PlayState.instance.currentStage.addCharacter(character, CharacterType.BF);
+								PlayState.instance.currentStage.refresh();
+								var characterData = parseJSONData(id);
+								if (characterData != null) {
+									// Check if the suffixes are still blank before changing them.
+									if (PauseSubState.musicSuffix == '') {
+											PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null && characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : '';
+									}
+									if (GameOverSubState.musicSuffix == '') {
+											GameOverSubState.musicSuffix = (characterData.gameOverMusicSuffix != null && characterData.gameOverMusicSuffix != '') ? characterData.gameOverMusicSuffix : '';
+									}
+									if (GameOverSubState.blueBallSuffix == '') {
+											GameOverSubState.blueBallSuffix = (characterData.blueBallSuffix != null && characterData.blueBallSuffix != '') ? characterData.blueBallSuffix : '';
+									}
+								}
+						}
+						if (Assets.exists(voiceFile) && PlayState.instance.vocals != null) {
+								PlayState.instance.currentChart.characters.player = id;
+								PlayState.instance.currentChart.buildVoiceList();
+								PlayState.instance.vocals.stop();
+								PlayState.instance.vocals = PlayState.instance.currentChart.buildVocals();
+						}
+					}
+				}
+			case 'gf':
+				if (PlayState.instance.currentStage.getGirlfriend() != null) {
+					if (PlayState.instance.currentStage.getGirlfriend().characterId != characterIDs.gf && characterIDs.gf != 'default') {
+						var charZIndex:Int = PlayState.instance.currentStage.getGirlfriend().zIndex;
+						var character = CharacterDataParser.fetchCharacter(id);
+						if (character != null) {
+								PlayState.instance.currentStage.getGirlfriend().destroy();
+								character.set_characterType(CharacterType.GF);
+								character.zIndex = charZIndex;
+								PlayState.instance.currentStage.addCharacter(character, CharacterType.GF);
+								PlayState.instance.currentStage.refresh();
+						}
+					}
+				}
+			case 'dad':
+				if (PlayState.instance.currentStage.getDad() != null) {
+					if (PlayState.instance.currentStage.getDad().characterId != characterIDs.dad && characterIDs.dad != 'default') {
+						var charZIndex:Int = PlayState.instance.currentStage.getDad().zIndex;
+						var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-' + PlayState.instance.currentVariation : '';
+						var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
+						var character = CharacterDataParser.fetchCharacter(id);
+						if (character != null) {
+								PlayState.instance.currentStage.getDad().destroy();
+								character.set_characterType(CharacterType.DAD);
+								character.initHealthIcon(true);
+								character.zIndex = charZIndex;
+								PlayState.instance.currentStage.addCharacter(character, CharacterType.DAD);
+								PlayState.instance.currentStage.refresh();
+						}
+						if (Assets.exists(voiceFile) && PlayState.instance.vocals != null) {
+								PlayState.instance.currentChart.characters.opponent = id;
+								PlayState.instance.currentChart.buildVoiceList();
+								PlayState.instance.vocals.stop();
+								PlayState.instance.vocals = PlayState.instance.currentChart.buildVocals();
+						}
+					}
+				}
+			default:
+				trace('How did you get here?');
+		}
+	}
+}

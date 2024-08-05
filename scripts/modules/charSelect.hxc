@@ -187,7 +187,7 @@ class CharacterSelect extends Module
 	/**
 	 * We preload the sprites for the JSON characters
 	 * when the Module is created in order to reduce lag when
-	 * they're shown in the Character Selection screen!
+	 * they're shown in the Character Selection screen.
 	 * 
 	 * If "Simplify UI" is enabled, the sprites are not
 	 * cached as they won't show up in the menu.
@@ -216,11 +216,15 @@ class CharacterSelect extends Module
 	override function onCountdownStart(event) {
 		super.onCountdownStart(event);
 		if (PlayState.instance == null || PlayState.instance.currentStage == null || PlayStatePlaylist.isStoryMode || PlayState.instance.isMinimalMode || PlayState.instance.isChartingMode) return;
-		// Setting voiceList to null in order to reset the voices!
+		// Setting voiceList to null in order to reset the voices.
 		voiceList = [null, null];
 		replaceChar(characterIDs.bf, 'bf');
 		replaceChar(characterIDs.gf, 'gf');
 		replaceChar(characterIDs.dad, 'dad');
+		if (voiceList[0] != null || voiceList[1] != null) {
+			PlayState.instance.vocals.stop();
+			PlayState.instance.vocals = replaceVocals(voiceList);
+		}
 	}
 	
 	/**
@@ -303,10 +307,6 @@ class CharacterSelect extends Module
 				}
 			default:
 				trace('How did you get here?');
-		}
-		if (voiceList[0] != null || voiceList[1] != null) {
-				PlayState.instance.vocals.stop();
-				PlayState.instance.vocals = replaceVocals(voiceList);
 		}
 	}
 

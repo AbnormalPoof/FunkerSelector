@@ -11,6 +11,7 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
 import flixel.text.FlxText;
+import funkin.graphics.FunkinCamera;
 import funkin.save.Save;
 import funkin.modding.module.ModuleHandler;
 import funkin.modding.PolymodErrorHandler;
@@ -214,40 +215,52 @@ class CharacterMenu extends MusicBeatSubState {
         bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
         bg.alpha = 0;
 
+        uiCam = new FunkinCamera('charSelectUI');
+        uiCam.bgColor = 0x0;
+        FlxG.cameras.add(uiCam, false);
+
         selectText = new FlxText(170, 400, 0, 'PLACEHOLDER');
         selectText.setFormat(Paths.font("PhantomMuff.ttf"), 50);
         selectText.screenCenter(); 
         selectText.y = 10;
+        selectText.camera = uiCam;
 
         numberThing = new FlxText(170, 400, 0, 'PLACEHOLDER');
         numberThing.setFormat(Paths.font("PhantomMuff.ttf"), 45, null, 'center');
         numberThing.color = 0xFFE3E1E1;
         numberThing.y = 55;
+        numberThing.camera = uiCam;
 
         selected = new FlxText(720, 220, 0, '(SELECTED)');
         selected.setFormat(Paths.font("PhantomMuff.ttf"), 50, null, 'center');
         selected.color = 0xFF53FF38;
         selected.visible = false;
+        selected.camera = uiCam;
 
         reset = new FlxText(1100, 15, 0, 'F - Reset\nto Default');
         reset.setFormat(Paths.font("PhantomMuff.ttf"), 30, null, 'center');
         reset.color = 0xFFE3E1E1;
+        reset.camera = uiCam;
 
         leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
         leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
         leftDifficultyArrow.animation.addByPrefix('press', 'leftConfirm0');
         leftDifficultyArrow.animation.play('idle');
         leftDifficultyArrow.scale.set(1.5, 1.5);
+        leftDifficultyArrow.camera = uiCam;
 
         rightDifficultyArrow = FunkinSprite.createSparrow(1200, leftDifficultyArrow.y, 'storymenu/ui/arrows');
         rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
         rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
         rightDifficultyArrow.animation.play('idle');
         rightDifficultyArrow.scale.set(1.5, 1.5);
+        rightDifficultyArrow.camera = uiCam;
 
         charIcon = new HealthIcon('dad', 0);
+        charIcon.camera = uiCam;
         charName = new FlxText(170, 400, 0, 'PLACEHOLDER');
         charName.setFormat(Paths.font("PhantomMuff.ttf"), 70);
+        charName.camera = uiCam;
 
         add(bg);
         if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {

@@ -172,7 +172,7 @@ class CharacterMenu extends MusicBeatSubState {
                 if (charIconData != null) {
                     icon.configure(charIconData.healthIcon);
                 } else {
-                    icon.loadCharacter('face');
+                    icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
                 }
     
                 add(icon);
@@ -484,7 +484,7 @@ class CharacterMenu extends MusicBeatSubState {
                 charDesc.fieldWidth = 550;
             }
         } else {
-            charIcon.loadCharacter('face');
+            charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
             charName.text = "DEFAULT";
             charName.size = 70;
             charDesc = new FlxText(580, 300, 0, "This is the Default character defined by the song.");
@@ -507,7 +507,7 @@ class CharacterMenu extends MusicBeatSubState {
                     if (curCharID != 'default') {
                         icon.configure(charIconData.healthIcon);
                     } else {
-                        icon.loadCharacter('face');
+                        icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
                     }
                 }
             }

@@ -318,6 +318,22 @@ class CharacterMenu extends MusicBeatSubState {
             updateCharInfo();
         }
     
+        if (FlxG.keys.justPressed.J) {
+            FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+            switch (pageIndex) {
+                case 0:
+                    charIndex = charArrayBF.indexOf(characterIDs.bf);
+                    curCharID = characterIDs.bf;
+                case 1:
+                    charIndex = charArrayDad.indexOf(characterIDs.dad);
+                    curCharID = characterIDs.dad;
+                case 2:
+                    charIndex = charArrayGF.indexOf(characterIDs.gf);
+                    curCharID = characterIDs.gf;
+            }
+            updateCharInfo();
+        }
+
         if (FlxG.keys.justPressed.F) {
             var shouldPlaySound:Bool;
             if (characterIDs.bf != 'default') {

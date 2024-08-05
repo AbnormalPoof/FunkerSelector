@@ -41,6 +41,7 @@ class CharacterSelect extends Module
 		preloadSprites: true
 	}
 	var save:FlxSave;
+	var voiceList:Array<String>;
 
 	function new() {
 		super("CharacterSelect");
@@ -215,6 +216,8 @@ class CharacterSelect extends Module
 	override function onCountdownStart(event) {
 		super.onCountdownStart(event);
 		if (PlayState.instance == null || PlayState.instance.currentStage == null || PlayStatePlaylist.isStoryMode || PlayState.instance.isMinimalMode || PlayState.instance.isChartingMode) return;
+		// Setting voiceList to null in order to reset the voices!
+		voiceList = [null, null];
 		replaceChar(characterIDs.bf, 'bf');
 		replaceChar(characterIDs.gf, 'gf');
 		replaceChar(characterIDs.dad, 'dad');
@@ -230,6 +233,7 @@ class CharacterSelect extends Module
 	 * @param type The character type we're replacing.
 	 */
 	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
+
 		switch (type) {
 			case 'bf':
 				if (PlayState.instance.currentStage.getBoyfriend() != null) {
@@ -259,9 +263,8 @@ class CharacterSelect extends Module
 									}
 								}
 						}
-						if (Assets.exists(voiceFile) && PlayState.instance.vocals != null) {
-								PlayState.instance.vocals.stop();
-								PlayState.instance.vocals = replaceVocals('bf', voiceFile);
+						if (Assets.exists(voiceFile)) {
+								voiceList[0] = voiceFile;
 						}
 					}
 				}
@@ -294,36 +297,29 @@ class CharacterSelect extends Module
 								PlayState.instance.currentStage.addCharacter(character, CharacterType.DAD);
 								PlayState.instance.currentStage.refresh();
 						}
-						if (Assets.exists(voiceFile) && PlayState.instance.vocals != null) {
-								PlayState.instance.vocals.stop();
-								PlayState.instance.vocals = replaceVocals('dad', voiceFile);
+						if (Assets.exists(voiceFile)) {
+								voiceList[1] = voiceFile;
 						}
 					}
 				}
 			default:
 				trace('How did you get here?');
 		}
+		PlayState.instance.vocals.stop();
+		trace('VOICE LIST: ' + voiceList);
+		PlayState.instance.vocals = replaceVocals(voiceList);
 	}
 
 	/**
 	 * Modified version of buildVocals(); to handle vocal replacement.
-	 * 
-	 * @param id The ID to use.
-	 * @param voiceFile The file path constructed in replaceChar();
+	 *
+	 * @param voiceList The supplied array.
 	 */
-	function replaceVocals(id:String, voiceFile:String):VoicesGroup
+	function replaceVocals(voiceList:Array<String>):VoicesGroup
 	{
 		var currentChart = PlayState.instance.currentChart;
 		var result:VoicesGroup = new VoicesGroup();
-		var voiceList:Array<String> = [null, null];
 		var songVoices:Array<String> = currentChart.buildVoiceList();
-
-		switch (id) {
-			case 'bf':
-				voiceList[0] = voiceFile;
-			case 'dad':
-				voiceList[1] = voiceFile;
-		}
 
 		if (voiceList.length == 0)
 		{

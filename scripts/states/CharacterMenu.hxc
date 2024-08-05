@@ -16,6 +16,7 @@ import funkin.modding.module.ModuleHandler;
 import funkin.modding.PolymodErrorHandler;
 import haxe.Json;
 import openfl.utils.Assets;
+import funkin.util.assets.DataAssets;
 import StringTools;
 import Std;
 
@@ -116,34 +117,32 @@ class CharacterMenu extends MusicBeatSubState {
      * If no character ID exists in the file (or the character ID is invalid), the character will be skipped. 
      */
     function initChars():Void {
-        var funkerJSONs = Assets.list().filter(function(file):Bool {
-            return StringTools.startsWith(file, 'assets/data/funkerSelector/') && StringTools.endsWith(file, '.json');
-        });
+        var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
         for (funker in funkerJSONs) {
-            funkerStripped = funker.substring('assets/data/funkerSelector/'.length, funker.length - 5);
-            var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funkerStripped)));
+            var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
             var isValid:Bool = Assets.exists(Paths.json('characters/' + data.characterID));
             if (data.characterID != null) {
-                if (!isValid) {
-                    PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funkerStripped)) + '":' + '\n\nThe specified Character ID (' + data.characterID + ') is invalid. This character will be skipped to prevent any issues.');
-                }
-                if (data.characterID != funkerStripped && isValid) PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Warning', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funkerStripped)) + '":' + '\n\nThe specified "characterID" (' + data.characterID + ') does not match the file name of the JSON. (' + funkerStripped + '.json' + ")\n\nThis character will behave as a Legacy Character if the specified Character ID isn't invalid or a duplicate.");
-                if (data.characterType != null) {
-                    switch (data.characterType) {
-                        case 'bf', 'player':
-                            if (charArrayBF.indexOf(data.characterID) == -1 && isValid) charArrayBF.push(data.characterID);
-                        case 'gf':
-                            if (charArrayGF.indexOf(data.characterID) == -1 && isValid) charArrayGF.push(data.characterID);
-                        case 'dad', 'opponent':
-                            if (charArrayDad.indexOf(data.characterID) == -1 && isValid) charArrayDad.push(data.characterID);
-                        default:
-                            PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funkerStripped)) + '":' + '\n\nThe specified Character Type (' + data.characterType + ') is invalid. What are you even doing?\n\nAccepted values are: "bf", "gf", "dad", "player", and "opponent".');
+                if (isValid) {
+                    if (data.characterID != funker) PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Warning', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":' + '\n\nThe specified "characterID" (' + data.characterID + ') does not match the file name of the JSON. (' + funker + '.json' + ")\n\nThis character will behave as a Legacy Character if the specified Character ID isn't invalid or a duplicate.");
+                    if (data.characterType != null) {
+                        switch (data.characterType) {
+                            case 'bf', 'player':
+                                if (charArrayBF.indexOf(data.characterID) == -1) charArrayBF.push(data.characterID);
+                            case 'gf':
+                                if (charArrayGF.indexOf(data.characterID) == -1) charArrayGF.push(data.characterID);
+                            case 'dad', 'opponent':
+                                if (charArrayDad.indexOf(data.characterID) == -1) charArrayDad.push(data.characterID);
+                            default:
+                                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":' + '\n\nThe specified Character Type (' + data.characterType + ') is invalid. What are you even doing?\n\nAccepted values are: "bf", "gf", "dad", "player", and "opponent".');
+                        }
+                    } else {
+                        if (charArrayBF.indexOf(data.characterID) == -1) charArrayBF.push(data.characterID);
                     }
                 } else {
-                    if (charArrayBF.indexOf(data.characterID) == -1 && isValid) charArrayBF.push(data.characterID);
+                    PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":' + '\n\nThe specified Character ID (' + data.characterID + ') is invalid. This character will be skipped to prevent any issues.');
                 }
             } else {
-                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funkerStripped)) + '":' + '\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
+                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":' + '\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
             }
         }
         var charList = Assets.getText(Paths.txt('charSelectList')).split('\n').filter(function(s:String) return s != '');
@@ -394,10 +393,11 @@ class CharacterMenu extends MusicBeatSubState {
 
     /**
      * Update character information.
+     * 
+     * TODO: Maybe refactor this so we aren't making new objects everytime!
      */
     function updateCharInfo():Void {
         // Removing existing objects so we can update them!
-        // TODO: Set the charName and charDesc text instead of recreating them each time.
         if (charIcon != null) remove(charIcon);
         if (charName != null) remove(charName);
         if (characterSprite != null) remove(characterSprite);

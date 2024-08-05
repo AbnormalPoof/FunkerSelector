@@ -245,6 +245,10 @@ class CharacterMenu extends MusicBeatSubState {
         rightDifficultyArrow.animation.play('idle');
         rightDifficultyArrow.scale.set(1.5, 1.5);
 
+        charIcon = new HealthIcon('dad', 0);
+        charName = new FlxText(170, 400, 0, 'PLACEHOLDER');
+        charName.setFormat(Paths.font("PhantomMuff.ttf"), 70);
+
         add(bg);
         if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
             createIconGrid(150);
@@ -255,6 +259,8 @@ class CharacterMenu extends MusicBeatSubState {
         add(numberThing);
         add(selected);
         add(reset);
+        add(charIcon);
+        add(charName);
 
         FlxTween.tween(bg, {alpha: 0.5}, 0.5, {ease: FlxEase.quartOut});
     }
@@ -395,9 +401,6 @@ class CharacterMenu extends MusicBeatSubState {
      * TODO: Maybe refactor this so we aren't making new objects everytime!
      */
     function updateCharInfo():Void {
-        // Removing existing objects so we can update them!
-        if (charIcon != null) remove(charIcon);
-        if (charName != null) remove(charName);
         if (characterSprite != null) remove(characterSprite);
         if (charDesc != null) remove(charDesc);
 
@@ -414,8 +417,6 @@ class CharacterMenu extends MusicBeatSubState {
         }
         selectText.screenCenter(); 
         selectText.y = 10;
-
-        charIcon = new HealthIcon('dad', 0);
 
         characterData = ModuleHandler.getModule("CharacterSelect").scriptCall('parseJSONData', [curCharID]);
         charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
@@ -434,15 +435,13 @@ class CharacterMenu extends MusicBeatSubState {
         }
     
         if (curCharID != 'default') {
-            charName = new FlxText(170, 400, 0, charIconData.name);
+            charName.text = charIconData.name;
             charIcon.configure(charIconData.healthIcon);
             charIcon.size.set(1, 1);
-            charName.setFormat(Paths.font("PhantomMuff.ttf"), 70);
-    
             if (characterData != null) {
                 charIcon.setPosition(550, 160);    
                 charDesc = new FlxText(600, 300, 0, characterData.description != null && (characterData.description.text != null || characterData.description.text != '') ? characterData.description.text : "No description was specified in the JSON file.");
-                charDesc.setFormat(Paths.font("PhantomMuff.ttf"), characterData.description != null && characterData.description.size != null ? characterData.description.size : 35, null, 'center');
+                charDesc.setFormat(Paths.font("PhantomMuff.ttf"), characterData.description != null && characterData.description.size != null ? characterData.description.size : 38, null, 'center');
                 charDesc.x += characterData.description != null && characterData.description.offsets != null ? characterData.description.offsets[0] : 0;
                 charDesc.y += characterData.description != null && characterData.description.offsets != null ? characterData.description.offsets[1] : 0;
                 charDesc.wordWrap = true;
@@ -451,14 +450,14 @@ class CharacterMenu extends MusicBeatSubState {
                 charIcon.setPosition(250, 270);
                 charIcon.size.set(2, 2);
                 charDesc = new FlxText(600, 310, 0, if (Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) "This is a legacy character. Thus, it does not have a description." else "This is a legacy character. Thus, it does not have a description, nor does it have its sprites displayed here.");
-                charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 35, null, 'center');
+                charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 38, null, 'center');
                 charDesc.wordWrap = true;
                 charDesc.fieldWidth = 550;
             }
         } else {
             charIcon.loadCharacter('face');
-            charName = new FlxText(170, 400, 0, "DEFAULT");
-            charName.setFormat(Paths.font("PhantomMuff.ttf"), 70);
+            charName.text = "DEFAULT";
+            charName.size = 70;
             charDesc = new FlxText(580, 300, 0, "This is the Default character defined by the song.");
             charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 50, null, 'center');
             charDesc.wordWrap = true;
@@ -489,8 +488,6 @@ class CharacterMenu extends MusicBeatSubState {
         charName.y = 110;
         selected.y = charDesc.y - 60;
 
-        add(charIcon);
-        add(charName);
         add(charDesc);
     }
 }

@@ -29,8 +29,8 @@ class CharacterMenu extends MusicBeatSubState {
     var selected:FlxText;
     var numberThing:FlxText;
 
-    var leftDifficultyArrow:FlxSprite;
-    var rightDifficultyArrow:FlxSprite;
+    var leftDifficultyArrow:FunkinSprite;
+    var rightDifficultyArrow:FunkinSprite;
 
     // Arrays for each character.
     var charArrayBF:Array<String> = ['default'];
@@ -233,15 +233,13 @@ class CharacterMenu extends MusicBeatSubState {
         reset.setFormat(Paths.font("PhantomMuff.ttf"), 30, null, 'center');
         reset.color = 0xFFE3E1E1;
 
-        leftDifficultyArrow = new FunkinSprite(30, 300);
-        leftDifficultyArrow.frames = Paths.getSparrowAtlas('storymenu/ui/arrows');
+        leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
         leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
         leftDifficultyArrow.animation.addByPrefix('press', 'leftConfirm0');
         leftDifficultyArrow.animation.play('idle');
         leftDifficultyArrow.scale.set(1.5, 1.5);
 
-        rightDifficultyArrow = new FunkinSprite(1200, leftDifficultyArrow.y);
-        rightDifficultyArrow.frames = leftDifficultyArrow.frames;
+        rightDifficultyArrow = FunkinSprite.createSparrow(1200, leftDifficultyArrow.y, 'storymenu/ui/arrows');
         rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
         rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
         rightDifficultyArrow.animation.play('idle');

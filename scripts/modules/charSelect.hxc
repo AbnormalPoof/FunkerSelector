@@ -11,16 +11,18 @@ import funkin.ui.options.OptionsState;
 import funkin.play.PauseSubState;
 import funkin.play.GameOverSubState;
 import funkin.Paths;
-import funkin.data.song.SongRegistry;
 import flixel.FlxG;
 import flixel.util.FlxSave;
-import openfl.utils.Assets;
 import funkin.util.assets.DataAssets;
+import openfl.display3D.textures.RectangleTexture;
+import openfl.display.BitmapData;
+import flixel.graphics.FlxGraphic;
+import openfl.display3D.textures.TextureBase;
+import openfl.utils.Assets;
 import funkin.audio.VoicesGroup;
 import funkin.audio.FunkinSound;
 import funkin.save.Save;
 import haxe.Json;
-import StringTools;
 import Std;
 
 /**
@@ -40,7 +42,6 @@ class CharacterSelect extends Module
 		potatoMode: false,
 		preloadSprites: true
 	}
-	var save:FlxSave;
 	var voiceList:Array<String>;
 
 	function new() {
@@ -198,7 +199,18 @@ class CharacterSelect extends Module
 			var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
 			if (data.characterID != null) {
 					if (Assets.exists(Paths.json('characters/' + data.characterID))) {
-							FunkinSprite.cacheSparrow(CharacterDataParser.parseCharacterData(data.characterID).assetPath);
+						var data = CharacterDataParser.parseCharacterData(data.characterID);
+						if (data.renderType == 'multisparrow') {
+							for (anim in data.animations)
+							{
+								if (anim.assetPath != null)
+								{
+									cacheSprite(Paths.image(anim.assetPath));
+								}
+							}
+						} else {
+							cacheSprite(Paths.image(data.assetPath));
+						}
 					} else {
 							trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
 					}
@@ -209,18 +221,49 @@ class CharacterSelect extends Module
 	}
 
 	/**
-	 * Swapping out the characters before the song starts.
-	 * The IDs are passed through a helper function which
-	 * is the one doing the actual replacement!
+	 * This is taken from Psych Engine, with some modifications.
+	 * This is a lot more Memory-efficient compared to using FunkinSprite's cacheSparrow function!
+	 * 
+	 * @param path The file path.
+	 */
+	function cacheSprite(path:String) {
+		if (FunkinSprite.currentCachedTextures.exists(path)) return;
+		var bitmap:BitmapData = Assets.getBitmapData(path);
+		if (bitmap != null) {
+				var texture:TextureBase = FlxG.stage.context3D.createTexture(bitmap.width, bitmap.height, "bgra", true);
+				texture.uploadFromBitmapData(bitmap);
+				bitmap.image.data = null;
+				bitmap.dispose();
+				bitmap.disposeImage();
+				bitmap = BitmapData.fromTexture(texture);
+				var graphic:FlxGraphic = FlxGraphic.fromBitmapData(bitmap, false, path);
+				graphic.persist = true;
+				FunkinSprite.currentCachedTextures.set(path, graphic);
+				trace('[Funker Selector] Successfully cached graphic: ' + path);
+				return graphic;
+		} else {
+				trace('[ERROR] Failed to cache graphic: ' + path);
+		}
+	}
+
+	/**
+	 * Reset the voiceList, swap out the characters, and
+	 * replace vocals if any are found.
 	 */
 	override function onCountdownStart(event) {
 		super.onCountdownStart(event);
 		if (PlayState.instance == null || PlayState.instance.currentStage == null || PlayStatePlaylist.isStoryMode || PlayState.instance.isMinimalMode || PlayState.instance.isChartingMode) return;
-		// Setting voiceList to null in order to reset the voices.
+
+		// Setting voiceList to null in order to reset the voices,
+		// since module variables persist between state changes.
 		voiceList = [null, null];
+
+		// Replace and swap out the characters.
 		replaceChar(characterIDs.bf, 'bf');
 		replaceChar(characterIDs.gf, 'gf');
 		replaceChar(characterIDs.dad, 'dad');
+
+		// If at least ONE of them was changed (means a vocal file was found), replace the vocals.
 		if (voiceList[0] != null || voiceList[1] != null) {
 			PlayState.instance.vocals.stop();
 			PlayState.instance.vocals = replaceVocals(voiceList);
@@ -231,7 +274,7 @@ class CharacterSelect extends Module
 	 * The actual logic for character replacement.
 	 * For Boyfriend and Dad, it checks to see if a vocal
 	 * file of the current song exists for the specified character,
-	 * and replaces the original character's vocals with that!
+	 * and replaces the original character's vocals with that.
 	 * 
 	 * @param id The character ID to change into. 
 	 * @param type The character type we're replacing.

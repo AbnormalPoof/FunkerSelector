@@ -121,9 +121,8 @@ class CharacterMenu extends MusicBeatSubState {
         var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
         for (funker in funkerJSONs) {
             var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
-            var isValid:Bool = Assets.exists(Paths.json('characters/' + data.characterID));
             if (data.characterID != null) {
-                if (isValid) {
+                if (Assets.exists(Paths.json('characters/' + data.characterID))) {
                     if (data.characterID != funker) PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Warning', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":' + '\n\nThe specified "characterID" (' + data.characterID + ') does not match the file name of the JSON. (' + funker + '.json' + ")\n\nThis character will behave as a Legacy Character if the specified Character ID isn't invalid or a duplicate.");
                     if (data.characterType != null) {
                         switch (data.characterType) {
@@ -148,7 +147,7 @@ class CharacterMenu extends MusicBeatSubState {
         }
         var charList = Assets.getText(Paths.txt('charSelectList')).split('\n').filter(function(s:String) return s != '');
         for (legacyChar in charList) {
-            if (charArrayBF.indexOf(legacyChar) == -1) charArrayBF.push(legacyChar);
+            if (charArrayBF.indexOf(legacyChar) == -1 && Assets.exists(Paths.json('characters/' + legacyChar))) charArrayBF.push(legacyChar);
         }
     }
 

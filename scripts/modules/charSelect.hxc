@@ -64,8 +64,10 @@ class CharacterSelect extends Module
 				Save.instance.flush();
 			}
 		}
-		if (!funkerSettings.potatoMode && funkerSettings.preloadSprites)
+		if (!funkerSettings.potatoMode) {
+			if (funkerSettings.preloadSprites)
 				cacheJSONSparrows();
+		}
 	}
 
 	function onUpdate(event) {

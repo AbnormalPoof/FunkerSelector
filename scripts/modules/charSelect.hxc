@@ -16,6 +16,8 @@ import flixel.FlxG;
 import flixel.util.FlxSave;
 import openfl.utils.Assets;
 import funkin.util.assets.DataAssets;
+import funkin.audio.VoicesGroup;
+import funkin.audio.FunkinSound;
 import funkin.save.Save;
 import haxe.Json;
 import StringTools;
@@ -144,11 +146,6 @@ class CharacterSelect extends Module
 	
 	override function onStateChangeEnd(event) {
 		super.onStateChangeEnd(event);
-		if (Std.isOfType(event.targetState, PlayState)) {
-			// Reloading song entries in order to reset the characters!
-	 		// The vocals will not reset if they're changed without this.
-			SongRegistry.instance.loadEntries();
-		}
 		// Options Menu stuff
 		if (Std.isOfType(event.targetState, OptionsState)) {
 			var prefs = event.targetState.pages.get("preferences");
@@ -222,7 +219,7 @@ class CharacterSelect extends Module
 		replaceChar(characterIDs.gf, 'gf');
 		replaceChar(characterIDs.dad, 'dad');
 	}
-
+	
 	/**
 	 * The actual logic for character replacement.
 	 * For Boyfriend and Dad, it checks to see if a vocal
@@ -238,9 +235,9 @@ class CharacterSelect extends Module
 				if (PlayState.instance.currentStage.getBoyfriend() != null) {
 					if (PlayState.instance.currentStage.getBoyfriend().characterId != characterIDs.bf && characterIDs.bf != 'default') {
 						var charZIndex:Int = PlayState.instance.currentStage.getBoyfriend().zIndex;
+						var character = CharacterDataParser.fetchCharacter(id);
 						var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-' + PlayState.instance.currentVariation : '';
 						var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
-						var character = CharacterDataParser.fetchCharacter(id);
 						if (character != null) {
 								PlayState.instance.currentStage.getBoyfriend().destroy();
 								character.set_characterType(CharacterType.BF);
@@ -263,10 +260,8 @@ class CharacterSelect extends Module
 								}
 						}
 						if (Assets.exists(voiceFile) && PlayState.instance.vocals != null) {
-								PlayState.instance.currentChart.characters.player = id;
-								PlayState.instance.currentChart.buildVoiceList();
 								PlayState.instance.vocals.stop();
-								PlayState.instance.vocals = PlayState.instance.currentChart.buildVocals();
+								PlayState.instance.vocals = replaceVocals('bf', voiceFile);
 						}
 					}
 				}
@@ -275,6 +270,8 @@ class CharacterSelect extends Module
 					if (PlayState.instance.currentStage.getGirlfriend().characterId != characterIDs.gf && characterIDs.gf != 'default') {
 						var charZIndex:Int = PlayState.instance.currentStage.getGirlfriend().zIndex;
 						var character = CharacterDataParser.fetchCharacter(id);
+						var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-' + PlayState.instance.currentVariation : '';
+						var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
 						if (character != null) {
 								PlayState.instance.currentStage.getGirlfriend().destroy();
 								character.set_characterType(CharacterType.GF);
@@ -288,9 +285,9 @@ class CharacterSelect extends Module
 				if (PlayState.instance.currentStage.getDad() != null) {
 					if (PlayState.instance.currentStage.getDad().characterId != characterIDs.dad && characterIDs.dad != 'default') {
 						var charZIndex:Int = PlayState.instance.currentStage.getDad().zIndex;
+						var character = CharacterDataParser.fetchCharacter(id);
 						var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-' + PlayState.instance.currentVariation : '';
 						var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
-						var character = CharacterDataParser.fetchCharacter(id);
 						if (character != null) {
 								PlayState.instance.currentStage.getDad().destroy();
 								character.set_characterType(CharacterType.DAD);
@@ -300,15 +297,64 @@ class CharacterSelect extends Module
 								PlayState.instance.currentStage.refresh();
 						}
 						if (Assets.exists(voiceFile) && PlayState.instance.vocals != null) {
-								PlayState.instance.currentChart.characters.opponent = id;
-								PlayState.instance.currentChart.buildVoiceList();
 								PlayState.instance.vocals.stop();
-								PlayState.instance.vocals = PlayState.instance.currentChart.buildVocals();
+								PlayState.instance.vocals = replaceVocals('dad', voiceFile);
 						}
 					}
 				}
 			default:
 				trace('How did you get here?');
 		}
+	}
+
+	/**
+	 * Modified version of buildVocals(); to handle vocal replacement.
+	 * 
+	 * @param id The ID to use.
+	 * @param voiceFile The file path constructed in replaceChar();
+	 */
+	function replaceVocals(id:String, voiceFile:String):VoicesGroup
+	{
+		var result:VoicesGroup = new VoicesGroup();
+		var voiceList:Array<String> = [null, null];
+		var songVoices:Array<String> = PlayState.instance.currentChart.buildVoiceList();
+		var currentChart = PlayState.instance.currentChart;
+
+		switch (id) {
+			case 'bf':
+				voiceList[0] = voiceFile;
+			case 'dad':
+				voiceList[1] = voiceFile;
+		}
+
+		if (voiceList.length == 0)
+		{
+			return result;
+		}
+
+		if (voiceList[0] != null) {
+			result.addPlayerVoice(FunkinSound.load(voiceList[0]));
+		} else {
+			result.addPlayerVoice(FunkinSound.load(songVoices[0]));
+		}
+
+		if (voiceList[1] != null) {
+			result.addOpponentVoice(FunkinSound.load(voiceList[1]));
+		} else {
+			result.addOpponentVoice(FunkinSound.load(songVoices[1]));
+		}
+
+		if (voiceList.length > 2)
+		{
+			for (i in 2...voiceList.length)
+			{
+				result.add(FunkinSound.load(Assets.getSound(voiceList[i])));
+			}
+		}
+
+		result.playerVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.player);
+		result.opponentVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.opponent);
+
+		return result;
 	}
 }

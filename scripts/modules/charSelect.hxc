@@ -304,8 +304,10 @@ class CharacterSelect extends Module
 			default:
 				trace('How did you get here?');
 		}
-		PlayState.instance.vocals.stop();
-		PlayState.instance.vocals = replaceVocals(voiceList);
+		if (voiceList[0] != null || voiceList[1] != null) {
+				PlayState.instance.vocals.stop();
+				PlayState.instance.vocals = replaceVocals(voiceList);
+		}
 	}
 
 	/**

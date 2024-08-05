@@ -306,7 +306,6 @@ class CharacterSelect extends Module
 				trace('How did you get here?');
 		}
 		PlayState.instance.vocals.stop();
-		trace('VOICE LIST: ' + voiceList);
 		PlayState.instance.vocals = replaceVocals(voiceList);
 	}
 

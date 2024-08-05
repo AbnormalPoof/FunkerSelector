@@ -270,8 +270,6 @@ class CharacterSelect extends Module
 					if (PlayState.instance.currentStage.getGirlfriend().characterId != characterIDs.gf && characterIDs.gf != 'default') {
 						var charZIndex:Int = PlayState.instance.currentStage.getGirlfriend().zIndex;
 						var character = CharacterDataParser.fetchCharacter(id);
-						var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-' + PlayState.instance.currentVariation : '';
-						var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
 						if (character != null) {
 								PlayState.instance.currentStage.getGirlfriend().destroy();
 								character.set_characterType(CharacterType.GF);

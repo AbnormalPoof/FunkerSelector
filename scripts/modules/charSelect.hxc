@@ -313,10 +313,10 @@ class CharacterSelect extends Module
 	 */
 	function replaceVocals(id:String, voiceFile:String):VoicesGroup
 	{
+		var currentChart = PlayState.instance.currentChart;
 		var result:VoicesGroup = new VoicesGroup();
 		var voiceList:Array<String> = [null, null];
-		var songVoices:Array<String> = PlayState.instance.currentChart.buildVoiceList();
-		var currentChart = PlayState.instance.currentChart;
+		var songVoices:Array<String> = currentChart.buildVoiceList();
 
 		switch (id) {
 			case 'bf':

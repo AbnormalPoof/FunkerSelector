@@ -15,6 +15,7 @@ import funkin.data.song.SongRegistry;
 import flixel.FlxG;
 import flixel.util.FlxSave;
 import openfl.utils.Assets;
+import funkin.util.assets.DataAssets;
 import funkin.save.Save;
 import haxe.Json;
 import StringTools;

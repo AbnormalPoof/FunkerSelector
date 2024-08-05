@@ -233,7 +233,6 @@ class CharacterSelect extends Module
 	 * @param type The character type we're replacing.
 	 */
 	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
-
 		switch (type) {
 			case 'bf':
 				if (PlayState.instance.currentStage.getBoyfriend() != null) {
@@ -320,11 +319,6 @@ class CharacterSelect extends Module
 		var result:VoicesGroup = new VoicesGroup();
 		var songVoices:Array<String> = currentChart.buildVoiceList();
 
-		if (voiceList.length == 0)
-		{
-			return result;
-		}
-
 		if (voiceList[0] != null) {
 			result.addPlayerVoice(FunkinSound.load(voiceList[0]));
 		} else {
@@ -335,14 +329,6 @@ class CharacterSelect extends Module
 			result.addOpponentVoice(FunkinSound.load(voiceList[1]));
 		} else {
 			result.addOpponentVoice(FunkinSound.load(songVoices[1]));
-		}
-
-		if (voiceList.length > 2)
-		{
-			for (i in 2...voiceList.length)
-			{
-				result.add(FunkinSound.load(Assets.getSound(voiceList[i])));
-			}
 		}
 
 		result.playerVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.player);

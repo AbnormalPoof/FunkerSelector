@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- Minor optimizations to the CharacterMenu substate.
+- Refactored vocal replacement. `PlayState.instance.voices` is now replaced directly instead of setting `PlayState.instance.currentChart.characters.player` and basically running with it.
+
 ## [1.2.0] - 2024-08-03
 ### Added
 - A new JSON System for adding Funker Selector characters! Loaded from `data/funkerSelector/` in the mod folder.

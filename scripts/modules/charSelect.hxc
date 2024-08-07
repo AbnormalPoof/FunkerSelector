@@ -246,8 +246,6 @@ class CharacterSelect extends Module
 	 * This is a lot more Memory-efficient compared to using FunkinSprite's cacheSparrow function!
 	 *
 	 * @param path The file path.
-	 * 
-	 * TODO: How to present this in the Changelog?
 	 */
 	function cacheSprite(path:String) {
 		if (cachedJSONSparrows.exists(path)) return;

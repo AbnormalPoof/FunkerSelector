@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 ### Changed
 - Minor optimizations to the CharacterMenu substate.
-- Refactored vocal replacement. `PlayState.instance.voices` is now replaced directly instead of the hacky way of setting `PlayState.instance.currentChart.characters.player` and basically running with it.
+- Refactored vocal replacement. `PlayState.instance.voices` is now replaced properly instead of the hacky way of setting `PlayState.instance.currentChart.characters.player` and basically running with it.
+### Fixed 
+- Fixed "Preload Sprites" doing the opposite of what it was supposed to do.
 
 ## [1.2.0] - 2024-08-03
 ### Added

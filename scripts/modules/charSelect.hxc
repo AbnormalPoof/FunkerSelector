@@ -21,6 +21,8 @@ import openfl.display3D.textures.TextureBase;
 import openfl.utils.Assets;
 import funkin.audio.VoicesGroup;
 import funkin.audio.FunkinSound;
+import funkin.util.MemoryUtil;
+import haxe.ds.StringMap;
 import funkin.save.Save;
 import haxe.Json;
 import Std;
@@ -29,7 +31,7 @@ import Std;
  * Module that handles the Character Select button in Freeplay.
  * This also handles switching out Characters in PlayState!
  */
-class CharacterSelect extends Module 
+class CharacterSelect extends Module
 {
 	var charText:AtlasText;
 	var charSelectIcon:FunkinSprite;
@@ -43,6 +45,10 @@ class CharacterSelect extends Module
 		preloadSprites: true
 	}
 	var voiceList:Array<String>;
+
+	// currentCachedTextures gets cleared everytime we load into a song.
+	// It'd be annoying to have to re-cache everything everytime we exit!
+	var cachedJSONSparrows:StringMap = new StringMap();
 
 	function new() {
 		super("CharacterSelect");
@@ -120,7 +126,7 @@ class CharacterSelect extends Module
 			state.dj.onIntroDone.add(function() {
 				charSelectIcon.visible = true;
 				charSelectIcon.animation.play('intro');
-				charSelectIcon.animation.finishCallback = function(_) { 
+				charSelectIcon.animation.finishCallback = function(_) {
 					charSelectIcon.animation.play('idle');
 					charText.visible = true;
 					if (charSelectIcon.animation.curAnim.name == 'idle')
@@ -145,7 +151,7 @@ class CharacterSelect extends Module
 			GameOverSubState.blueBallSuffix = '';
 		}
 	}
-	
+
 	override function onStateChangeEnd(event) {
 		super.onStateChangeEnd(event);
 		// Options Menu stuff
@@ -164,7 +170,22 @@ class CharacterSelect extends Module
 					funkerSettings.preloadSprites = value;
 					Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
 					Save.instance.flush();
-					if (value) cacheJSONSparrows();
+					if (value) {
+						cacheJSONSparrows();
+					} else {
+						// Remove the JSON Characters from memory when the user disables the option.
+						for (jsonChar in cachedJSONSparrows.keys()) {
+							var char = cachedJSONSparrows.get(jsonChar);
+							if (char == null) continue;
+							FlxG.bitmap.remove(char);
+							Assets.cache.removeBitmapData(jsonChar);
+							char.persist = false;
+							char.destroyOnNoUse = true;
+							char.destroy();
+							cachedJSONSparrows.remove(jsonChar);
+						}
+						MemoryUtil.collect(true);
+					}
 				}, funkerSettings.preloadSprites);
 
 				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold"));
@@ -174,7 +195,7 @@ class CharacterSelect extends Module
 
 	/**
 	 * Parse a Funker Selector JSON file and return the data.
-	 * @param characterID 
+	 * @param characterID
 	 */
 	function parseJSONData(characterID:String = 'default'):Void {
 		if (Assets.exists(Paths.json('funkerSelector/' + characterID))) {
@@ -189,7 +210,7 @@ class CharacterSelect extends Module
 	 * We preload the sprites for the JSON characters
 	 * when the Module is created in order to reduce lag when
 	 * they're shown in the Character Selection screen.
-	 * 
+	 *
 	 * If "Simplify UI" is enabled, the sprites are not
 	 * cached as they won't show up in the menu.
 	 */
@@ -223,11 +244,13 @@ class CharacterSelect extends Module
 	/**
 	 * This is taken from Psych Engine, with some modifications.
 	 * This is a lot more Memory-efficient compared to using FunkinSprite's cacheSparrow function!
-	 * 
+	 *
 	 * @param path The file path.
+	 * 
+	 * TODO: How to present this in the Changelog?
 	 */
 	function cacheSprite(path:String) {
-		if (FunkinSprite.currentCachedTextures.exists(path)) return;
+		if (cachedJSONSparrows.exists(path)) return;
 		var bitmap:BitmapData = Assets.getBitmapData(path);
 		if (bitmap != null) {
 				var texture:TextureBase = FlxG.stage.context3D.createTexture(bitmap.width, bitmap.height, "bgra", true);
@@ -238,9 +261,8 @@ class CharacterSelect extends Module
 				bitmap = BitmapData.fromTexture(texture);
 				var graphic:FlxGraphic = FlxGraphic.fromBitmapData(bitmap, false, path);
 				graphic.persist = true;
-				FunkinSprite.currentCachedTextures.set(path, graphic);
+				cachedJSONSparrows.set(path, graphic);
 				trace('[Funker Selector] Successfully cached graphic: ' + path);
-				return graphic;
 		} else {
 				trace('[ERROR] Failed to cache graphic: ' + path);
 		}
@@ -269,14 +291,14 @@ class CharacterSelect extends Module
 			PlayState.instance.vocals = replaceVocals(voiceList);
 		}
 	}
-	
+
 	/**
 	 * The actual logic for character replacement.
 	 * For Boyfriend and Dad, it checks to see if a vocal
 	 * file of the current song exists for the specified character,
 	 * and replaces the original character's vocals with that.
-	 * 
-	 * @param id The character ID to change into. 
+	 *
+	 * @param id The character ID to change into.
 	 * @param type The character type we're replacing.
 	 */
 	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {

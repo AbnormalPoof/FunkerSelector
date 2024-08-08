@@ -16,6 +16,7 @@ body:
       label: Issue Checklist
       options:
         - label: Have you checked the Issues/Discussions to see if this hasn't been reported yet?
+        - label: Have you tried reinstalling the mod?
         - label: Is this a genuine issue with Funker Selector and not a side-effect of another mod you have installed?
 
   - type: markdown

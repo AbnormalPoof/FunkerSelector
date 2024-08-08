@@ -1,0 +1,12 @@
+name: Enhancement
+description: Suggest a new feature for the mod.
+labels: ["Enhancement"]
+title: "Enhancement: "
+body:
+  - type: markdown
+    attributes:
+      value: "### Requests to add characters to the mod will be rejected. You can add them yourself."
+
+  - type: textarea
+    attributes:
+      label: What is your feature/suggestion?

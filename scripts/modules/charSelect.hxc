@@ -46,8 +46,10 @@ class CharacterSelect extends Module
 	}
 	var voiceList:Array<String>;
 
-	// currentCachedTextures gets cleared everytime we load into a song.
-	// It'd be annoying to have to re-cache everything everytime we exit!
+	/**
+	 * currentCachedTextures gets cleared everytime we load into a song.
+	 * It'd be annoying to have to re-cache everything everytime we exit!
+	 */
 	var cachedJSONSparrows:StringMap = new StringMap();
 
 	function new() {
@@ -214,29 +216,27 @@ class CharacterSelect extends Module
 	 * If "Simplify UI" is enabled, the sprites are not
 	 * cached as they won't show up in the menu.
 	 */
-	function cacheJSONSparrows():Void {
+	 function cacheJSONSparrows():Void {
 		var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
 		for (funker in funkerJSONs) {
 			var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
-			if (data.characterID != null) {
-					if (Assets.exists(Paths.json('characters/' + data.characterID))) {
-						var data = CharacterDataParser.parseCharacterData(data.characterID);
-						if (data.renderType == 'multisparrow') {
-							for (anim in data.animations)
-							{
-								if (anim.assetPath != null)
-								{
-									cacheSprite(Paths.image(anim.assetPath));
-								}
-							}
-						} else {
-							cacheSprite(Paths.image(data.assetPath));
-						}
-					} else {
-							trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
-					}
-			} else {
+			var charData = CharacterDataParser.parseCharacterData(data.characterID);
+			if (data.characterID == null) {
 					trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '! The "characterID" field does not exist.');
+					continue;
+			}
+			if (!Assets.exists(Paths.json('characters/' + data.characterID))) {
+					trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
+					continue;
+			}
+			if (charData.renderType == 'multisparrow') {
+				for (anim in charData.animations) {
+						if (anim.assetPath != null) {
+								cacheSprite(Paths.image(anim.assetPath));
+						}
+				}
+			} else {
+				cacheSprite(Paths.image(charData.assetPath));
 			}
 		}
 	}

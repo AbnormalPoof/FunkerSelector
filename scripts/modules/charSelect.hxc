@@ -216,7 +216,7 @@ class CharacterSelect extends Module
 	 * If "Simplify UI" is enabled, the sprites are not
 	 * cached as they won't show up in the menu.
 	 */
-	 function cacheJSONSparrows():Void {
+	function cacheJSONSparrows():Void {
 		var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
 		for (funker in funkerJSONs) {
 			var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));

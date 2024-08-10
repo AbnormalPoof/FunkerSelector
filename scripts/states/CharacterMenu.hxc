@@ -117,37 +117,59 @@ class CharacterMenu extends MusicBeatSubState {
      * to the Boyfriend character list. 
      * If no character ID exists in the file (or the character ID is invalid), the character will be skipped. 
      */
-    function initChars():Void {
+     function initChars():Void {
         var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
+        
         for (funker in funkerJSONs) {
             var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
-            if (data.characterID != null) {
-                if (Assets.exists(Paths.json('characters/' + data.characterID))) {
-                    if (data.characterID != funker) PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Warning', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":' + '\n\nThe specified "characterID" (' + data.characterID + ') does not match the file name of the JSON. (' + funker + '.json' + ")\n\nThis character will behave as a Legacy Character if the specified Character ID isn't invalid or a duplicate.");
-                    if (data.characterType != null) {
-                        switch (data.characterType) {
-                            case 'bf', 'player':
-                                if (charArrayBF.indexOf(data.characterID) == -1) charArrayBF.push(data.characterID);
-                            case 'gf':
-                                if (charArrayGF.indexOf(data.characterID) == -1) charArrayGF.push(data.characterID);
-                            case 'dad', 'opponent':
-                                if (charArrayDad.indexOf(data.characterID) == -1) charArrayDad.push(data.characterID);
-                            default:
-                                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":' + '\n\nThe specified Character Type (' + data.characterType + ') is invalid. What are you even doing?\n\nAccepted values are: "bf", "gf", "dad", "player", and "opponent".');
-                        }
-                    } else {
+
+            // If the "characterID" field was not found.
+            if (data.characterID == null) {
+                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 
+                    'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
+                continue;
+            }
+    
+            // If the Character ID is "default"
+            if (data.characterID == 'default') {
+                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified Character ID (' + data.characterID + ') is set to "default"! This character will be skipped to prevent any issues.');
+                continue;
+            }
+    
+            // If the specified Character ID does not exist in data/characters/
+            if (!Assets.exists(Paths.json('characters/' + data.characterID))) {
+                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified Character ID (' + data.characterID + ') is invalid. This character will be skipped to prevent any issues.');
+                continue;
+            }
+    
+            // If the specified Character ID does not match the filename of the JSON
+            // TODO: Add a solution to this, so the filename and Character ID can be different
+            if (data.characterID != funker) {
+                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Warning', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified "characterID" (' + data.characterID + ') does not match the file name of the JSON. (' + funker + '.json' + ')\n\nThis character will behave as a Legacy Character if the specified Character ID isn\'t invalid or a duplicate.');
+            }
+    
+            if (data.characterType != null) {
+                switch (data.characterType) {
+                    case 'bf', 'player':
                         if (charArrayBF.indexOf(data.characterID) == -1) charArrayBF.push(data.characterID);
-                    }
-                } else {
-                    PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":' + '\n\nThe specified Character ID (' + data.characterID + ') is invalid. This character will be skipped to prevent any issues.');
+                    case 'gf':
+                        if (charArrayGF.indexOf(data.characterID) == -1) charArrayGF.push(data.characterID);
+                    case 'dad', 'opponent':
+                        if (charArrayDad.indexOf(data.characterID) == -1) charArrayDad.push(data.characterID);
+                    default:
+                        PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified Character Type (' + data.characterType + ') is invalid. To prevent any issues, you will find this character under "PLAYABLE CHARACTERS".');
+                        if (charArrayBF.indexOf(data.characterID) == -1) charArrayBF.push(data.characterID);
                 }
             } else {
-                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In ' + '"' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":' + '\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
+                if (charArrayBF.indexOf(data.characterID) == -1) charArrayBF.push(data.characterID);
             }
         }
+    
         var charList = Assets.getText(Paths.txt('charSelectList')).split('\n').filter(function(s:String) return s != '');
         for (legacyChar in charList) {
-            if (charArrayBF.indexOf(legacyChar) == -1 && Assets.exists(Paths.json('characters/' + legacyChar))) charArrayBF.push(legacyChar);
+            if (charArrayBF.indexOf(legacyChar) == -1 && Assets.exists(Paths.json('characters/' + legacyChar))) {
+                charArrayBF.push(legacyChar);
+            }
         }
     }
 

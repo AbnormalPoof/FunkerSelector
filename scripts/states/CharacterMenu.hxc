@@ -404,43 +404,36 @@ class CharacterMenu extends MusicBeatSubState {
     }
 
     function confirmThing():Void {
-        FunkinSound.playOnce(Paths.sound('confirmMenu'));
+        FunkinSound.playOnce(Paths.sound('confirmMenu'));  
         if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
             characterData = ModuleHandler.getModule("CharacterSelect").scriptCall('parseJSONData', [curCharID]);
-            animation = 'hey';
+            animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';     
             if (characterSprite != null) {
-                if (characterData != null && characterData.characterMenu.selectedAnim != null) {
-                    animation = characterData.characterMenu.selectedAnim;
-                }
                 characterSprite.playAnimation(animation, true);
             }
-        }
-        if (charIcon != null) {
-            if (charIcon.hasAnimation('winning')) {
-                // Play the winning animation if it's available.
-                charIcon.playAnimation('winning');
+        }   
+        if (charIcon != null && charIcon.hasAnimation('winning')) {
+            // Play the winning animation if it's available.
+            charIcon.playAnimation('winning');
 
-                // I wanted this really cool effect where the icons would also
-                // play the winning animation!
-                // But let's not play that if "Simplify UI" is turned on.
-                if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
-                    if (iconGrid != null) {
-                        for (i in 0...iconGrid.length) {
-                            var icon = iconGrid[i];
-                            new FlxTimer().start(0.01 * i, function() {
-                                icon.playAnimation('winning');
-                            });
-                        }
-                        new FlxTimer().start(0.3, function() {
-                            for (i in 0...iconGrid.length) {
-                                var icon = iconGrid[i];
-                                new FlxTimer().start(0.01 * i, function() {
-                                    icon.playAnimation('idle');
-                                });
-                            }
+            // I wanted this really cool effect where the icons in the icon grid would also
+            // play the winning animation!
+            // But let's not play that if "Simplify UI" is turned on.
+            if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode && iconGrid != null) {
+                for (i in 0...iconGrid.length) {
+                    var icon = iconGrid[i];
+                    new FlxTimer().start(0.01 * i, function() {
+                        icon.playAnimation('winning');
+                    });
+                }
+                new FlxTimer().start(0.3, function() {
+                    for (i in 0...iconGrid.length) {
+                        var icon = iconGrid[i];
+                        new FlxTimer().start(0.01 * i, function() {
+                            icon.playAnimation('idle');
                         });
                     }
-                }
+                });
             }
         }
     }

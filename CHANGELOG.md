@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added a small hotkey menu in the Character Menu, accessible by pressing D.
 - J will now jump to the currently selected character.
 ### Changed
-- Optimized a few spots in the `charSelect` and `CharacterMenu` modules.
+- Optimized a few spots in the `charSelect` module and `CharacterMenu` substate.
 - Refactored vocal replacement. `PlayState.instance.voices` is now replaced properly instead of the hacky way of setting `PlayState.instance.currentChart.characters.player` and basically running with it.
 - Use a more memory-efficient method for "Preload Sprites".
 ### Fixed 

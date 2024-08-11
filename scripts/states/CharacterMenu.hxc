@@ -409,7 +409,7 @@ class CharacterMenu extends MusicBeatSubState {
             characterData = ModuleHandler.getModule("CharacterSelect").scriptCall('parseJSONData', [curCharID]);
             animation = (characterData != null && characterData.characterMenu != null && characterData.characterMenu.selectedAnim != null) ? characterData.characterMenu.selectedAnim : 'hey';     
             if (characterSprite != null) {
-                characterSprite.playAnimation(animation, true);
+                characterSprite.playAnimation(animation, true, true);
             }
         }   
         if (charIcon != null && charIcon.hasAnimation('winning')) {

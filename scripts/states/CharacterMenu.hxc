@@ -407,7 +407,7 @@ class CharacterMenu extends MusicBeatSubState {
         FunkinSound.playOnce(Paths.sound('confirmMenu'));  
         if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
             characterData = ModuleHandler.getModule("CharacterSelect").scriptCall('parseJSONData', [curCharID]);
-            animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';     
+            animation = (characterData != null && characterData.characterMenu != null && characterData.characterMenu.selectedAnim != null) ? characterData.characterMenu.selectedAnim : 'hey';     
             if (characterSprite != null) {
                 characterSprite.playAnimation(animation, true);
             }

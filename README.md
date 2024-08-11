@@ -11,3 +11,9 @@ Funker Selector is a mod for Friday Night Funkin' Base Game (V-Slice) that adds 
 ## Credits
 - AbnormalPoof - Scripting, Playtesting. In addition: Also created the mod's thumbnail. Basically everything!
 - [Cracsthor](https://gamebanana.com/members/1844732) - Creator of the PhantomMuff font, which is used in this mod for the UI and thumbnail.
+
+## Features
+- A UI, I guess
+![screenshot-2024-08-11-00-33-24](https://github.com/user-attachments/assets/cb663368-73e0-42ee-9990-aa32644f1c85)
+- Character-specific vocals, simply by adding a vocal file.
+- Game Over music, blue ball, and Pause Menu music suffixes defined by JSON.

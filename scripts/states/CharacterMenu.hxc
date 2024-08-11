@@ -15,9 +15,7 @@ import funkin.save.Save;
 import funkin.modding.module.ModuleHandler;
 import funkin.modding.PolymodErrorHandler;
 import haxe.Json;
-import openfl.utils.Assets;
 import funkin.util.assets.DataAssets;
-import StringTools;
 import Std;
 
 /**

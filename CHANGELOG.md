@@ -3,15 +3,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.1] - 2024-08-11
 ### Added
-- The J key will now jump to the currently selected character.
+- Added a small hotkey menu in the Character Menu, accessible by pressing D.
+- J will now jump to the currently selected character.
 ### Changed
-- Minor optimizations to the CharacterMenu substate.
+- Optimized a few spots in the `charSelect` and `CharacterMenu` modules.
 - Refactored vocal replacement. `PlayState.instance.voices` is now replaced properly instead of the hacky way of setting `PlayState.instance.currentChart.characters.player` and basically running with it.
 - Use a more memory-efficient method for "Preload Sprites".
 ### Fixed 
 - Fixed "Preload Sprites" doing the opposite of what it was supposed to do.
+  - In addition, disabling the option will now remove the sprites from memory.
+- Fixed a random Null Object Reference from occuring when "Default" was selected.
 
 ## [1.2.0] - 2024-08-03
 ### Added

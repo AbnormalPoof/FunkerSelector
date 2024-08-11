@@ -35,6 +35,7 @@ class CharacterSelect extends Module
 {
 	var charText:AtlasText;
 	var charSelectIcon:FunkinSprite;
+
 	var characterIDs:Dynamic = {
 		bf: 'default',
 		gf: 'default',
@@ -55,18 +56,22 @@ class CharacterSelect extends Module
 	function new() {
 		super("CharacterSelect");
 		save = new FlxSave();
+
+		// Initializing Funker Selector's save data if it's not found.
 		if (Save.instance.modOptions.get("FunkerSelector") == null) {
 				Save.instance.modOptions.set("FunkerSelector", characterIDs);
 				Save.instance.flush();
 		} else {
 				characterIDs = Save.instance.modOptions.get("FunkerSelector");
 		}
+
 		if (Save.instance.modOptions.get("FunkerSelectorSettings") == null) {
 			Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
 			Save.instance.flush();
 		} else {
 				funkerSettings = Save.instance.modOptions.get("FunkerSelectorSettings");
 		}
+
 		// Backwards compatability with the old save system.
 		if (save.bind("characterselect", "kagaminerinlen")) {
 			if (save.data.characterselect != null) {
@@ -109,22 +114,21 @@ class CharacterSelect extends Module
 		super.onSubStateOpenEnd(event);
 		var state = event.targetState;
 		if (Std.isOfType(state, FreeplayState)) {
-			charSelectIcon = new FunkinSprite(0, 0);
-			charSelectIcon.frames = Paths.getSparrowAtlas('freeplay/char_select');
+			charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
 			charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
 			charSelectIcon.animation.addByPrefix('idle', 'idle', 24, true);
 			charSelectIcon.zIndex = 1000;
-			charSelectIcon.x = 10;
-			charSelectIcon.y = 120;
 			charSelectIcon.scale.set(0.7, 0.7);
 			charSelectIcon.camera = state.funnyCam;
 			charSelectIcon.visible = false;
+
 			charText = new AtlasText(170, 270, 'G', 'bold');
 			charText.visible = false;
 			charText.zIndex = 1001;
 			charText.camera = state.funnyCam;
 			state.add(charSelectIcon);
 			state.add(charText);
+
 			state.dj.onIntroDone.add(function() {
 				charSelectIcon.visible = true;
 				charSelectIcon.animation.play('intro');

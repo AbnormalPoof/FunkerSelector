@@ -25,7 +25,7 @@ Adding characters to the mod is relatively simple, it's not really that difficul
    - `characterID` is self-explanatory.
    - Accepted values for `characterType` are: `bf`, `gf`, `dad`, `player`, and `opponent`.
 
-The resulting file heirarchy should look like this:
+The resulting file hierarchy should look like this:
 ```
 |- My Funker Selector Mod
   |-data
@@ -43,7 +43,7 @@ The resulting file heirarchy should look like this:
 2. Inside `_append`, create a new folder called `data`.
 3. Within the `data` folder, create a new file called `charSelectList.txt`. Type your character's ID into this file.
 
-The resulting file heirarchy should look like this:
+The resulting file hierarchy should look like this:
 ```
 |- My Funker Selector Mod
   |-_append

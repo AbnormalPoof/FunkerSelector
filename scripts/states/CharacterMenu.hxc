@@ -22,7 +22,7 @@ import Std;
 /**
  * This is a substate that acts as a Character Selection screen.
  */
-class CharacterMenu extends MusicBeatSubState {
+class CharacterSelectSubState extends MusicBeatSubState {
     var charName:FlxText;
     var charDesc:FlxText;
     var selected:FlxText;

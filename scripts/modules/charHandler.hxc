@@ -28,10 +28,10 @@ import haxe.Json;
 import Std;
 
 /**
- * Module that handles the Character Select button in Freeplay.
- * This also handles switching out Characters in PlayState!
+ * Module that handles the Character Select button in
+ * Freeplay, along with character replacement.
  */
-class CharacterSelect extends Module
+class CharacterHandler extends Module
 {
 	var charText:AtlasText;
 	var charSelectIcon:FunkinSprite;
@@ -54,7 +54,7 @@ class CharacterSelect extends Module
 	var cachedJSONSparrows:StringMap = new StringMap();
 
 	function new() {
-		super("CharacterSelect");
+		super("CharacterHandler");
 		save = new FlxSave();
 
 		// Initializing Funker Selector's save data if it's not found.
@@ -98,7 +98,7 @@ class CharacterSelect extends Module
 			// Open the CharacterMenu substate.
 			// We need to make a new one everytime since it gets destroyed when it's closed.
 			if (FlxG.keys.justPressed.G && charText.visible) {
-				var charSelect:FlxSubState = ScriptedMusicBeatSubState.init("CharacterMenu");
+				var charSelect:FlxSubState = ScriptedMusicBeatSubState.init("CharacterSelectSubState");
 				charSelect.camera = FlxG.state.subState.funnyCam;
 				FlxG.state.subState.persistentUpdate = false;
 				FlxG.state.subState.openSubState(charSelect);

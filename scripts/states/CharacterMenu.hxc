@@ -5,6 +5,7 @@ import openfl.utils.Assets;
 import funkin.Paths;
 import funkin.play.character.CharacterDataParser;
 import funkin.play.character.BaseCharacter;
+import funkin.graphics.FunkinCamera;
 import funkin.ui.MusicBeatSubState;
 import funkin.play.components.HealthIcon;
 import flixel.tweens.FlxEase;
@@ -29,6 +30,9 @@ class CharacterMenu extends MusicBeatSubState {
 
     var leftDifficultyArrow:FunkinSprite;
     var rightDifficultyArrow:FunkinSprite;
+    var keyBox:FunkinSprite;
+
+    var hotkeyCam:FunkinCamera;
 
     // Arrays for each character.
     var charArrayBF:Array<String> = ['default'];
@@ -86,8 +90,23 @@ class CharacterMenu extends MusicBeatSubState {
             if (characterSprite != null) characterSprite.dance();
             bopTimer = 0;
         }
+
+        if (FlxG.keys.justPressed.D) {
+            hotkeyCam.visible = true;
+        }
     
-        handleKeyShit();
+        if (!hotkeyCam.visible) {
+            handleKeyShit();
+        }
+
+        if (FlxG.keys.justPressed.ESCAPE) {
+            if (hotkeyCam.visible) {
+                hotkeyCam.visible = false;
+            } else {
+                FunkinSound.playOnce(Paths.sound('cancelMenu'));
+                close();
+            }
+        }
     }
 
     /**
@@ -224,6 +243,12 @@ class CharacterMenu extends MusicBeatSubState {
      * Set up UI stuff like the BG and text.
      */
     function setupUIStuff():Void {
+
+        hotkeyCam = new FunkinCamera('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+        FlxG.cameras.add(hotkeyCam, false);
+        hotkeyCam.bgColor = 0x0;
+        hotkeyCam.visible = false;
+
         bg = new FunkinSprite(0, 0);
         bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
         bg.alpha = 0;
@@ -243,9 +268,9 @@ class CharacterMenu extends MusicBeatSubState {
         selected.color = 0xFF53FF38;
         selected.visible = false;
 
-        reset = new FlxText(1100, 15, 0, 'F - Reset\nto Default');
-        reset.setFormat(Paths.font("PhantomMuff.ttf"), 30, null, 'center');
-        reset.color = 0xFFE3E1E1;
+        hotkeyText = new FlxText(990, 15, 0, 'D - Hotkeys');
+        hotkeyText.setFormat(Paths.font("PhantomMuff.ttf"), 45, null, 'center');
+        hotkeyText.color = 0xFFE3E1E1;
 
         leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
         leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
@@ -258,6 +283,18 @@ class CharacterMenu extends MusicBeatSubState {
         rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
         rightDifficultyArrow.animation.play('idle');
         rightDifficultyArrow.scale.set(1.5, 1.5);
+
+        keyBox = new FunkinSprite(0, 0);
+        keyBox.makeSolidColor(600, 600, 0xFF000000);
+        keyBox.camera = hotkeyCam;
+        keyBox.alpha = 0.8;
+        keyBox.screenCenter();
+
+        hotkeys = new FlxText(350, 80, 0, 'F - Reset everything to default.\n\nJ - Jump to the currently selected character.\n\nQ - Switch to the previous page.\n\nE - Switch to the next page.\n\nESC - Close this.');
+        hotkeys.setFormat(Paths.font("PhantomMuff.ttf"), 40);
+        hotkeys.camera = hotkeyCam;
+        hotkeys.wordWrap = true;
+        hotkeys.fieldWidth = 600;
 
         charIcon = new HealthIcon('dad', 0);
 
@@ -273,9 +310,11 @@ class CharacterMenu extends MusicBeatSubState {
         add(selectText);
         add(numberThing);
         add(selected);
-        add(reset);
+        add(hotkeyText);
         add(charIcon);
         add(charName);
+        add(keyBox);
+        add(hotkeys);
 
         FlxTween.tween(bg, {alpha: 0.5}, 0.5, {ease: FlxEase.quartOut});
     }
@@ -355,11 +394,6 @@ class CharacterMenu extends MusicBeatSubState {
             Save.instance.modOptions.set("FunkerSelector", characterIDs);
             Save.instance.flush();
         }
-
-        if (FlxG.keys.justPressed.ESCAPE) {
-            FunkinSound.playOnce(Paths.sound('cancelMenu'));
-            close();
-        } 
     
         if (FlxG.keys.justPressed.ENTER) {
             switch (pageIndex) {
@@ -428,13 +462,13 @@ class CharacterMenu extends MusicBeatSubState {
 
         switch (pageIndex) {
             case 0:
-                selectText.text = '< (Q) PLAYABLE CHARACTERS (E) >';
+                selectText.text = 'PLAYABLE CHARACTERS';
                 selectText.color = 0xFF2DB2D2;
             case 1:
-                selectText.text = '< (Q) OPPONENT CHARACTERS (E) >';
+                selectText.text = 'OPPONENT CHARACTERS';
                 selectText.color = 0xFFAF66CE;
             case 2:
-                selectText.text = '< (Q) GIRLFRIEND CHARACTERS (E) >';
+                selectText.text = 'GIRLFRIEND CHARACTERS';
                 selectText.color = 0xFFA7004C;
         }
         selectText.screenCenter(); 

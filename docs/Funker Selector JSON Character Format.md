@@ -2,7 +2,7 @@
 
 As of v1.2.0, a new JSON format has been introduced in Funker Selector. This deprecates the old charSelectList.txt method
 and allows for a bit more flexibility when adding characters!
-The mod queries `data/funkerSelector/` at runtime and parses the JSON files in there, then takes the variables and passes it through the `CharacterMenu` SubState to set up the Character.
+The mod queries `data/funkerSelector/` at runtime and parses the JSON files in there, then takes the variables and passes it through the `CharacterSelectSubState` SubState to set up the Character.
 
 ### Example
 

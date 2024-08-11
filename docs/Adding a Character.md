@@ -4,7 +4,6 @@ Adding characters to the mod is relatively simple, it's not really that difficul
 #### Method 1: JSON
 
 1. In your Mod, create a new folder within `data` called `funkerSelector/`.
-
 2. Create a new JSON file named after your character's ID. Here is an example of what the JSON should look like:
 
     ```json
@@ -26,13 +25,29 @@ Adding characters to the mod is relatively simple, it's not really that difficul
    - `characterID` is self-explanatory.
    - Accepted values for `characterType` are: `bf`, `gf`, `dad`, `player`, and `opponent`.
 
+The resulting file heirarchy should look like this:
+```
+|- My Funker Selector Mod
+  |-data
+    |-funkerSelector
+      |-characterID.json
+  |-_polymod_metadata.json
+```
+
 #### Method 2: charSelectList (DEPRECATED)
 
 > [!WARNING]  
 > This method is deprecated. I recommend using the JSON method instead.
 
 1. In your Mod, create a new folder called `_append`.
-
 2. Inside `_append`, create a new folder called `data`.
-
 3. Within the `data` folder, create a new file called `charSelectList.txt`. Type your character's ID into this file.
+
+The resulting file heirarchy should look like this:
+```
+|- My Funker Selector Mod
+  |-_append
+    |-data
+      |-charSelectList.txt
+  |-_polymod_metadata.json
+```

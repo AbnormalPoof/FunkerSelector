@@ -90,6 +90,9 @@ class CharacterHandler extends Module
 
 	function onUpdate(event) {
 		super.onUpdate(event);
+		trace("GAME OVER MUSIC SUFFIX: " + GameOverSubState.musicSuffix);
+		trace("GAME OVER BLUE BALL SUFFIX: " + GameOverSubState.blueBallSuffix);
+		trace("PAUSE MENU MUSIC SUFFIX: " + PauseSubState.musicSuffix);
 		if (Std.isOfType(FlxG.state.subState, FreeplayState)) {
 			if (charSelectIcon != null && charText != null) {
 				charSelectIcon.visible = FlxG.state.subState.alsoOrangeLOL.visible;
@@ -150,7 +153,7 @@ class CharacterHandler extends Module
 	 * scripted characters will have their suffixes overridden!
 	 * 
 	 * TODO: There is some weird bug where the suffixes would
-	 * randomly change. Fix this!
+	 * change if Pico or BF-Pixel are shown in the menu. Fix this!
 	 */
 	override function onStateChangeBegin(event) {
 		super.onStateChangeBegin(event);

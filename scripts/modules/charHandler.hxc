@@ -340,7 +340,7 @@ class CharacterHandler extends Module
 				}
 			case 'gf':
 				if (PlayState.instance.currentStage.getGirlfriend() != null) {
-					if (characterIDs.gf && characterIDs.gf != 'default') {
+					if (characterIDs.gf != 'default') {
 						var charZIndex:Int = PlayState.instance.currentStage.getGirlfriend().zIndex;
 						var character = CharacterDataParser.fetchCharacter(id);
 						if (character != null) {
@@ -354,7 +354,7 @@ class CharacterHandler extends Module
 				}
 			case 'dad':
 				if (PlayState.instance.currentStage.getDad() != null) {
-					if (characterIDs.dad && characterIDs.dad != 'default') {
+					if (characterIDs.dad != 'default') {
 						var charZIndex:Int = PlayState.instance.currentStage.getDad().zIndex;
 						var character = CharacterDataParser.fetchCharacter(id);
 						var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-' + PlayState.instance.currentVariation : '';

@@ -421,7 +421,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     function confirmThing():Void {
         FunkinSound.playOnce(Paths.sound('confirmMenu'));  
         if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
-            characterData = ModuleHandler.getModule("CharacterSelect").scriptCall('parseJSONData', [curCharID]);
+            characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
             animation = (characterData != null && characterData.characterMenu != null && characterData.characterMenu.selectedAnim != null) ? characterData.characterMenu.selectedAnim : 'hey';     
             if (characterSprite != null) {
                 characterSprite.playAnimation(animation, true, true);
@@ -474,7 +474,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
         selectText.screenCenter(); 
         selectText.y = 10;
 
-        characterData = ModuleHandler.getModule("CharacterSelect").scriptCall('parseJSONData', [curCharID]);
+        characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
         charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
     
         // Legacy Characters will not have their sprites loaded.

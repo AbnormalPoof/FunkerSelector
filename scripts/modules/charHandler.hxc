@@ -90,9 +90,6 @@ class CharacterHandler extends Module
 
 	function onUpdate(event) {
 		super.onUpdate(event);
-		trace("GAME OVER MUSIC SUFFIX: " + GameOverSubState.musicSuffix);
-		trace("GAME OVER BLUE BALL SUFFIX: " + GameOverSubState.blueBallSuffix);
-		trace("PAUSE MENU MUSIC SUFFIX: " + PauseSubState.musicSuffix);
 		if (Std.isOfType(FlxG.state.subState, FreeplayState)) {
 			if (charSelectIcon != null && charText != null) {
 				charSelectIcon.visible = FlxG.state.subState.alsoOrangeLOL.visible;
@@ -147,13 +144,12 @@ class CharacterHandler extends Module
 		}
 	}
 
-
 	/**
 	 * Resetting Game Over and Pause Menu suffixes.
 	 * We put this in onStateChangeBegin instead of onStateChangeEnd, otherwise,
 	 * scripted characters will have their suffixes overridden!
 	 */
-	 override function onStateChangeBegin(event) {
+	override function onStateChangeBegin(event) {
 		super.onStateChangeBegin(event);
 		if (Std.isOfType(event.targetState, PlayState)) {
 			PauseSubState.musicSuffix = '';

@@ -17,6 +17,8 @@ import funkin.modding.module.ModuleHandler;
 import funkin.modding.PolymodErrorHandler;
 import haxe.Json;
 import funkin.util.assets.DataAssets;
+import funkin.play.PauseSubState;
+import funkin.play.GameOverSubState;
 import Std;
 
 /**
@@ -104,6 +106,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
                 hotkeyCam.visible = false;
             } else {
                 FunkinSound.playOnce(Paths.sound('cancelMenu'));
+
+                // Scripted characters overwrite the suffixes when
+                // they're shown. So we want to manually reset them!
+                PauseSubState.musicSuffix = '';
+                GameOverSubState.musicSuffix = '';
+                GameOverSubState.blueBallSuffix = '';
                 close();
             }
         }

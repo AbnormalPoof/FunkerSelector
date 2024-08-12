@@ -147,23 +147,6 @@ class CharacterHandler extends Module
 		}
 	}
 
-	/**
-	 * Resetting Game Over and Pause Menu suffixes.
-	 * We put this in onStateChangeBegin instead of onStateChangeEnd, otherwise,
-	 * scripted characters will have their suffixes overridden!
-	 * 
-	 * TODO: There is some weird bug where the suffixes would
-	 * change if Pico or BF-Pixel are shown in the menu. Fix this!
-	 */
-	override function onStateChangeBegin(event) {
-		super.onStateChangeBegin(event);
-		if (Std.isOfType(event.targetState, PlayState)) {
-			PauseSubState.musicSuffix = '';
-			GameOverSubState.musicSuffix = '';
-			GameOverSubState.blueBallSuffix = '';
-		}
-	}
-
 	override function onStateChangeEnd(event) {
 		super.onStateChangeEnd(event);
 		// Options Menu stuff

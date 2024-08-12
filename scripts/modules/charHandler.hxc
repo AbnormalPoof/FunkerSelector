@@ -325,15 +325,9 @@ class CharacterHandler extends Module
 								PlayState.instance.currentStage.refresh();
 								var characterData = parseJSONData(id);
 								if (characterData != null) {
-									if (characterData.pauseMusicSuffix != null && characterData.pauseMusicSuffix != '') {
-											PauseSubState.musicSuffix = characterData.pauseMusicSuffix;
-									}
-									if (characterData.gameOverMusicSuffix != null && characterData.gameOverMusicSuffix != '') {
-											GameOverSubState.musicSuffix = characterData.gameOverMusicSuffix;
-									}
-									if (characterData.blueBallSuffix != null && characterData.blueBallSuffix != '') {
-											GameOverSubState.blueBallSuffix = characterData.blueBallSuffix;
-									}
+									PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null && characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : PauseSubState.musicSuffix;
+									GameOverSubState.musicSuffix = (characterData.gameOverMusicSuffix != null && characterData.gameOverMusicSuffix != '') ? characterData.gameOverMusicSuffix : GameOverSubState.musicSuffix;
+									GameOverSubState.blueBallSuffix = (characterData.blueBallSuffix != null && characterData.blueBallSuffix != '') ? characterData.blueBallSuffix : GameOverSubState.blueBallSuffix;
 								}
 						}
 						if (Assets.exists(voiceFile)) {

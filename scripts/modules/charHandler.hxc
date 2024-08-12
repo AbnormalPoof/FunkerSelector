@@ -148,6 +148,9 @@ class CharacterHandler extends Module
 	 * Resetting Game Over and Pause Menu suffixes.
 	 * We put this in onStateChangeBegin instead of onStateChangeEnd, otherwise,
 	 * scripted characters will have their suffixes overridden!
+	 * 
+	 * TODO: There is some weird bug where the suffixes would
+	 * randomly change. Fix this!
 	 */
 	override function onStateChangeBegin(event) {
 		super.onStateChangeBegin(event);

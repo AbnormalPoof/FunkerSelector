@@ -147,6 +147,21 @@ class CharacterHandler extends Module
 		}
 	}
 
+
+	/**
+	 * Resetting Game Over and Pause Menu suffixes.
+	 * We put this in onStateChangeBegin instead of onStateChangeEnd, otherwise,
+	 * scripted characters will have their suffixes overridden!
+	 */
+	 override function onStateChangeBegin(event) {
+		super.onStateChangeBegin(event);
+		if (Std.isOfType(event.targetState, PlayState)) {
+			PauseSubState.musicSuffix = '';
+			GameOverSubState.musicSuffix = '';
+			GameOverSubState.blueBallSuffix = '';
+		}
+	}
+
 	override function onStateChangeEnd(event) {
 		super.onStateChangeEnd(event);
 		// Options Menu stuff
@@ -310,15 +325,14 @@ class CharacterHandler extends Module
 								PlayState.instance.currentStage.refresh();
 								var characterData = parseJSONData(id);
 								if (characterData != null) {
-									// Check if the suffixes are still blank before changing them.
-									if (PauseSubState.musicSuffix == '') {
-											PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null && characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : '';
+									if (characterData.pauseMusicSuffix != null && characterData.pauseMusicSuffix != '') {
+											PauseSubState.musicSuffix = characterData.pauseMusicSuffix;
 									}
-									if (GameOverSubState.musicSuffix == '') {
-											GameOverSubState.musicSuffix = (characterData.gameOverMusicSuffix != null && characterData.gameOverMusicSuffix != '') ? characterData.gameOverMusicSuffix : '';
+									if (characterData.gameOverMusicSuffix != null && characterData.gameOverMusicSuffix != '') {
+											GameOverSubState.musicSuffix = characterData.gameOverMusicSuffix;
 									}
-									if (GameOverSubState.blueBallSuffix == '') {
-											GameOverSubState.blueBallSuffix = (characterData.blueBallSuffix != null && characterData.blueBallSuffix != '') ? characterData.blueBallSuffix : '';
+									if (characterData.blueBallSuffix != null && characterData.blueBallSuffix != '') {
+											GameOverSubState.blueBallSuffix = characterData.blueBallSuffix;
 									}
 								}
 						}

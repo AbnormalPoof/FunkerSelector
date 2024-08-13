@@ -34,7 +34,7 @@ The resulting file hierarchy should look like this:
   |-_polymod_metadata.json
 ```
 
-#### Method 2: charSelectList (DEPRECATED)
+#### Method 2: charSelectList
 
 > [!WARNING]  
 > This method is deprecated. I recommend using the JSON method instead.

@@ -95,10 +95,22 @@ For example, Boyfriend (Pixel) uses `-pixel`, while Pico (Playable) uses `-pico`
   "offsets": [0, 0]
 }
 ```
-This is a short description of the character, with a few properties.
-`text`: The text itself.
-`size`: The font size.
-`offsets`: The offsets for the description. These are ***not*** the actual X and Y coordinates of the text, this is mainly for adjustment.
+This is a short description of the character, with a few properties:
+
+```json
+"text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand..."
+``` 
+The text itself.
+
+```json
+"size": 35
+```
+The font size.
+
+```json
+"offsets": [0, 0]
+```
+The offsets for the description. These are ***not*** the actual X and Y coordinates of the text, this is mainly for adjustment.
 
 ---
 

@@ -17,7 +17,8 @@ body:
       options:
         - label: Have you checked the Issues/Discussions to see if this hasn't been reported yet?
         - label: Have you tried reinstalling the mod?
-        - label: Is this a genuine issue with Funker Selector and not a side-effect of another mod you have installed?
+        - label: Have you tried disabling every mod except Funker Selector?
+        - label: Have you tried reproducing this issue on a fresh install of FNF?
 
   - type: markdown
     attributes:
@@ -25,7 +26,7 @@ body:
 
   - type: markdown
     attributes:
-      value: "### Provide as many details as you can!"
+      value: "### Please provide as many detailed as you can! I cannot read your mind."
 
   - type: textarea
     attributes:

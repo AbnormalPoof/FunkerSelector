@@ -1,6 +1,6 @@
 name: Enhancement
 description: Suggest a new feature for the mod.
-labels: ["Enhancement"]
+labels: ["Enhancement", "Awaiting Review"]
 title: "Enhancement: "
 body:
   - type: markdown

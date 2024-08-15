@@ -26,7 +26,7 @@ body:
 
   - type: markdown
     attributes:
-      value: "### Please provide as many detailed as you can! I cannot read your mind."
+      value: "### Please provide as many details as you can! I cannot read your mind."
 
   - type: textarea
     attributes:

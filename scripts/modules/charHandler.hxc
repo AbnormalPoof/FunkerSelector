@@ -25,6 +25,7 @@ import funkin.util.MemoryUtil;
 import haxe.ds.StringMap;
 import funkin.save.Save;
 import haxe.Json;
+import haxe.Exception;
 import Std;
 
 /**
@@ -223,7 +224,14 @@ class CharacterHandler extends Module
 	function cacheJSONSparrows():Void {
 		var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
 		for (funker in funkerJSONs) {
-			var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
+
+			// Exceptions continue the loop so there's no need for a continue; here.
+			try {
+					var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
+			} catch (e:Dynamic) {
+					trace(':(');
+			}
+			
 			var charData = CharacterDataParser.parseCharacterData(data.characterID);
 			if (data.characterID == null) {
 					trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '! The "characterID" field does not exist.');

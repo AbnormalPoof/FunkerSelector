@@ -139,9 +139,19 @@ class CharacterSelectSubState extends MusicBeatSubState {
      */
      function initChars():Void {
         var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
+        var charList = Assets.getText(Paths.txt('charSelectList')).split('\n').filter(function(s:String) return s != '');
+        var tempArray = [];
         
         for (funker in funkerJSONs) {
-            var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
+
+            try { 
+                var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker))); 
+            } catch (e:Dynamic) {
+                trace(':('); // If only catch blocks actually worked in HScript...
+            }
+
+            // If the parsing succeeds, then they get pushed to a temporary array.
+            tempArray.push(funker);
 
             // If the "characterID" field was not found.
             if (data.characterID == null) {
@@ -184,10 +194,24 @@ class CharacterSelectSubState extends MusicBeatSubState {
             }
         }
     
-        var charList = Assets.getText(Paths.txt('charSelectList')).split('\n').filter(function(s:String) return s != '');
         for (legacyChar in charList) {
             if (charArrayBF.indexOf(legacyChar) == -1 && Assets.exists(Paths.json('characters/' + legacyChar))) {
                 charArrayBF.push(legacyChar);
+                tempArray.push(legacyChar);
+            }
+        }
+
+        // VERY BASIC ERROR HANDLING!!
+        for (funker in funkerJSONs) {
+            if (tempArray.indexOf(funker) == -1) {
+                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThis character was not loaded due to an issue with their JSON file. Please make sure the syntax is correct.');
+                continue;
+            }
+        }
+        for (legacyChar in charList) {
+            if (tempArray.indexOf(funker) == -1) {
+                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'The following legacy character was not loaded:\n' + legacyChar + '\nThis character was not loaded since their character ID does not exist.');
+                continue;
             }
         }
     }

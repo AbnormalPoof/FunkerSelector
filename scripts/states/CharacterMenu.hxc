@@ -195,22 +195,19 @@ class CharacterSelectSubState extends MusicBeatSubState {
         }
     
         for (legacyChar in charList) {
-            if (charArrayBF.indexOf(legacyChar) == -1 && Assets.exists(Paths.json('characters/' + legacyChar))) {
+					if (Assets.exists(Paths.json('characters/' + legacyChar))) {
+            if (charArrayBF.indexOf(legacyChar) == -1) {
                 charArrayBF.push(legacyChar);
-                tempArray.push(legacyChar);
             }
+					} else {
+						PolymodErrorHandler.showAlert('Funker Selector', 'The following legacy character was not loaded:\n' + legacyChar + '\nThis character was not loaded since their character ID does not exist.');
+					}
         }
 
         // VERY BASIC ERROR HANDLING!!
         for (funker in funkerJSONs) {
             if (tempArray.indexOf(funker) == -1) {
                 PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThis character was not loaded due to an issue with their JSON file. Please make sure the syntax is correct.');
-                continue;
-            }
-        }
-        for (legacyChar in charList) {
-            if (tempArray.indexOf(funker) == -1) {
-                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'The following legacy character was not loaded:\n' + legacyChar + '\nThis character was not loaded since their character ID does not exist.');
                 continue;
             }
         }

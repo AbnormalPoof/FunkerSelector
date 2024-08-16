@@ -161,7 +161,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     
             // If the Character ID is "default"
             if (data.characterID == 'default') {
-                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified Character ID (' + data.characterID + ') is set to "default"! This character will be skipped to prevent any issues.');
+                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified Character ID (' + data.characterID + ') is set to "default"! Please change it, since it will conflict with the "default" character object in the menu.\nThis character will be skipped to prevent any issues.');
                 continue;
             }
     

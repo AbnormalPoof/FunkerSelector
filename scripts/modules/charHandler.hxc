@@ -223,9 +223,8 @@ class CharacterHandler extends Module
 	 */
 	function cacheJSONSparrows():Void {
 		var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
+		var data = null;
 		for (funker in funkerJSONs) {
-			var data = null;
-
 			// Exceptions continue the loop so there's no need for a continue; here.
 			try {
 					data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));

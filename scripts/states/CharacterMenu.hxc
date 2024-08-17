@@ -140,11 +140,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
      function initChars():Void {
         var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
         var charList = Assets.getText(Paths.txt('charSelectList')).split('\n').filter(function(s:String) return s != '');
+        var data = null;
         var tempArray = [];
         
         for (funker in funkerJSONs) {
-            var data = null;
-
             try { 
                 data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker))); 
             } catch (e:Dynamic) {

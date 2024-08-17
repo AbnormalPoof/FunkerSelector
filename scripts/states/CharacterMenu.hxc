@@ -143,9 +143,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
         var tempArray = [];
         
         for (funker in funkerJSONs) {
+            var data = null;
 
             try { 
-                var data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker))); 
+                data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker))); 
             } catch (e:Dynamic) {
                 trace(':('); // If only catch blocks actually worked in HScript...
             }

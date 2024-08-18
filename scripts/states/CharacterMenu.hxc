@@ -166,7 +166,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
             }
     
             // If the specified Character ID does not exist in data/characters/
-            if (!Assets.exists(Paths.json('characters/' + data.characterID))) {
+            if (!charJSONCheck(data.characterID)) {
                 PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified Character ID (' + data.characterID + ') is invalid. This character will be skipped to prevent any issues.');
                 continue;
             }
@@ -195,13 +195,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
         }
     
         for (legacyChar in charList) {
-					if (Assets.exists(Paths.json('characters/' + legacyChar))) {
-            if (charArrayBF.indexOf(legacyChar) == -1) {
-                charArrayBF.push(legacyChar);
+			if (Assets.exists(Paths.json('characters/' + legacyChar))) {
+                if (charArrayBF.indexOf(legacyChar) == -1) {
+                    charArrayBF.push(legacyChar);
+                }
+            } else {
+                PolymodErrorHandler.showAlert('Funker Selector', 'The following legacy character was not loaded:\n' + legacyChar + '\nThis character was not loaded since their character ID does not exist.');
             }
-					} else {
-						PolymodErrorHandler.showAlert('Funker Selector', 'The following legacy character was not loaded:\n' + legacyChar + '\nThis character was not loaded since their character ID does not exist.');
-					}
         }
 
         // VERY BASIC ERROR HANDLING!!
@@ -253,6 +253,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
             case 2: return charArrayGF;
             default: return [];
         }
+    }
+
+    function charJSONCheck(string:String):Bool {
+        for (json in DataAssets.listDataFilesInPath('characters/')) {
+            if (json == string) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

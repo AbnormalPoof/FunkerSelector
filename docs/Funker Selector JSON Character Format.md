@@ -6,7 +6,7 @@ The mod queries `data/funkerSelector/` at runtime and parses the JSON files in t
 
 ### Example
 
-``` json
+```json
 {
   "version": "1.0.0",
   "characterID": "bf",
@@ -29,7 +29,7 @@ The mod queries `data/funkerSelector/` at runtime and parses the JSON files in t
 
 Now, you don't have to include ***every*** variable in here. In fact, here are only the essential ones you need:
 
-``` json
+```json
 {
   "version": "1.0.0",
   "characterID": "bf"
@@ -42,21 +42,21 @@ It won't look very pretty in the Character Selection screen, though...
 
 ---
 
-``` json
+```json
 "version": "1.0.0"
 ```
 This is the version of the JSON Format, self explanatory.
 
 ---
 
-``` json
+```json
 "characterID": "bf"
 ```
 The Character ID to use, this is ***needed*** or else the character will not show up in the menu!
 
 ---
 
-``` json
+```json
 "characterType": "bf"
 ```
 The character type, accepted values are: `bf`, `gf`, `dad`, `player`, and `opponent`.
@@ -66,17 +66,17 @@ The character type, accepted values are: `bf`, `gf`, `dad`, `player`, and `oppon
 
 ***(These will be grouped together since they serve basically the same functionality.)***
 
-``` json
+```json
 "gameOverMusicSuffix": ""
 ```
 The music suffix used in the Game Over screen.
 
-``` json
+```json
 "blueBallSuffix": ""
 ```
 The blue ball suffix used in the Game Over screen.
 
-``` json
+```json
 "pauseMusicSuffix": ""
 ```
 The music suffix used in the Pause Menu.
@@ -88,7 +88,7 @@ For example, Boyfriend (Pixel) uses `-pixel`, while Pico (Playable) uses `-pico`
 
 #### Description data
 
-``` json
+```json
 "description": {
   "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand...",
   "size": 35,
@@ -118,7 +118,7 @@ The offsets for the description. These are ***not*** the actual X and Y coordina
 
 This is responsible for character appearance in the menu!
 
-``` json
+```json
 "characterMenu":
 {
   "position": [150, 250],
@@ -149,6 +149,35 @@ Multiplies the scale by 6 and disables anti-aliasing.
 ```
 The animation to use when the character is selected.
 The default animation is "hey"!
+
+#### Character Variation data
+
+`characterVariations` is an array that can contain character variations for specific songs.
+
+```json
+"characterVariations": [
+  {
+    "songID": "senpai",
+    "characterID": "bf-pixel"
+  },
+  {
+    "songID": "eggnog",
+    "characterID": "bf-christmas"
+  }
+]
+```
+
+```json
+"songID": "senpai"
+```
+The song ID we are targeting.
+
+```json
+"characterID": "bf-pixe"
+```
+The character ID we want to use.
+
+Funker Selector will prioritize character variations over the base character ID. If no variations exist, the base character ID you set will be used instead.
 
 ## Conclusion
 That's pretty much it! Adding a JSON Character should be relatively simple.

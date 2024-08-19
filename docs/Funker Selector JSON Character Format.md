@@ -175,7 +175,7 @@ The default animation is "hey"!
 The song ID we are targeting.
 
 ```json
-"characterID": "bf-pixe"
+"characterID": "bf-pixel"
 ```
 The character ID we want to use.
 

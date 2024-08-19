@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2024-08-??
+### Added
+- You can now set character variations for specific songs within the Funker Selector JSON. See the documentation for more information.
+- Added some more error messages for better error handling.
+### Changed
+- Changed an error message or two for better clarity.
+### Fixed
+- Fixed an issue where character IDs with different capitalization than the target character ID were incorrectly recognized as valid, causing the character to not work as intended.
+
 ## [1.2.2] - 2024-08-12
 ### Changed
 - Changed the class names for the Module and Substate to avoid confusion.

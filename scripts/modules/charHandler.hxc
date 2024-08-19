@@ -317,6 +317,20 @@ class CharacterHandler extends Module
 				if (PlayState.instance.currentStage.getBoyfriend() != null) {
 					if (characterIDs.bf != 'default') {
 						var charZIndex:Int = PlayState.instance.currentStage.getBoyfriend().zIndex;
+						var characterData = parseJSONData(id);
+						if (characterData != null && characterData.characterVariations != null) {
+								for (variation in characterData.characterVariations) {
+										if (variation.songID != null && variation.songID == PlayState.instance.currentSong.id) {
+												if (variation.characterID != null) {
+														var newCharData = parseJSONData(variation.characterID);
+														if (newCharData != null) {
+																characterData = newCharData;
+														}
+														id = variation.characterID;
+												}
+										}
+								}
+						}
 						var character = CharacterDataParser.fetchCharacter(id);
 						var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-' + PlayState.instance.currentVariation : '';
 						var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
@@ -327,7 +341,6 @@ class CharacterHandler extends Module
 								character.zIndex = charZIndex;
 								PlayState.instance.currentStage.addCharacter(character, CharacterType.BF);
 								PlayState.instance.currentStage.refresh();
-								var characterData = parseJSONData(id);
 								if (characterData != null) {
 									PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null && characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : PauseSubState.musicSuffix;
 									GameOverSubState.musicSuffix = (characterData.gameOverMusicSuffix != null && characterData.gameOverMusicSuffix != '') ? characterData.gameOverMusicSuffix : GameOverSubState.musicSuffix;
@@ -343,6 +356,16 @@ class CharacterHandler extends Module
 				if (PlayState.instance.currentStage.getGirlfriend() != null) {
 					if (characterIDs.gf != 'default') {
 						var charZIndex:Int = PlayState.instance.currentStage.getGirlfriend().zIndex;
+						var characterData = parseJSONData(id);
+						if (characterData != null && characterData.characterVariations != null) {
+								for (variation in characterData.characterVariations) {
+										if (variation.songID != null && variation.songID == PlayState.instance.currentSong.id) {
+												if (variation.characterID != null) {
+														id = variation.characterID;
+												}
+										}
+								}
+						}
 						var character = CharacterDataParser.fetchCharacter(id);
 						if (character != null) {
 								PlayState.instance.currentStage.getGirlfriend().destroy();
@@ -357,6 +380,16 @@ class CharacterHandler extends Module
 				if (PlayState.instance.currentStage.getDad() != null) {
 					if (characterIDs.dad != 'default') {
 						var charZIndex:Int = PlayState.instance.currentStage.getDad().zIndex;
+						var characterData = parseJSONData(id);
+						if (characterData != null && characterData.characterVariations != null) {
+								for (variation in characterData.characterVariations) {
+										if (variation.songID != null && variation.songID == PlayState.instance.currentSong.id) {
+												if (variation.characterID != null) {
+														id = variation.characterID;
+												}
+										}
+								}
+						}
 						var character = CharacterDataParser.fetchCharacter(id);
 						var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-' + PlayState.instance.currentVariation : '';
 						var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);

@@ -195,12 +195,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
         }
     
         for (legacyChar in charList) {
-			if (Assets.exists(Paths.json('characters/' + legacyChar))) {
+			if (charJSONCheck(legacyChar)) {
                 if (charArrayBF.indexOf(legacyChar) == -1) {
                     charArrayBF.push(legacyChar);
                 }
             } else {
-                PolymodErrorHandler.showAlert('Funker Selector', 'The following legacy character was not loaded:\n' + legacyChar + '\nThis character was not loaded since their character ID does not exist.');
+                PolymodErrorHandler.showAlert('Funker Selector', 'The following legacy character was not loaded:\n' + legacyChar + '\nThis character was not loaded because their character ID does not exist.');
             }
         }
 
@@ -255,10 +255,24 @@ class CharacterSelectSubState extends MusicBeatSubState {
         }
     }
 
+    /**
+     * This is basically just comparing strings.
+     * I wrote this function because OpenFL Assets is case-insensitive
+     * on Windows and macOS. This is for an edge case where the JSON filename
+     * in data/characters/ has different capitalization than the Character ID
+     * specified in the Funker Selector JSON. This was reported in issue [#1](https://github.com/AbnormalPoof/FunkerSelector/issues/1)!
+     * 
+     * This should hopefully solve any and all issues like that one.
+     * 
+     * @param string The character ID we're comparing.
+     * @return Returns a true or false if the file exists.
+     */
     function charJSONCheck(string:String):Bool {
-        for (json in DataAssets.listDataFilesInPath('characters/')) {
-            if (json == string) {
-                return true;
+        if (Assets.exists(Paths.json('characters/' + string))) {
+            for (json in DataAssets.listDataFilesInPath('characters/')) {
+                if (json == string) {
+                    return true;
+                }
             }
         }
         return false;

@@ -150,6 +150,8 @@ Multiplies the scale by 6 and disables anti-aliasing.
 The animation to use when the character is selected.
 The default animation is "hey"!
 
+---
+
 #### Character Variation data
 
 `characterVariations` is an array that can contain character variations for specific songs.

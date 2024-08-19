@@ -260,7 +260,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
      * I wrote this function because OpenFL Assets is case-insensitive
      * on Windows and macOS. This is for an edge case where the JSON filename
      * in data/characters/ has different capitalization than the Character ID
-     * specified in the Funker Selector JSON. This was reported in issue [#1](https://github.com/AbnormalPoof/FunkerSelector/issues/1)!
+     * specified in the Funker Selector JSON. Because OpenFL is case insensitive, it will
+     * always return true, which confuses Funker Selector!
+     * 
+     * This was reported in issue [#1](https://github.com/AbnormalPoof/FunkerSelector/issues/1)!
      * 
      * This should hopefully solve any and all issues like that one.
      * 

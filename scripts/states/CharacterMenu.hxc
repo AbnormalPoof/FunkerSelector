@@ -254,7 +254,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
             default: return [];
         }
     }
-    // this is only for vscode to make the pr
 
     /**
      * This is basically just comparing strings.

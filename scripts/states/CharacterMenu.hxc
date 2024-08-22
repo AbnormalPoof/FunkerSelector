@@ -25,580 +25,631 @@ import Std;
  * This is a substate that acts as a Character Selection screen.
  */
 class CharacterSelectSubState extends MusicBeatSubState {
-    var charName:FlxText;
-    var charDesc:FlxText;
-    var selected:FlxText;
-    var numberThing:FlxText;
+	var charName:FlxText;
+	var charDesc:FlxText;
+	var selected:FlxText;
+	var numberThing:FlxText;
 
-    var leftDifficultyArrow:FunkinSprite;
-    var rightDifficultyArrow:FunkinSprite;
-    var keyBox:FunkinSprite;
+	var leftDifficultyArrow:FunkinSprite;
+	var rightDifficultyArrow:FunkinSprite;
+	var keyBox:FunkinSprite;
 
-    var hotkeyCam:FunkinCamera;
+	var hotkeyCam:FunkinCamera;
 
-    // Arrays for each character.
-    var charArrayBF:Array<String> = ['default'];
-    var charArrayDad:Array<String> = ['default'];
-    var charArrayGF:Array<String> = ['default'];
+	// Arrays for each character.
+	var charArrayBF:Array<String> = ['default'];
+	var charArrayDad:Array<String> = ['default'];
+	var charArrayGF:Array<String> = ['default'];
 
-    // The current array.
-    // If this didn't exist, we'd have to put switch statements for pageIndex everywhere!
-    var curCharArray:Array<String> = [];
+	// The current array.
+	// If this didn't exist, we'd have to put switch statements for pageIndex everywhere!
+	var curCharArray:Array<String> = [];
 
-    var pages:Array<String> = ['bf', 'dad', 'gf'];
-    var charIcon:HealthIcon;
-    var iconGrid:Array<HealthIcon> = [];
+	var pages:Array<String> = ['bf', 'dad', 'gf'];
+	var charIcon:HealthIcon;
+	var iconGrid:Array<HealthIcon> = [];
 
-    var charIndex:Int = 0;
-    var pageIndex:Int = 0;
-    var bopTimer:Float = 0;
+	var charIndex:Int = 0;
+	var pageIndex:Int = 0;
+	var bopTimer:Float = 0;
 
-    var curCharID:String = 'default';
-    var characterSprite:BaseCharacter;
-    var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
+	var curCharID:String = 'default';
+	var characterSprite:BaseCharacter;
+	var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
 
-    public function new() {
-        super();
-    }
+	public function new() {
+		super();
+	}
 
-    public override function create():Void {
-        super.create();
+	public override function create():Void {
+		super.create();
 
-        setupUIStuff();
-        initChars();
-        updateCharInfo();
-    }
+		setupUIStuff();
+		initChars();
+		updateCharInfo();
+	}
 
-    public override function update(elapsed:Float):Void {
-        super.update(elapsed);
-    
-        // I would use Conductor's forceBPM() instead of a timer, but it doesn't really work...
-        bopTimer += elapsed;
-    
-        numberThing.text = "< " + (charIndex + 1) + " / " + curCharArray.length + " >";
-        numberThing.screenCenter();
-        numberThing.y = 60;
-    
-        curCharArray = getCurrentPage();
-        selected.visible = switch (pageIndex) {
-            case 0: curCharID == characterIDs.bf;
-            case 1: curCharID == characterIDs.dad;
-            case 2: curCharID == characterIDs.gf;
-            default: false;
-        }
+	public override function update(elapsed:Float):Void {
+		super.update(elapsed);
 
-        if (bopTimer >= 0.5) {
-            bopDaThing();
-            if (characterSprite != null) characterSprite.dance();
-            bopTimer = 0;
-        }
+		// I would use Conductor's forceBPM() instead of a timer, but it doesn't really work...
+		bopTimer += elapsed;
 
-        if (FlxG.keys.justPressed.D) {
-            hotkeyCam.visible = true;
-        }
-    
-        if (!hotkeyCam.visible) {
-            handleKeyShit();
-        }
+		numberThing.text = "< " + (charIndex + 1) + " / " + curCharArray.length + " >";
+		numberThing.screenCenter();
+		numberThing.y = 60;
 
-        if (FlxG.keys.justPressed.ESCAPE) {
-            if (hotkeyCam.visible) {
-                hotkeyCam.visible = false;
-            } else {
-                FunkinSound.playOnce(Paths.sound('cancelMenu'));
+		curCharArray = getCurrentPage();
+		selected.visible = switch (pageIndex) {
+			case 0: curCharID == characterIDs.bf;
+			case 1: curCharID == characterIDs.dad;
+			case 2: curCharID == characterIDs.gf;
+			default: false;
+		}
 
-                // Scripted characters overwrite the suffixes when
-                // they're shown. So we want to manually reset them!
-                PauseSubState.musicSuffix = '';
-                GameOverSubState.musicSuffix = '';
-                GameOverSubState.blueBallSuffix = '';
-                close();
-            }
-        }
-    }
+		if (bopTimer >= 0.5) {
+			bopDaThing();
+			if (characterSprite != null)
+				characterSprite.dance();
+			bopTimer = 0;
+		}
 
-    /**
-     * Initializing character data for use in the substate itself.
-     * 
-     * -- Legacy Characters --
-     * 
-     * Legacy characters are loaded from charSelectList.txt and
-     * then added to the Boyfriend character list, as they cannot
-     * specify a character type. They will also not have their
-     * sprites displayed, and neither a description. Their health
-     * icon will take place of where their sprites are supposed to be.
-     * 
-     * -- JSON Characters --
-     * 
-     * JSON Characters are loaded from data/funkerSelector/ and
-     * then parsed, JSON Characters can specify Game Over music, Blue Ball, 
-     * and Pause Menu music suffixes.
-     * If no character type is specified in the JSON, it is pushed
-     * to the Boyfriend character list. 
-     * If no character ID exists in the file (or the character ID is invalid), the character will be skipped. 
-     */
-     function initChars():Void {
-        var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
-        var charList = Assets.getText(Paths.txt('charSelectList')).split('\n').filter(function(s:String) return s != '');
-        var data = null;
-        var tempArray = [];
-        
-        for (funker in funkerJSONs) {
-            try { 
-                data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker))); 
-            } catch (e:Dynamic) {
-                trace(':('); // If only catch blocks actually worked in HScript...
-            }
+		if (FlxG.keys.justPressed.D) {
+			hotkeyCam.visible = true;
+		}
 
-            // If the parsing succeeds, then they get pushed to a temporary array.
-            tempArray.push(funker);
+		if (!hotkeyCam.visible) {
+			handleKeyShit();
+		}
 
-            // If the "characterID" field was not found.
-            if (data.characterID == null) {
-                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
-                continue;
-            }
-    
-            // If the Character ID is "default"
-            if (data.characterID == 'default') {
-                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified Character ID (' + data.characterID + ') is set to "default"! Please change it, since it will conflict with the "default" character object in the menu.\nThis character will be skipped to prevent any issues.');
-                continue;
-            }
-    
-            // If the specified Character ID does not exist in data/characters/
-            if (!charJSONCheck(data.characterID)) {
-                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified Character ID (' + data.characterID + ') is invalid. This character will be skipped to prevent any issues.');
-                continue;
-            }
-    
-            // If the specified Character ID does not match the filename of the JSON
-            // TODO: Add a solution to this, so the filename and Character ID can be different
-            if (data.characterID != funker) {
-                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Warning', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified "characterID" (' + data.characterID + ') does not match the file name of the JSON. (' + funker + '.json' + ')\n\nThis character will behave as a Legacy Character if the specified Character ID isn\'t invalid or a duplicate.');
-            }
-    
-            if (data.characterType != null) {
-                switch (data.characterType) {
-                    case 'bf', 'player':
-                        if (charArrayBF.indexOf(data.characterID) == -1) charArrayBF.push(data.characterID);
-                    case 'gf':
-                        if (charArrayGF.indexOf(data.characterID) == -1) charArrayGF.push(data.characterID);
-                    case 'dad', 'opponent':
-                        if (charArrayDad.indexOf(data.characterID) == -1) charArrayDad.push(data.characterID);
-                    default:
-                        PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThe specified Character Type (' + data.characterType + ') is invalid. To prevent any issues, you will find this character under "PLAYABLE CHARACTERS".');
-                        if (charArrayBF.indexOf(data.characterID) == -1) charArrayBF.push(data.characterID);
-                }
-            } else {
-                if (charArrayBF.indexOf(data.characterID) == -1) charArrayBF.push(data.characterID);
-            }
-        }
-    
-        for (legacyChar in charList) {
+		if (FlxG.keys.justPressed.ESCAPE) {
+			if (hotkeyCam.visible) {
+				hotkeyCam.visible = false;
+			} else {
+				FunkinSound.playOnce(Paths.sound('cancelMenu'));
+
+				// Scripted characters overwrite the suffixes when
+				// they're shown. So we want to manually reset them!
+				PauseSubState.musicSuffix = '';
+				GameOverSubState.musicSuffix = '';
+				GameOverSubState.blueBallSuffix = '';
+				close();
+			}
+		}
+	}
+
+	/**
+	 * Initializing character data for use in the substate itself.
+	 * 
+	 * -- Legacy Characters --
+	 * 
+	 * Legacy characters are loaded from charSelectList.txt and
+	 * then added to the Boyfriend character list, as they cannot
+	 * specify a character type. They will also not have their
+	 * sprites displayed, and neither a description. Their health
+	 * icon will take place of where their sprites are supposed to be.
+	 * 
+	 * -- JSON Characters --
+	 * 
+	 * JSON Characters are loaded from data/funkerSelector/ and
+	 * then parsed, JSON Characters can specify Game Over music, Blue Ball, 
+	 * and Pause Menu music suffixes.
+	 * If no character type is specified in the JSON, it is pushed
+	 * to the Boyfriend character list. 
+	 * If no character ID exists in the file (or the character ID is invalid), the character will be skipped. 
+	 */
+	function initChars():Void {
+		var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
+		var charList = Assets.getText(Paths.txt('charSelectList')).split('\n').filter(function(s:String) return s != '');
+		var data = null;
+		var tempArray = [];
+
+		for (funker in funkerJSONs) {
+			try {
+				data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
+			} catch (e:Dynamic) {
+				trace(':('); // If only catch blocks actually worked in HScript...
+			}
+
+			// If the parsing succeeds, then they get pushed to a temporary array.
+			tempArray.push(funker);
+
+			// If the "characterID" field was not found.
+			if (data.characterID == null) {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+					'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
+					'":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
+				continue;
+			}
+
+			// If the Character ID is "default"
+			if (data.characterID == 'default') {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+					'In "'
+					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
+					+ '":\n\nThe specified Character ID ('
+					+ data.characterID
+					+
+					') is set to "default"! Please change it, since it will conflict with the "default" character object in the menu.\nThis character will be skipped to prevent any issues.');
+				continue;
+			}
+
+			// If the specified Character ID does not exist in data/characters/
+			if (!charJSONCheck(data.characterID)) {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+					'In "'
+					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
+					+ '":\n\nThe specified Character ID ('
+					+ data.characterID
+					+ ') is invalid. This character will be skipped to prevent any issues.');
+				continue;
+			}
+
+			// If the specified Character ID does not match the filename of the JSON
+			// TODO: Add a solution to this, so the filename and Character ID can be different
+			if (data.characterID != funker) {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Warning',
+					'In "'
+					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
+					+ '":\n\nThe specified "characterID" ('
+					+ data.characterID
+					+ ') does not match the file name of the JSON. ('
+					+ funker
+					+ '.json'
+					+ ')\n\nThis character will behave as a Legacy Character if the specified Character ID isn\'t invalid or a duplicate.');
+			}
+
+			if (data.characterType != null) {
+				switch (data.characterType) {
+					case 'bf', 'player':
+						if (charArrayBF.indexOf(data.characterID) == -1)
+							charArrayBF.push(data.characterID);
+					case 'gf':
+						if (charArrayGF.indexOf(data.characterID) == -1)
+							charArrayGF.push(data.characterID);
+					case 'dad', 'opponent':
+						if (charArrayDad.indexOf(data.characterID) == -1)
+							charArrayDad.push(data.characterID);
+					default:
+						PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+							'In "'
+							+ Assets.getPath(Paths.json('funkerSelector/' + funker))
+							+ '":\n\nThe specified Character Type ('
+							+ data.characterType
+							+ ') is invalid. To prevent any issues, you will find this character under "PLAYABLE CHARACTERS".');
+						if (charArrayBF.indexOf(data.characterID) == -1)
+							charArrayBF.push(data.characterID);
+				}
+			} else {
+				if (charArrayBF.indexOf(data.characterID) == -1)
+					charArrayBF.push(data.characterID);
+			}
+		}
+
+		for (legacyChar in charList) {
 			if (charJSONCheck(legacyChar)) {
-                if (charArrayBF.indexOf(legacyChar) == -1) {
-                    charArrayBF.push(legacyChar);
-                }
-            } else {
-                PolymodErrorHandler.showAlert('Funker Selector', 'The following legacy character was not loaded:\n' + legacyChar + '\nThis character was not loaded because their character ID does not exist.');
-            }
-        }
+				if (charArrayBF.indexOf(legacyChar) == -1) {
+					charArrayBF.push(legacyChar);
+				}
+			} else {
+				PolymodErrorHandler.showAlert('Funker Selector',
+					'The following legacy character was not loaded:\n' + legacyChar +
+					'\nThis character was not loaded because their character ID does not exist.');
+			}
+		}
 
-        // VERY BASIC ERROR HANDLING!!
-        for (funker in funkerJSONs) {
-            if (tempArray.indexOf(funker) == -1) {
-                PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error', 'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '":\n\nThis character was not loaded due to an issue with their JSON file. Please make sure the syntax is correct.');
-                continue;
-            }
-        }
-    }
+		// VERY BASIC ERROR HANDLING!!
+		for (funker in funkerJSONs) {
+			if (tempArray.indexOf(funker) == -1) {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+					'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
+					'":\n\nThis character was not loaded due to an issue with their JSON file. Please make sure the syntax is correct.');
+				continue;
+			}
+		}
+	}
 
-    /**
-     * Make a super awesome cool icon grid!
-     * @param spacing The spacing of the icons, I guess.
-     * 
-     * This is disabled if "Simplify UI" is turned on in the Options Menu.
-     */
-     function createIconGrid(spacing:Int):Void { 
-        var charIconData = curCharID != 'default' ? CharacterDataParser.parseCharacterData(curCharID) : null;
-        var x = (FlxG.width - Math.ceil(FlxG.width / spacing) * spacing) / 2;
-        var y = (FlxG.height - Math.ceil(FlxG.height / spacing) * spacing) / 2;
-        for (i in 0...Math.ceil(FlxG.height / spacing)) {
-            for (j in 0...Math.ceil(FlxG.width / spacing)) {
-                var icon = new HealthIcon('dad', 0);
-                icon.x = x + j * spacing;
-                icon.y = y + i * spacing;
-                icon.alpha = 0.2;
-    
-                if (charIconData != null) {
-                    icon.configure(charIconData.healthIcon);
-                } else {
-                    icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-                }
-    
-                add(icon);
-                iconGrid.push(icon);
-            }
-        }
-    }
+	/**
+	 * Make a super awesome cool icon grid!
+	 * @param spacing The spacing of the icons, I guess.
+	 * 
+	 * This is disabled if "Simplify UI" is turned on in the Options Menu.
+	 */
+	function createIconGrid(spacing:Int):Void {
+		var charIconData = curCharID != 'default' ? CharacterDataParser.parseCharacterData(curCharID) : null;
+		var x = (FlxG.width - Math.ceil(FlxG.width / spacing) * spacing) / 2;
+		var y = (FlxG.height - Math.ceil(FlxG.height / spacing) * spacing) / 2;
+		for (i in 0...Math.ceil(FlxG.height / spacing)) {
+			for (j in 0...Math.ceil(FlxG.width / spacing)) {
+				var icon = new HealthIcon('dad', 0);
+				icon.x = x + j * spacing;
+				icon.y = y + i * spacing;
+				icon.alpha = 0.2;
 
-    /**
-     * Get the current page index and return the associated array.
-     * @return Returns an array associated with the page index.
-     */
-    function getCurrentPage():Array<String> {
-        switch (pageIndex) {
-            case 0: return charArrayBF;
-            case 1: return charArrayDad;
-            case 2: return charArrayGF;
-            default: return [];
-        }
-    }
+				if (charIconData != null) {
+					icon.configure(charIconData.healthIcon);
+				} else {
+					icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+				}
 
-    /**
-     * This is basically just comparing strings.
-     * I wrote this function because OpenFL Assets is case-insensitive
-     * on Windows and macOS. This is for an edge case where the JSON filename
-     * in data/characters/ has different capitalization than the Character ID
-     * specified in the Funker Selector JSON. Because OpenFL is case insensitive, it will
-     * always return true, which confuses Funker Selector!
-     * 
-     * This was reported in issue [#1](https://github.com/AbnormalPoof/FunkerSelector/issues/1)!
-     * 
-     * This should hopefully solve any and all issues like that one.
-     * 
-     * @param string The character ID we're comparing.
-     * @return Returns a true or false if the file exists.
-     */
-    function charJSONCheck(string:String):Bool {
-        if (Assets.exists(Paths.json('characters/' + string))) {
-            for (json in DataAssets.listDataFilesInPath('characters/')) {
-                if (json == string) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+				add(icon);
+				iconGrid.push(icon);
+			}
+		}
+	}
 
-    /**
-     * Configuring the JSON character, setting up position, scale, flipping, etc.
-     */
-     function configureChar(data:Null):Void {
-        var position = data.position != null ? data.position : [0, 0];
-        var scale = data.scale != null ? (data.isPixel ? data.scale * 6 : data.scale) : (data.isPixel ? 6.0 : 1.0);
-        characterSprite.x += position[0];
-        characterSprite.y += position[1];
-        characterSprite.flipX = data.flipX != null ? data.flipX : false;
-        characterSprite.scale.set(scale, scale);
-        characterSprite.antialiasing = data.isPixel != null ? !data.isPixel : true;
-    }
+	/**
+	 * Get the current page index and return the associated array.
+	 * @return Returns an array associated with the page index.
+	 */
+	function getCurrentPage():Array<String> {
+		switch (pageIndex) {
+			case 0:
+				return charArrayBF;
+			case 1:
+				return charArrayDad;
+			case 2:
+				return charArrayGF;
+			default:
+				return [];
+		}
+	}
 
-    /**
-     * Set up UI stuff like the BG and text.
-     */
-    function setupUIStuff():Void {
+	/**
+	 * This is basically just comparing strings.
+	 * I wrote this function because OpenFL Assets is case-insensitive
+	 * on Windows and macOS. This is for an edge case where the JSON filename
+	 * in data/characters/ has different capitalization than the Character ID
+	 * specified in the Funker Selector JSON. Because OpenFL is case insensitive, it will
+	 * always return true, which confuses Funker Selector!
+	 * 
+	 * This was reported in issue [#1](https://github.com/AbnormalPoof/FunkerSelector/issues/1)!
+	 * 
+	 * This should hopefully solve any and all issues like that one.
+	 * 
+	 * @param string The character ID we're comparing.
+	 * @return Returns a true or false if the file exists.
+	 */
+	function charJSONCheck(string:String):Bool {
+		if (Assets.exists(Paths.json('characters/' + string))) {
+			for (json in DataAssets.listDataFilesInPath('characters/')) {
+				if (json == string) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
-        hotkeyCam = new FunkinCamera('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-        FlxG.cameras.add(hotkeyCam, false);
-        hotkeyCam.bgColor = 0x0;
-        hotkeyCam.visible = false;
+	/**
+	 * Configuring the JSON character, setting up position, scale, flipping, etc.
+	 */
+	function configureChar(data:Null):Void {
+		var position = data.position != null ? data.position : [0, 0];
+		var scale = data.scale != null ? (data.isPixel ? data.scale * 6 : data.scale) : (data.isPixel ? 6.0 : 1.0);
+		characterSprite.x += position[0];
+		characterSprite.y += position[1];
+		characterSprite.flipX = data.flipX != null ? data.flipX : false;
+		characterSprite.scale.set(scale, scale);
+		characterSprite.antialiasing = data.isPixel != null ? !data.isPixel : true;
+	}
 
-        bg = new FunkinSprite(0, 0);
-        bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
-        bg.alpha = 0;
+	/**
+	 * Set up UI stuff like the BG and text.
+	 */
+	function setupUIStuff():Void {
+		hotkeyCam = new FunkinCamera('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+		FlxG.cameras.add(hotkeyCam, false);
+		hotkeyCam.bgColor = 0x0;
+		hotkeyCam.visible = false;
 
-        selectText = new FlxText(170, 400, 0, 'PLACEHOLDER');
-        selectText.setFormat(Paths.font("PhantomMuff.ttf"), 50);
-        selectText.screenCenter(); 
-        selectText.y = 10;
+		bg = new FunkinSprite(0, 0);
+		bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
+		bg.alpha = 0;
 
-        numberThing = new FlxText(170, 400, 0, 'PLACEHOLDER');
-        numberThing.setFormat(Paths.font("PhantomMuff.ttf"), 45, null, 'center');
-        numberThing.color = 0xFFE3E1E1;
-        numberThing.y = 55;
+		selectText = new FlxText(170, 400, 0, 'PLACEHOLDER');
+		selectText.setFormat(Paths.font("PhantomMuff.ttf"), 50);
+		selectText.screenCenter();
+		selectText.y = 10;
 
-        selected = new FlxText(720, 220, 0, '(SELECTED)');
-        selected.setFormat(Paths.font("PhantomMuff.ttf"), 50, null, 'center');
-        selected.color = 0xFF53FF38;
-        selected.visible = false;
+		numberThing = new FlxText(170, 400, 0, 'PLACEHOLDER');
+		numberThing.setFormat(Paths.font("PhantomMuff.ttf"), 45, null, 'center');
+		numberThing.color = 0xFFE3E1E1;
+		numberThing.y = 55;
 
-        hotkeyText = new FlxText(990, 15, 0, 'D - Hotkeys');
-        hotkeyText.setFormat(Paths.font("PhantomMuff.ttf"), 45, null, 'center');
-        hotkeyText.color = 0xFFE3E1E1;
+		selected = new FlxText(720, 220, 0, '(SELECTED)');
+		selected.setFormat(Paths.font("PhantomMuff.ttf"), 50, null, 'center');
+		selected.color = 0xFF53FF38;
+		selected.visible = false;
 
-        leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
-        leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
-        leftDifficultyArrow.animation.addByPrefix('press', 'leftConfirm0');
-        leftDifficultyArrow.animation.play('idle');
-        leftDifficultyArrow.scale.set(1.5, 1.5);
+		hotkeyText = new FlxText(990, 15, 0, 'D - Hotkeys');
+		hotkeyText.setFormat(Paths.font("PhantomMuff.ttf"), 45, null, 'center');
+		hotkeyText.color = 0xFFE3E1E1;
 
-        rightDifficultyArrow = FunkinSprite.createSparrow(1200, leftDifficultyArrow.y, 'storymenu/ui/arrows');
-        rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
-        rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
-        rightDifficultyArrow.animation.play('idle');
-        rightDifficultyArrow.scale.set(1.5, 1.5);
+		leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
+		leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
+		leftDifficultyArrow.animation.addByPrefix('press', 'leftConfirm0');
+		leftDifficultyArrow.animation.play('idle');
+		leftDifficultyArrow.scale.set(1.5, 1.5);
 
-        keyBox = new FunkinSprite(0, 0);
-        keyBox.makeSolidColor(600, 600, 0xFF000000);
-        keyBox.camera = hotkeyCam;
-        keyBox.alpha = 0.8;
-        keyBox.screenCenter();
+		rightDifficultyArrow = FunkinSprite.createSparrow(1200, leftDifficultyArrow.y, 'storymenu/ui/arrows');
+		rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
+		rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
+		rightDifficultyArrow.animation.play('idle');
+		rightDifficultyArrow.scale.set(1.5, 1.5);
 
-        hotkeys = new FlxText(350, 80, 0, 'F - Reset everything to default.\n\nJ - Jump to the currently selected character.\n\nQ - Switch to the previous page.\n\nE - Switch to the next page.\n\nESC - Close this.');
-        hotkeys.setFormat(Paths.font("PhantomMuff.ttf"), 40);
-        hotkeys.camera = hotkeyCam;
-        hotkeys.wordWrap = true;
-        hotkeys.fieldWidth = 600;
+		keyBox = new FunkinSprite(0, 0);
+		keyBox.makeSolidColor(600, 600, 0xFF000000);
+		keyBox.camera = hotkeyCam;
+		keyBox.alpha = 0.8;
+		keyBox.screenCenter();
 
-        charIcon = new HealthIcon('dad', 0);
+		hotkeys = new FlxText(350, 80, 0,
+			'F - Reset everything to default.\n\nJ - Jump to the currently selected character.\n\nQ - Switch to the previous page.\n\nE - Switch to the next page.\n\nESC - Close this.');
+		hotkeys.setFormat(Paths.font("PhantomMuff.ttf"), 40);
+		hotkeys.camera = hotkeyCam;
+		hotkeys.wordWrap = true;
+		hotkeys.fieldWidth = 600;
 
-        charName = new FlxText(170, 400, 0, 'PLACEHOLDER');
-        charName.setFormat(Paths.font("PhantomMuff.ttf"), 70);
+		charIcon = new HealthIcon('dad', 0);
 
-        add(bg);
-        if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
-            createIconGrid(150);
-        }
-        add(leftDifficultyArrow);
-        add(rightDifficultyArrow);
-        add(selectText);
-        add(numberThing);
-        add(selected);
-        add(hotkeyText);
-        add(charIcon);
-        add(charName);
-        add(keyBox);
-        add(hotkeys);
+		charName = new FlxText(170, 400, 0, 'PLACEHOLDER');
+		charName.setFormat(Paths.font("PhantomMuff.ttf"), 70);
 
-        FlxTween.tween(bg, {alpha: 0.5}, 0.5, {ease: FlxEase.quartOut});
-    }
+		add(bg);
+		if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
+			createIconGrid(150);
+		}
+		add(leftDifficultyArrow);
+		add(rightDifficultyArrow);
+		add(selectText);
+		add(numberThing);
+		add(selected);
+		add(hotkeyText);
+		add(charIcon);
+		add(charName);
+		add(keyBox);
+		add(hotkeys);
 
-    /**
-     * Bopping the icons, because why not?
-     */
-     function bopDaThing():Void {
-        if (charIcon != null) {
-            if (charIcon.width > charIcon.height) {
-                charIcon.setGraphicSize(Std.int(charIcon.width + (150 * charIcon.size.x * 0.2)), 0);
-            } else {
-                charIcon.setGraphicSize(0, Std.int(charIcon.height + (150 * charIcon.size.y * 0.2)));
-            }
+		FlxTween.tween(bg, {alpha: 0.5}, 0.5, {ease: FlxEase.quartOut});
+	}
 
-            charIcon.angle += 1;
+	/**
+	 * Bopping the icons, because why not?
+	 */
+	function bopDaThing():Void {
+		if (charIcon != null) {
+			if (charIcon.width > charIcon.height) {
+				charIcon.setGraphicSize(Std.int(charIcon.width + (150 * charIcon.size.x * 0.2)), 0);
+			} else {
+				charIcon.setGraphicSize(0, Std.int(charIcon.height + (150 * charIcon.size.y * 0.2)));
+			}
 
-            charIcon.updateHitbox();
-            charIcon.updatePosition();
-        }
-    }
+			charIcon.angle += 1;
 
-    /**
-     * Reponsible for handling inputs in the menu.
-     */
-    function handleKeyShit():Void {
-        if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT) {
-            FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-            charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + curCharArray.length) % curCharArray.length;
-            curCharID = curCharArray[charIndex];
-            updateCharInfo();
-        }
-    
-        leftDifficultyArrow.animation.play(FlxG.keys.pressed.LEFT ? 'press' : 'idle');
-        rightDifficultyArrow.animation.play(FlxG.keys.pressed.RIGHT ? 'press' : 'idle');
+			charIcon.updateHitbox();
+			charIcon.updatePosition();
+		}
+	}
 
-        if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E) {
-            FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-            pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
-            charIndex = 0;
-            curCharID = curCharArray[charIndex];
-            updateCharInfo();
-        }
-    
-        if (FlxG.keys.justPressed.J) {
-            FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-            switch (pageIndex) {
-                case 0:
-                    charIndex = charArrayBF.indexOf(characterIDs.bf);
-                    curCharID = characterIDs.bf;
-                case 1:
-                    charIndex = charArrayDad.indexOf(characterIDs.dad);
-                    curCharID = characterIDs.dad;
-                case 2:
-                    charIndex = charArrayGF.indexOf(characterIDs.gf);
-                    curCharID = characterIDs.gf;
-            }
-            updateCharInfo();
-        }
+	/**
+	 * Reponsible for handling inputs in the menu.
+	 */
+	function handleKeyShit():Void {
+		if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT) {
+			FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+			charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + curCharArray.length) % curCharArray.length;
+			curCharID = curCharArray[charIndex];
+			updateCharInfo();
+		}
 
-        if (FlxG.keys.justPressed.F) {
-            var shouldPlaySound:Bool;
-            if (characterIDs.bf != 'default') {
-                characterIDs.bf = 'default';
-                shouldPlaySound = true;
-            }
-            if (characterIDs.dad != 'default') {
-                characterIDs.dad = 'default';
-                shouldPlaySound = true;
-            }
-            if (characterIDs.gf != 'default') {
-                characterIDs.gf = 'default';
-                shouldPlaySound = true;
-            }
-            if (shouldPlaySound)
-                FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
-            Save.instance.modOptions.set("FunkerSelector", characterIDs);
-            Save.instance.flush();
-        }
-    
-        if (FlxG.keys.justPressed.ENTER) {
-            switch (pageIndex) {
-                case 0:
-                    if (curCharID != characterIDs.bf) {
-                        characterIDs.bf = curCharID;
-                        confirmThing();
-                    }
-                case 1:
-                    if (curCharID != characterIDs.dad) {
-                        characterIDs.dad = curCharID;
-                        confirmThing();
-                    }
-                case 2:
-                    if (curCharID != characterIDs.gf) {
-                        characterIDs.gf = curCharID;
-                        confirmThing();
-                    }
-            }
-            Save.instance.modOptions.set("FunkerSelector", characterIDs);
-            Save.instance.flush();
-        }
-    }
+		leftDifficultyArrow.animation.play(FlxG.keys.pressed.LEFT ? 'press' : 'idle');
+		rightDifficultyArrow.animation.play(FlxG.keys.pressed.RIGHT ? 'press' : 'idle');
 
-    function confirmThing():Void {
-        FunkinSound.playOnce(Paths.sound('confirmMenu'));  
-        if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
-            characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
-            animation = (characterData != null && characterData.characterMenu != null && characterData.characterMenu.selectedAnim != null) ? characterData.characterMenu.selectedAnim : 'hey';     
-            if (characterSprite != null) {
-                characterSprite.playAnimation(animation, true, true);
-            }
-        }   
-        if (charIcon != null && charIcon.hasAnimation('winning')) {
-            // Play the winning animation if it's available.
-            charIcon.playAnimation('winning');
+		if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E) {
+			FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+			pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
+			charIndex = 0;
+			curCharID = curCharArray[charIndex];
+			updateCharInfo();
+		}
 
-            // I wanted this really cool effect where the icons in the icon grid would also
-            // play the winning animation!
-            // But let's not play that if "Simplify UI" is turned on.
-            if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode && iconGrid != null) {
-                for (i in 0...iconGrid.length) {
-                    var icon = iconGrid[i];
-                    new FlxTimer().start(0.01 * i, function() {
-                        icon.playAnimation('winning');
-                    });
-                }
-                new FlxTimer().start(0.3, function() {
-                    for (i in 0...iconGrid.length) {
-                        var icon = iconGrid[i];
-                        new FlxTimer().start(0.01 * i, function() {
-                            icon.playAnimation('idle');
-                        });
-                    }
-                });
-            }
-        }
-    }
+		if (FlxG.keys.justPressed.J) {
+			FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+			switch (pageIndex) {
+				case 0:
+					charIndex = charArrayBF.indexOf(characterIDs.bf);
+					curCharID = characterIDs.bf;
+				case 1:
+					charIndex = charArrayDad.indexOf(characterIDs.dad);
+					curCharID = characterIDs.dad;
+				case 2:
+					charIndex = charArrayGF.indexOf(characterIDs.gf);
+					curCharID = characterIDs.gf;
+			}
+			updateCharInfo();
+		}
 
-    /**
-     * Update character information.
-     */
-    function updateCharInfo():Void {
-        if (characterSprite != null) remove(characterSprite);
-        if (charDesc != null) remove(charDesc);
+		if (FlxG.keys.justPressed.F) {
+			var shouldPlaySound:Bool;
+			if (characterIDs.bf != 'default') {
+				characterIDs.bf = 'default';
+				shouldPlaySound = true;
+			}
+			if (characterIDs.dad != 'default') {
+				characterIDs.dad = 'default';
+				shouldPlaySound = true;
+			}
+			if (characterIDs.gf != 'default') {
+				characterIDs.gf = 'default';
+				shouldPlaySound = true;
+			}
+			if (shouldPlaySound)
+				FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
+			Save.instance.modOptions.set("FunkerSelector", characterIDs);
+			Save.instance.flush();
+		}
 
-        switch (pageIndex) {
-            case 0:
-                selectText.text = 'PLAYABLE CHARACTERS';
-                selectText.color = 0xFF2DB2D2;
-            case 1:
-                selectText.text = 'OPPONENT CHARACTERS';
-                selectText.color = 0xFFAF66CE;
-            case 2:
-                selectText.text = 'GIRLFRIEND CHARACTERS';
-                selectText.color = 0xFFA7004C;
-        }
-        selectText.screenCenter(); 
-        selectText.y = 10;
+		if (FlxG.keys.justPressed.ENTER) {
+			switch (pageIndex) {
+				case 0:
+					if (curCharID != characterIDs.bf) {
+						characterIDs.bf = curCharID;
+						confirmThing();
+					}
+				case 1:
+					if (curCharID != characterIDs.dad) {
+						characterIDs.dad = curCharID;
+						confirmThing();
+					}
+				case 2:
+					if (curCharID != characterIDs.gf) {
+						characterIDs.gf = curCharID;
+						confirmThing();
+					}
+			}
+			Save.instance.modOptions.set("FunkerSelector", characterIDs);
+			Save.instance.flush();
+		}
+	}
 
-        characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
-        charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
-    
-        // Legacy Characters will not have their sprites loaded.
-        // If "Simplify UI" is enabled in the Options Menu, the sprites will not load as well.
-        if (characterData != null && !Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
-            characterSprite = CharacterDataParser.fetchCharacter(curCharID, true);
-            if (characterSprite != null) {
-                characterSprite.dance();
-                if (characterData.characterMenu != null) {
-                    configureChar(characterData.characterMenu);
-                }
-                add(characterSprite);
-            }
-        }
-    
-        if (curCharID != 'default') {
-            charName.text = charIconData.name;
-            charIcon.configure(charIconData.healthIcon);
-            charIcon.size.set(1, 1);
-            if (characterData != null) {
-                charIcon.setPosition(550, 160);    
-                charDesc = new FlxText(600, 300, 0, characterData.description != null && (characterData.description.text != null || characterData.description.text != '') ? characterData.description.text : "No description was specified in the JSON file.");
-                charDesc.setFormat(Paths.font("PhantomMuff.ttf"), characterData.description != null && characterData.description.size != null ? characterData.description.size : 38, null, 'center');
-                charDesc.x += characterData.description != null && characterData.description.offsets != null ? characterData.description.offsets[0] : 0;
-                charDesc.y += characterData.description != null && characterData.description.offsets != null ? characterData.description.offsets[1] : 0;
-                charDesc.wordWrap = true;
-                charDesc.fieldWidth = 550;
-            } else {
-                charIcon.setPosition(250, 270);
-                charIcon.size.set(2, 2);
-                charDesc = new FlxText(600, 310, 0, if (Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) "This is a legacy character. Thus, it does not have a description." else "This is a legacy character. Thus, it does not have a description, nor does it have its sprites displayed here.");
-                charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 38, null, 'center');
-                charDesc.wordWrap = true;
-                charDesc.fieldWidth = 550;
-            }
-        } else {
-            charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-            charName.text = "DEFAULT";
-            charName.size = 70;
-            charDesc = new FlxText(580, 300, 0, "This is the Default character defined by the song.");
-            charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 50, null, 'center');
-            charDesc.wordWrap = true;
-            charDesc.fieldWidth = 600;
-            charIcon.setPosition(250, 270);
-            charIcon.size.set(2, 2);
-        }
+	function confirmThing():Void {
+		FunkinSound.playOnce(Paths.sound('confirmMenu'));
+		if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
+			characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
+			animation = (characterData != null
+				&& characterData.characterMenu != null
+				&& characterData.characterMenu.selectedAnim != null) ? characterData.characterMenu.selectedAnim : 'hey';
+			if (characterSprite != null) {
+				characterSprite.playAnimation(animation, true, true);
+			}
+		}
+		if (charIcon != null && charIcon.hasAnimation('winning')) {
+			// Play the winning animation if it's available.
+			charIcon.playAnimation('winning');
 
-        // Making it not look so awkward when "Simplify UI" is turned on.
-        if (Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode && charIcon != null) {
-            charIcon.setPosition(250, 270);
-            charIcon.size.set(2, 2);
-        }
+			// I wanted this really cool effect where the icons in the icon grid would also
+			// play the winning animation!
+			// But let's not play that if "Simplify UI" is turned on.
+			if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode && iconGrid != null) {
+				for (i in 0...iconGrid.length) {
+					var icon = iconGrid[i];
+					new FlxTimer().start(0.01 * i, function() {
+						icon.playAnimation('winning');
+					});
+				}
+				new FlxTimer().start(0.3, function() {
+					for (i in 0...iconGrid.length) {
+						var icon = iconGrid[i];
+						new FlxTimer().start(0.01 * i, function() {
+							icon.playAnimation('idle');
+						});
+					}
+				});
+			}
+		}
+	}
 
-        if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
-            for (icon in iconGrid) {
-                if (icon != null) {
-                    if (curCharID != 'default') {
-                        icon.configure(charIconData.healthIcon);
-                    } else {
-                        icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-                    }
-                }
-            }
-        }
+	/**
+	 * Update character information.
+	 */
+	function updateCharInfo():Void {
+		if (characterSprite != null)
+			remove(characterSprite);
+		if (charDesc != null)
+			remove(charDesc);
 
-        charName.screenCenter();
-        charName.y = 110;
-        selected.y = charDesc.y - 60;
+		switch (pageIndex) {
+			case 0:
+				selectText.text = 'PLAYABLE CHARACTERS';
+				selectText.color = 0xFF2DB2D2;
+			case 1:
+				selectText.text = 'OPPONENT CHARACTERS';
+				selectText.color = 0xFFAF66CE;
+			case 2:
+				selectText.text = 'GIRLFRIEND CHARACTERS';
+				selectText.color = 0xFFA7004C;
+		}
+		selectText.screenCenter();
+		selectText.y = 10;
 
-        add(charDesc);
-    }
+		characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
+		charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
+
+		// Legacy Characters will not have their sprites loaded.
+		// If "Simplify UI" is enabled in the Options Menu, the sprites will not load as well.
+		if (characterData != null && !Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
+			characterSprite = CharacterDataParser.fetchCharacter(curCharID, true);
+			if (characterSprite != null) {
+				characterSprite.dance();
+				if (characterData.characterMenu != null) {
+					configureChar(characterData.characterMenu);
+				}
+				add(characterSprite);
+			}
+		}
+
+		if (curCharID != 'default') {
+			charName.text = charIconData.name;
+			charIcon.configure(charIconData.healthIcon);
+			charIcon.size.set(1, 1);
+			if (characterData != null) {
+				charIcon.setPosition(550, 160);
+				charDesc = new FlxText(600, 300, 0, characterData.description != null && (characterData.description.text != null
+					|| characterData.description.text != '') ? characterData.description.text : "No description was specified in the JSON file.");
+				charDesc.setFormat(Paths.font("PhantomMuff.ttf"), characterData.description != null && characterData.description.size != null ? characterData.description.size : 38,
+					null, 'center');
+				charDesc.x += characterData.description != null
+					&& characterData.description.offsets != null ? characterData.description.offsets[0] : 0;
+				charDesc.y += characterData.description != null
+					&& characterData.description.offsets != null ? characterData.description.offsets[1] : 0;
+				charDesc.wordWrap = true;
+				charDesc.fieldWidth = 550;
+			} else {
+				charIcon.setPosition(250, 270);
+				charIcon.size.set(2, 2);
+				charDesc = new FlxText(600, 310, 0,
+					if (Save.instance.modOptions.get("FunkerSelectorSettings")
+						.potatoMode) "This is a legacy character. Thus, it does not have a description." else
+						"This is a legacy character. Thus, it does not have a description, nor does it have its sprites displayed here.");
+				charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 38, null, 'center');
+				charDesc.wordWrap = true;
+				charDesc.fieldWidth = 550;
+			}
+		} else {
+			charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+			charName.text = "DEFAULT";
+			charName.size = 70;
+			charDesc = new FlxText(580, 300, 0, "This is the Default character defined by the song.");
+			charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 50, null, 'center');
+			charDesc.wordWrap = true;
+			charDesc.fieldWidth = 600;
+			charIcon.setPosition(250, 270);
+			charIcon.size.set(2, 2);
+		}
+
+		// Making it not look so awkward when "Simplify UI" is turned on.
+		if (Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode && charIcon != null) {
+			charIcon.setPosition(250, 270);
+			charIcon.size.set(2, 2);
+		}
+
+		if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
+			for (icon in iconGrid) {
+				if (icon != null) {
+					if (curCharID != 'default') {
+						icon.configure(charIconData.healthIcon);
+					} else {
+						icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+					}
+				}
+			}
+		}
+
+		charName.screenCenter();
+		charName.y = 110;
+		selected.y = charDesc.y - 60;
+
+		add(charDesc);
+	}
 }

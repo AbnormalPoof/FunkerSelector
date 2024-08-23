@@ -361,7 +361,7 @@ class CharacterHandler extends Module {
 							}
 						} else {
 								PolymodErrorHandler.showAlert('Funker Selector Error',
-									'Something went wrong replacing the character, how the fuck???');
+									'Something went wrong replacing the Boyfriend, how the fuck???');
 						}
 						if (Assets.exists(voiceFile)) {
 							voiceList[0] = voiceFile;
@@ -391,7 +391,7 @@ class CharacterHandler extends Module {
 							PlayState.instance.currentStage.refresh();
 						} else {
 								PolymodErrorHandler.showAlert('Funker Selector Error',
-									'Something went wrong replacing the character, how the fuck???');
+									'Something went wrong replacing the Girlfriend, how the fuck???');
 						}
 					}
 				}
@@ -423,7 +423,7 @@ class CharacterHandler extends Module {
 							PlayState.instance.currentStage.refresh();
 						} else {
 								PolymodErrorHandler.showAlert('Funker Selector Error',
-									'Something went wrong replacing the character, how the fuck???');
+									'Something went wrong replacing the Opponent, how the fuck???');
 						}
 						if (Assets.exists(voiceFile)) {
 							voiceList[1] = voiceFile;

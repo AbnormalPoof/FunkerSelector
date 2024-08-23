@@ -359,6 +359,9 @@ class CharacterHandler extends Module {
 								GameOverSubState.blueBallSuffix = (characterData.blueBallSuffix != null
 									&& characterData.blueBallSuffix != '') ? characterData.blueBallSuffix : GameOverSubState.blueBallSuffix;
 							}
+						} else {
+								PolymodErrorHandler.showAlert('Funker Selector Error',
+									'Something went wrong replacing the character, how the fuck???');
 						}
 						if (Assets.exists(voiceFile)) {
 							voiceList[0] = voiceFile;
@@ -386,6 +389,9 @@ class CharacterHandler extends Module {
 							character.zIndex = charZIndex;
 							PlayState.instance.currentStage.addCharacter(character, CharacterType.GF);
 							PlayState.instance.currentStage.refresh();
+						} else {
+								PolymodErrorHandler.showAlert('Funker Selector Error',
+									'Something went wrong replacing the character, how the fuck???');
 						}
 					}
 				}
@@ -415,6 +421,9 @@ class CharacterHandler extends Module {
 							character.zIndex = charZIndex;
 							PlayState.instance.currentStage.addCharacter(character, CharacterType.DAD);
 							PlayState.instance.currentStage.refresh();
+						} else {
+								PolymodErrorHandler.showAlert('Funker Selector Error',
+									'Something went wrong replacing the character, how the fuck???');
 						}
 						if (Assets.exists(voiceFile)) {
 							voiceList[1] = voiceFile;

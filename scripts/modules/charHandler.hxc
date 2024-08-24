@@ -345,7 +345,7 @@ class CharacterHandler extends Module {
 							&& PlayState.instance.currentVariation != 'default') ? '-'
 							+ PlayState.instance.currentVariation : '';
 						var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
-						if (character == null) {
+						if (character != null) {
 							PlayState.instance.currentStage.getBoyfriend().destroy();
 							character.set_characterType(CharacterType.BF);
 							character.initHealthIcon(false);

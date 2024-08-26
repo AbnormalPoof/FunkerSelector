@@ -327,6 +327,7 @@ class CharacterHandler extends Module {
 					if (characterIDs.bf != 'default') {
 						var charZIndex:Int = PlayState.instance.currentStage.getBoyfriend().zIndex;
 						var characterData = parseJSONData(id);
+						// TODO: Add visual indicator for variations, allow multiple song IDs as an array.
 						if (characterData != null && characterData.characterVariations != null) {
 							for (variation in characterData.characterVariations) {
 								if (variation.songID != null && variation.songID == PlayState.instance.currentSong.id) {

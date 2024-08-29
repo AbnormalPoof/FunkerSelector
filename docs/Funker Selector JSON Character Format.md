@@ -32,7 +32,8 @@ Now, you don't have to include ***every*** variable in here. In fact, here are o
 ```json
 {
   "version": "1.0.0",
-  "characterID": "bf"
+  "characterID": "bf",
+  "characterType": "bf"
 }
 ```
 

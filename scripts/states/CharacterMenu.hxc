@@ -76,8 +76,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		bopTimer += elapsed;
 
 		numberThing.text = "< " + (charIndex + 1) + " / " + curCharArray.length + " >";
-		numberThing.screenCenter();
-		numberThing.y = 60;
+		numberThing.screenCenter(0x01);
 
 		curCharArray = getCurrentPage();
 		selected.visible = switch (pageIndex) {
@@ -349,13 +348,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		selectText = new FlxText(170, 400, 0, 'PLACEHOLDER');
 		selectText.setFormat(Paths.font("PhantomMuff.ttf"), 50);
-		selectText.screenCenter();
+		selectText.screenCenter(0x01);
 		selectText.y = 10;
 
 		numberThing = new FlxText(170, 400, 0, 'PLACEHOLDER');
 		numberThing.setFormat(Paths.font("PhantomMuff.ttf"), 45, null, 'center');
 		numberThing.color = 0xFFE3E1E1;
-		numberThing.y = 55;
+		numberThing.y = 60;
 
 		selected = new FlxText(720, 220, 0, '(SELECTED)');
 		selected.setFormat(Paths.font("PhantomMuff.ttf"), 50, null, 'center');
@@ -395,6 +394,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		charName = new FlxText(170, 400, 0, 'PLACEHOLDER');
 		charName.setFormat(Paths.font("PhantomMuff.ttf"), 70);
+		charName.y = 110;
 
 		add(bg);
 		if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
@@ -570,8 +570,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				selectText.text = 'GIRLFRIEND CHARACTERS';
 				selectText.color = 0xFFA7004C;
 		}
-		selectText.screenCenter();
-		selectText.y = 10;
+		selectText.screenCenter(0x01);
 
 		characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
 		charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
@@ -646,8 +645,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 		}
 
-		charName.screenCenter();
-		charName.y = 110;
+		charName.screenCenter(0x01);
 		selected.y = charDesc.y - 60;
 
 		add(charDesc);

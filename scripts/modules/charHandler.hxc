@@ -326,6 +326,86 @@ class CharacterHandler extends Module {
 	 * TOOD: Can we rewrite this?
 	 */
 	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
+		var characterData = parseJSONData(id);
+		var oldChar = null;
+		var charType = null;
+
+		if (id == 'default') return;
+		switch (type) {
+			case 'bf':
+				oldChar = PlayState.instance.currentStage.getBoyfriend();
+				charType = CharacterType.BF;
+			case 'gf':
+				oldChar = PlayState.instance.currentStage.getGirlfriend();
+				charType = CharacterType.GF;
+			case 'dad':
+				oldChar = PlayState.instance.currentStage.getDad();
+				charType = CharacterType.DAD;
+			case 'default':
+				trace('How did you get here?');
+				return;
+		}
+
+		// Return if the target character does not exist.
+		if (oldChar == null) return;
+
+		// TODO: Add visual indicator for variations, allow multiple song IDs as an array.
+		if (characterData != null && characterData.characterVariations != null) {
+			for (variation in characterData.characterVariations) {
+				if (variation.songID != null && variation.songID == PlayState.instance.currentSong.id) {
+					if (variation.characterID != null) {
+						var newCharData = parseJSONData(variation.characterID);
+						if (newCharData != null) {
+							characterData = newCharData;
+						}
+						id = variation.characterID;
+					}
+				}
+			}
+		}
+		var charZIndex:Int = oldChar.zIndex;
+		var character = CharacterDataParser.fetchCharacter(id);
+		var suffix:String = (PlayState.instance.currentVariation != null
+			&& PlayState.instance.currentVariation != 'default') ? '-'
+			+ PlayState.instance.currentVariation : '';
+		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
+
+		if (character != null) {
+			oldChar.destroy();
+			character.set_characterType(charType);
+			if (type != 'dad') {
+				character.initHealthIcon(false);
+			} else if (type != 'gf') {
+ 				character.initHealthIcon(true);
+			}
+			character.zIndex = charZIndex;
+			PlayState.instance.currentStage.addCharacter(character, charType);
+			if (characterData != null && type == 'bf') {
+				PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null
+					&& characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : PauseSubState.musicSuffix;
+				GameOverSubState.musicSuffix = (characterData.gameOverMusicSuffix != null
+					&& characterData.gameOverMusicSuffix != '') ? characterData.gameOverMusicSuffix : GameOverSubState.musicSuffix;
+				GameOverSubState.blueBallSuffix = (characterData.blueBallSuffix != null
+					&& characterData.blueBallSuffix != '') ? characterData.blueBallSuffix : GameOverSubState.blueBallSuffix;
+			}
+		} else {
+				PolymodErrorHandler.showAlert('Funker Selector Error',
+					'Something went wrong replacing a character, how the fuck???');
+		}
+		switch (type) {
+			case 'bf':
+				if (Assets.exists(voiceFile)) {
+					voiceList[0] = voiceFile;
+				}
+			case 'dad':
+				if (Assets.exists(voiceFile)) {
+					voiceList[1] = voiceFile;
+				}
+		}
+	}
+}
+
+/* 	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
 		switch (type) {
 			case 'bf':
 				if (PlayState.instance.currentStage.getBoyfriend() != null) {
@@ -437,7 +517,7 @@ class CharacterHandler extends Module {
 			default:
 				trace('How did you get here?');
 		}
-	}
+	} */
 
 	/**
 	 * Modified version of buildVocals(); to handle vocal replacement.

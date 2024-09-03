@@ -244,17 +244,20 @@ class CharacterHandler extends Module {
 				trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
 				continue;
 			}
-			if (charData.renderType == 'multisparrow') {
-				for (anim in charData.animations) {
-					if (anim.assetPath != null) {
-						cacheSprite(Paths.image(anim.assetPath));
-					}
-				}
-			} else if (charData.renderType == 'animateatlas') {
-				cacheSprite(Paths.image(charData.assetPath + '/spritemap1'));
-			} else {
-				cacheSprite(Paths.image(charData.assetPath));
-			}
+      switch (charData.renderType) {
+        case 'multisparrow':
+          for (anim in charData.animations) {
+            if (anim.assetPath != null) {
+              cacheSprite(Paths.image(anim.assetPath));
+            }
+          }
+        case 'animateatlas':
+          cacheSprite(Paths.image(charData.assetPath + '/spritemap1'));
+        case 'sparrow':
+          cacheSprite(Paths.image(charData.assetPath));
+        default:
+          cacheSprite(Paths.image(charData.assetPath));
+      }
 		}
 	}
 

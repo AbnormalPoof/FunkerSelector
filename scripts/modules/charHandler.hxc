@@ -250,6 +250,8 @@ class CharacterHandler extends Module {
 						cacheSprite(Paths.image(anim.assetPath));
 					}
 				}
+			} else if (charData.renderType == 'animateatlas') {
+				cacheSprite(Paths.image(charData.assetPath + '/spritemap1'));
 			} else {
 				cacheSprite(Paths.image(charData.assetPath));
 			}

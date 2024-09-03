@@ -349,6 +349,9 @@ class CharacterHandler extends Module {
 		// Return if the target character does not exist.
 		if (oldChar == null) return;
 
+		// Return if, for some reason, the character type is null.
+		if (charType == null) return;
+
 		// TODO: Add visual indicator for variations, allow multiple song IDs as an array.
 		if (characterData != null && characterData.characterVariations != null) {
 			for (variation in characterData.characterVariations) {
@@ -373,10 +376,11 @@ class CharacterHandler extends Module {
 		if (character != null) {
 			oldChar.destroy();
 			character.set_characterType(charType);
-			if (type != 'dad') {
-				character.initHealthIcon(false);
-			} else if (type != 'gf') {
- 				character.initHealthIcon(true);
+			switch (type) {
+				case 'bf':
+					character.initHealthIcon(false);
+				case 'dad':
+					character.initHealthIcon(true);
 			}
 			character.zIndex = charZIndex;
 			PlayState.instance.currentStage.addCharacter(character, charType);
@@ -401,9 +405,9 @@ class CharacterHandler extends Module {
 				if (Assets.exists(voiceFile)) {
 					voiceList[1] = voiceFile;
 				}
+			}
 		}
 	}
-}
 
 /* 	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
 		switch (type) {

@@ -52,7 +52,7 @@ class CharacterHandler extends Module {
 	 * currentCachedTextures gets cleared everytime we load into a song.
 	 * It'd be annoying to have to re-cache everything everytime we exit!
 	 */
-	var cachedJSONSparrows:StringMap = new StringMap();
+	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
 
 	function new() {
 		super("CharacterHandler");

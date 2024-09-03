@@ -174,6 +174,7 @@ The default animation is "hey"!
 "songID": ["senpai"]
 ```
 The song ID we are targeting. You can have multiple song IDs in here.
+This has to be an array even if it's just one song ID.
 
 ```json
 "characterID": "bf-pixel"

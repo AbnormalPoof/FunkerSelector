@@ -405,7 +405,6 @@ class CharacterHandler extends Module {
 				if (Assets.exists(voiceFile)) {
 					voiceList[1] = voiceFile;
 				}
-			}
 		}
 	}
 

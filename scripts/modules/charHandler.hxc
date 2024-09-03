@@ -322,6 +322,8 @@ class CharacterHandler extends Module {
 	 *
 	 * @param id The character ID to change into.
 	 * @param type The character type we're replacing.
+	 * 
+	 * TOOD: Can we rewrite this?
 	 */
 	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
 		switch (type) {

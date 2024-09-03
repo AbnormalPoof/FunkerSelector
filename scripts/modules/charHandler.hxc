@@ -305,6 +305,7 @@ class CharacterHandler extends Module {
 		replaceChar(characterIDs.bf, 'bf');
 		replaceChar(characterIDs.gf, 'gf');
 		replaceChar(characterIDs.dad, 'dad');
+		PlayState.instance.currentStage.refresh();
 
 		// If at least ONE of them was changed (means a vocal file was found), replace the vocals.
 		if (voiceList[0] != null || voiceList[1] != null) {
@@ -354,7 +355,6 @@ class CharacterHandler extends Module {
 							character.initHealthIcon(false);
 							character.zIndex = charZIndex;
 							PlayState.instance.currentStage.addCharacter(character, CharacterType.BF);
-							PlayState.instance.currentStage.refresh();
 							if (characterData != null) {
 								PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null
 									&& characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : PauseSubState.musicSuffix;
@@ -392,7 +392,6 @@ class CharacterHandler extends Module {
 							character.set_characterType(CharacterType.GF);
 							character.zIndex = charZIndex;
 							PlayState.instance.currentStage.addCharacter(character, CharacterType.GF);
-							PlayState.instance.currentStage.refresh();
 						} else {
 								PolymodErrorHandler.showAlert('Funker Selector Error',
 									'Something went wrong replacing the Girlfriend, how the fuck???');
@@ -424,7 +423,6 @@ class CharacterHandler extends Module {
 							character.initHealthIcon(true);
 							character.zIndex = charZIndex;
 							PlayState.instance.currentStage.addCharacter(character, CharacterType.DAD);
-							PlayState.instance.currentStage.refresh();
 						} else {
 								PolymodErrorHandler.showAlert('Funker Selector Error',
 									'Something went wrong replacing the Opponent, how the fuck???');

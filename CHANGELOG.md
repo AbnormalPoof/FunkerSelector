@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2024-09-??
+### Added
+- You can now have multiple song IDs for Character Variations as an Array. This does mean current characters with variations will break, so please update your JSON files!
+### Changed
+- Rewritten all the code for Character replacement, the code should look a lot cleaner now.
+
 ## [1.3.0] - 2024-08-19
 ### Added
 - You can now set character variations for specific songs within the Funker Selector JSON. See the documentation for more information.

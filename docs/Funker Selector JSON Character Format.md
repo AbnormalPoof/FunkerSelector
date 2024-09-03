@@ -160,20 +160,20 @@ The default animation is "hey"!
 ```json
 "characterVariations": [
   {
-    "songID": "senpai",
+    "songID": ["senpai"],
     "characterID": "bf-pixel"
   },
   {
-    "songID": "eggnog",
+    "songID": ["eggnog"],
     "characterID": "bf-christmas"
   }
 ]
 ```
 
 ```json
-"songID": "senpai"
+"songID": ["senpai"]
 ```
-The song ID we are targeting.
+The song ID we are targeting. You can have multiple song IDs in here.
 
 ```json
 "characterID": "bf-pixel"

@@ -402,7 +402,7 @@ class CharacterHandler extends Module {
 					&& characterData.blueBallSuffix != '') ? characterData.blueBallSuffix : GameOverSubState.blueBallSuffix;
 			}
 		} else {
-			PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing a character, how the fuck???');
+			PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + type + ' character. How the fuck???');
 		}
 		switch (type) {
 			case 'bf':

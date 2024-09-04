@@ -360,35 +360,36 @@ class CharacterHandler extends Module {
 			return;
 
 		// TODO: Add visual indicator for variations.
-    if (characterData != null && characterData.characterVariations != null) {
-      for (variation in characterData.characterVariations) {
-        if (variation.songID == null || variation.characterID == null) {
-          continue;
-        }
+		if (characterData != null && characterData.characterVariations != null) {
+			for (variation in characterData.characterVariations) {
+				if (variation.songID == null || variation.characterID == null) {
+					continue;
+				}
 
-        var songMatch = false;
-        
-        if (Std.isOfType(variation.songID, Array)) {
-          songMatch = (variation.songID.indexOf(PlayState.instance.currentSong.id) != -1);
-        } else if (Std.isOfType(variation.songID, String)) {
-          songMatch = (variation.songID == PlayState.instance.currentSong.id);
-        }
+				var songMatch = false;
 
-        if (songMatch) {
-          var newCharData = parseJSONData(variation.characterID);
-          if (newCharData != null) {
-            characterData = newCharData;
-          }
+				if (Std.isOfType(variation.songID, Array)) {
+					songMatch = (variation.songID.indexOf(PlayState.instance.currentSong.id) != -1);
+				} else if (Std.isOfType(variation.songID, String)) {
+					songMatch = (variation.songID == PlayState.instance.currentSong.id);
+				}
 
-          if (Assets.exists(Paths.json('characters/' + variation.characterID))) {
-            id = variation.characterID;
-          } else {
-            PolymodErrorHandler.showAlert('Funker Selector Error', 'The character variation "' + variation.characterID + '" does not exist. The base character ID will be used instead.');
-          }
-          break;
-        }
-      }
-    }
+				if (songMatch) {
+					var newCharData = parseJSONData(variation.characterID);
+					if (newCharData != null) {
+						characterData = newCharData;
+					}
+
+					if (Assets.exists(Paths.json('characters/' + variation.characterID))) {
+						id = variation.characterID;
+					} else {
+						PolymodErrorHandler.showAlert('Funker Selector Error',
+							'The character variation "' + variation.characterID + '" does not exist. The base character ID will be used instead.');
+					}
+					break;
+				}
+			}
+		}
 		var charZIndex:Int = oldChar.zIndex;
 		var character = CharacterDataParser.fetchCharacter(id);
 		var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-'

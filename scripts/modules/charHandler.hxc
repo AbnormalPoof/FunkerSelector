@@ -360,34 +360,34 @@ class CharacterHandler extends Module {
 			return;
 
 		// TODO: Add visual indicator for variations.
-    if (characterData != null && characterData.characterVariations != null) {
-      for (variation in characterData.characterVariations) {
-        if (variation.songID != null) {
-          if (Std.isOfType(variation.songID, Array)) {
-            for (song in variation.songID) {
-              if (song == PlayState.instance.currentSong.id) {
-                if (variation.characterID != null) {
-                  var newCharData = parseJSONData(variation.characterID);
-                  if (newCharData != null) {
-                    characterData = newCharData;
-                  }
-                  id = variation.characterID;
-                }
-                break;
-              }
-            }
-          } else if (Std.isOfType(variation.songID, String)) {
-            if (variation.songID == PlayState.instance.currentSong.id && variation.characterID != null) {
-              var newCharData = parseJSONData(variation.characterID);
-              if (newCharData != null) {
-                characterData = newCharData;
-              }
-              id = variation.characterID;
-            }
-          }
-        }
-      }
-    }
+		if (characterData != null && characterData.characterVariations != null) {
+			for (variation in characterData.characterVariations) {
+				if (variation.songID != null) {
+					if (Std.isOfType(variation.songID, Array)) {
+						for (song in variation.songID) {
+							if (song == PlayState.instance.currentSong.id) {
+								if (variation.characterID != null) {
+									var newCharData = parseJSONData(variation.characterID);
+									if (newCharData != null) {
+										characterData = newCharData;
+									}
+									id = variation.characterID;
+								}
+								break;
+							}
+						}
+					} else if (Std.isOfType(variation.songID, String)) {
+						if (variation.songID == PlayState.instance.currentSong.id && variation.characterID != null) {
+							var newCharData = parseJSONData(variation.characterID);
+							if (newCharData != null) {
+								characterData = newCharData;
+							}
+							id = variation.characterID;
+						}
+					}
+				}
+			}
+		}
 		var charZIndex:Int = oldChar.zIndex;
 		var character = CharacterDataParser.fetchCharacter(id);
 		var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-'

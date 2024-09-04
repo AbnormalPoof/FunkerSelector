@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased] - 2024-09-??
 ### Added
-- You can now have multiple song IDs for Character Variations as an Array. This does mean current characters with variations will break, so please update your JSON files!
+- You can now have multiple song IDs for Character Variations as an Array.
 ### Changed
 - Rewritten all the code for Character replacement, the code should look a lot cleaner now.
 

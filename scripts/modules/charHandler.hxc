@@ -242,7 +242,7 @@ class CharacterHandler extends Module {
 					+ '! The "characterID" field does not exist.');
 				continue;
 			}
-			if (!Assets.exists(Paths.json('characters/' + data.characterID))) {
+			if (!charJSONCheck(data.characterID)) {
 				trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
 				continue;
 			}
@@ -380,7 +380,7 @@ class CharacterHandler extends Module {
 						characterData = newCharData;
 					}
 
-					if (Assets.exists(Paths.json('characters/' + variation.characterID))) {
+					if (charJSONCheck(variation.characterID)) {
 						id = variation.characterID;
 					} else {
 						PolymodErrorHandler.showAlert('Funker Selector Error',
@@ -428,6 +428,20 @@ class CharacterHandler extends Module {
 					voiceList[1] = voiceFile;
 				}
 		}
+	}
+
+	/**
+	 * Copy-pasted from CharacterMenu.
+	 */
+	function charJSONCheck(string:String):Bool {
+		if (Assets.exists(Paths.json('characters/' + string))) {
+			for (json in DataAssets.listDataFilesInPath('characters/')) {
+				if (json == string) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

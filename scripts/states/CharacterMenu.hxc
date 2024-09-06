@@ -609,8 +609,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				charIcon.setPosition(250, 270);
 				charIcon.size.set(2, 2);
 				charDesc = new FlxText(600, 310, 0,
-					if (Save.instance.modOptions.get("FunkerSelectorSettings")
-						.potatoMode) "This is a legacy character. Thus, it does not have a description." else
+					if (simplifyUI) "This is a legacy character. Thus, it does not have a description." else
 						"This is a legacy character. Thus, it does not have a description, nor does it have its sprites displayed here.");
 				charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 38, null, 'center');
 				charDesc.wordWrap = true;

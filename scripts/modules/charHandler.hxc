@@ -398,7 +398,7 @@ class CharacterHandler extends Module {
 
 		if (character != null) {
 			oldChar.destroy();
-			character.set_characterType(charType);
+			character.characterType = charType;
 			switch (type) {
 				case 'bf':
 					character.initHealthIcon(false);

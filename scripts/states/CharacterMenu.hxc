@@ -56,6 +56,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var curCharID:String = 'default';
 	var characterSprite:BaseCharacter;
 	var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
+	var simplifyUI:Bool = Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode;
 
 	public function new() {
 		super();
@@ -397,7 +398,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		charName.y = 110;
 
 		add(bg);
-		if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
+		if (!simplifyUI) {
 			createIconGrid(150);
 		}
 		add(leftDifficultyArrow);
@@ -515,7 +516,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 	function confirmThing():Void {
 		FunkinSound.playOnce(Paths.sound('confirmMenu'));
-		if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
+		if (!simplifyUI) {
 			characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
 			animation = (characterData != null
 				&& characterData.characterMenu != null
@@ -531,7 +532,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			// I wanted this really cool effect where the icons in the icon grid would also
 			// play the winning animation!
 			// But let's not play that if "Simplify UI" is turned on.
-			if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode && iconGrid != null) {
+			if (!simplifyUI && iconGrid != null) {
 				for (i in 0...iconGrid.length) {
 					var icon = iconGrid[i];
 					new FlxTimer().start(0.01 * i, function() {
@@ -577,7 +578,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		// Legacy Characters will not have their sprites loaded.
 		// If "Simplify UI" is enabled in the Options Menu, the sprites will not load as well.
-		if (characterData != null && !Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
+		if (characterData != null && !simplifyUI) {
 			characterSprite = CharacterDataParser.fetchCharacter(curCharID, true);
 			if (characterSprite != null) {
 				characterSprite.dance();
@@ -628,12 +629,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		// Making it not look so awkward when "Simplify UI" is turned on.
-		if (Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode && charIcon != null) {
+		if (simplifyUI && charIcon != null) {
 			charIcon.setPosition(250, 270);
 			charIcon.size.set(2, 2);
 		}
 
-		if (!Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode) {
+		if (!simplifyUI) {
 			for (icon in iconGrid) {
 				if (icon != null) {
 					if (curCharID != 'default') {

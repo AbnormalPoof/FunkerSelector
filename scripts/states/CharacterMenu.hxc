@@ -94,27 +94,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			bopTimer = 0;
 		}
 
-		if (FlxG.keys.justPressed.D) {
-			hotkeyCam.visible = true;
-		}
-
 		if (!hotkeyCam.visible) {
 			handleKeyShit();
-		}
-
-		if (FlxG.keys.justPressed.ESCAPE) {
-			if (hotkeyCam.visible) {
-				hotkeyCam.visible = false;
-			} else {
-				FunkinSound.playOnce(Paths.sound('cancelMenu'));
-
-				// Scripted characters overwrite the suffixes when
-				// they're shown. So we want to manually reset them!
-				PauseSubState.musicSuffix = '';
-				GameOverSubState.musicSuffix = '';
-				GameOverSubState.blueBallSuffix = '';
-				close();
-			}
 		}
 	}
 
@@ -123,7 +104,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * 
 	 * -- Legacy Characters --
 	 * 
-	 * Legacy characters are loaded from charSelectList.txt and
+	 * Legacy characters are loaded from `charSelectList.txt` and
 	 * then added to the Boyfriend character list, as they cannot
 	 * specify a character type. They will also not have their
 	 * sprites displayed, and neither a description. Their health
@@ -131,7 +112,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * 
 	 * -- JSON Characters --
 	 * 
-	 * JSON Characters are loaded from data/funkerSelector/ and
+	 * JSON Characters are loaded from `data/funkerSelector/` and
 	 * then parsed, JSON Characters can specify Game Over music, Blue Ball, 
 	 * and Pause Menu music suffixes.
 	 * If no character type is specified in the JSON, it is pushed
@@ -489,6 +470,25 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
 			Save.instance.modOptions.set("FunkerSelector", characterIDs);
 			Save.instance.flush();
+		}
+
+		if (FlxG.keys.justPressed.ESCAPE) {
+			if (hotkeyCam.visible) {
+				hotkeyCam.visible = false;
+			} else {
+				FunkinSound.playOnce(Paths.sound('cancelMenu'));
+
+				// Scripted characters overwrite the suffixes when
+				// they're shown. So we want to manually reset them!
+				PauseSubState.musicSuffix = '';
+				GameOverSubState.musicSuffix = '';
+				GameOverSubState.blueBallSuffix = '';
+				close();
+			}
+		}
+
+		if (FlxG.keys.justPressed.D) {
+			hotkeyCam.visible = true;
 		}
 
 		if (FlxG.keys.justPressed.ENTER) {

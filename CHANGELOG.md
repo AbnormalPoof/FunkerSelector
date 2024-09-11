@@ -3,11 +3,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2024-09-??
+## [1.4.0] - 2024-09-12
 ### Added
 - You can now have multiple song IDs for Character Variations as an Array.
 ### Changed
 - Rewritten all the code for Character replacement, the code should look a lot cleaner now.
+- Reformatted all of the code for better readability.
+- Optimized certain parts of CharacterMenu.
 
 ## [1.3.0] - 2024-08-19
 ### Added

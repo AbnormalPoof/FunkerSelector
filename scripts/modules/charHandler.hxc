@@ -371,10 +371,7 @@ class CharacterHandler extends Module {
 				}
 
 				if (songMatch) {
-					var newCharData = parseJSONData(variation.characterID);
-					if (newCharData != null) {
-						characterData = newCharData;
-					}
+					characterData = parseJSONData(variation.characterID) != null ? parseJSONData(variation.characterID) : characterData;
 
 					if (charJSONCheck(variation.characterID)) {
 						id = variation.characterID;

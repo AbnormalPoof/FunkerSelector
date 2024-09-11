@@ -346,17 +346,13 @@ class CharacterHandler extends Module {
 			case 'dad':
 				oldChar = PlayState.instance.currentStage.getDad();
 				charType = CharacterType.DAD;
-			case 'default':
+			default:
 				trace('How did you get here?');
 				return;
 		}
 
 		// Return if the target character does not exist.
 		if (oldChar == null)
-			return;
-
-		// Return if, for some reason, the character type is null.
-		if (charType == null)
 			return;
 
 		// TODO: Add visual indicator for variations.

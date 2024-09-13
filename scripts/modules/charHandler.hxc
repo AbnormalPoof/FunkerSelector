@@ -363,6 +363,7 @@ class CharacterHandler extends Module {
 				}
 
 				var songMatch = false;
+				var variationMatch = false;
 
 				if (Std.isOfType(variation.songID, Array)) {
 					songMatch = (variation.songID.indexOf(PlayState.instance.currentSong.id) != -1);
@@ -370,7 +371,17 @@ class CharacterHandler extends Module {
 					songMatch = (variation.songID == PlayState.instance.currentSong.id);
 				}
 
-				if (songMatch) {
+				if (variation.songVariation != null) {
+					if (Std.isOfType(variation.songVariation, Array)) {
+						variationMatch = (variation.songVariation.indexOf(PlayState.instance.currentVariation) != -1);
+					} else if (Std.isOfType(variation.songVariation, String)) {
+						variationMatch = (variation.songVariation == PlayState.instance.currentVariation);
+					}
+				} else {
+					variationMatch = true; // Assume true if songVariation does not exist.
+				}
+
+				if (songMatch && variationMatch) {
 					characterData = parseJSONData(variation.characterID) != null ? parseJSONData(variation.characterID) : characterData;
 
 					if (charJSONCheck(variation.characterID)) {

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [1.4.0] - 2024-09-12
 ### Added
 - You can now have multiple song IDs for Character Variations as an Array.
+- You can now specify a song's variation ID. So you can have character variations for specific song variations.
+- v0.5.0 support.
 ### Changed
 - Rewritten all the code for Character replacement, the code should look a lot cleaner now.
 - Reformatted all of the code for better readability.

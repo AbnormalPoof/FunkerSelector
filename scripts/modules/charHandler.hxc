@@ -95,8 +95,8 @@ class CharacterHandler extends Module {
 		super.onUpdate(event);
 		if (Std.isOfType(FlxG.state.subState, FreeplayState)) {
 			if (charSelectIcon != null && charText != null) {
-				charSelectIcon.visible = FlxG.state.subState.alsoOrangeLOL.visible;
-				charText.visible = FlxG.state.subState.alsoOrangeLOL.visible;
+				charSelectIcon.visible = FlxG.state.subState.alsoOrangeLOL != null ? FlxG.state.subState.alsoOrangeLOL.visible : true;
+				charText.visible = FlxG.state.subState.alsoOrangeLOL != null ? FlxG.state.subState.alsoOrangeLOL.visible : true;
 			}
 			// Open the CharacterMenu substate.
 			// We need to make a new one everytime since it gets destroyed when it's closed.

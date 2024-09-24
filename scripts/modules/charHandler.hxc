@@ -15,6 +15,7 @@ import flixel.FlxG;
 import flixel.util.FlxSave;
 import funkin.util.assets.DataAssets;
 import openfl.display3D.textures.RectangleTexture;
+import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.modding.PolymodErrorHandler;
 import openfl.display.BitmapData;
 import flixel.graphics.FlxGraphic;
@@ -406,6 +407,7 @@ class CharacterHandler extends Module {
 			switch (type) {
 				case 'bf':
 					character.initHealthIcon(false);
+					if (PlayerRegistry.instance.fetchEntry(id) != null) PlayState.instance.currentChart.characters.player = id;
 				case 'dad':
 					character.initHealthIcon(true);
 			}

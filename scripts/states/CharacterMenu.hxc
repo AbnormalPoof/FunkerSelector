@@ -464,10 +464,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				characterIDs.gf = 'default';
 				shouldPlaySound = true;
 			}
-			if (shouldPlaySound)
+			if (shouldPlaySound) {
 				FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
-			Save.instance.modOptions.set("FunkerSelector", characterIDs);
-			Save.instance.flush();
+				selectedTextVisibility();
+				Save.instance.modOptions.set("FunkerSelector", characterIDs);
+				Save.instance.flush();
+			}
 		}
 
 		if (FlxG.keys.justPressed.ESCAPE) {
@@ -510,6 +512,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 			if (shouldConfirm) {
 				confirmThing();
+				selectedTextVisibility();
 				Save.instance.modOptions.set("FunkerSelector", characterIDs);
 				Save.instance.flush();
 			}
@@ -553,6 +556,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 	}
 
+	function selectedTextVisibility():Void {
+		selected.visible = switch (pageIndex) {
+			case 0: curCharID == characterIDs.bf;
+			case 1: curCharID == characterIDs.dad;
+			case 2: curCharID == characterIDs.gf;
+			default: false;
+		}
+	}
+
 	/**
 	 * Update character information.
 	 */
@@ -562,16 +574,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (charDesc != null)
 			remove(charDesc);
 
-		selected.visible = switch (pageIndex) {
-			case 0: curCharID == characterIDs.bf;
-			case 1: curCharID == characterIDs.dad;
-			case 2: curCharID == characterIDs.gf;
-			default: false;
-		}
-
 		selectText.text = topText[pageIndex];
 		selectText.color = topTextColor[pageIndex];
 		selectText.screenCenter(0x01);
+		selectedTextVisibility();
 
 		characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
 		charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;

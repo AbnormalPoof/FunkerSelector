@@ -41,6 +41,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var charArrayDad:Array<String> = ['default'];
 	var charArrayGF:Array<String> = ['default'];
 
+	// For the top text in the menu.
+	var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "GIRLFRIEND CHARACTERS"];
+	var topTextColor = [0xFF2DB2D2, 0xFFAF66CE, 0xFFA7004C];
+
 	// The current array.
 	// If this didn't exist, we'd have to put switch statements for pageIndex everywhere!
 	var curCharArray:Array<String> = [];
@@ -80,12 +84,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		numberThing.screenCenter(0x01);
 
 		curCharArray = getCurrentPage();
-		selected.visible = switch (pageIndex) {
-			case 0: curCharID == characterIDs.bf;
-			case 1: curCharID == characterIDs.dad;
-			case 2: curCharID == characterIDs.gf;
-			default: false;
-		}
 
 		if (bopTimer >= 0.5) {
 			bopDaThing();
@@ -236,7 +234,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * 
 	 * This is disabled if "Simplify UI" is turned on in the Options Menu.
 	 */
-	function createIconGrid(spacing:Int):Void {
+	function createIconGrid(spacing:Int, ?alpha:Float = null):Void {
 		var charIconData = curCharID != 'default' ? CharacterDataParser.parseCharacterData(curCharID) : null;
 		var x = (FlxG.width - Math.ceil(FlxG.width / spacing) * spacing) / 2;
 		var y = (FlxG.height - Math.ceil(FlxG.height / spacing) * spacing) / 2;
@@ -245,7 +243,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				var icon = new HealthIcon('dad', 0);
 				icon.x = x + j * spacing;
 				icon.y = y + i * spacing;
-				icon.alpha = 0.2;
+				icon.alpha = (alpha != null ? alpha : 0.2);
 
 				if (charIconData != null) {
 					icon.configure(charIconData.healthIcon);
@@ -380,7 +378,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		add(bg);
 		if (!simplifyUI) {
-			createIconGrid(150);
+			createIconGrid(150, 0.2);
 		}
 		add(leftDifficultyArrow);
 		add(rightDifficultyArrow);
@@ -453,7 +451,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		if (FlxG.keys.justPressed.F) {
-			var shouldPlaySound:Bool;
+			var shouldPlaySound:Bool = false;
 			if (characterIDs.bf != 'default') {
 				characterIDs.bf = 'default';
 				shouldPlaySound = true;
@@ -492,25 +490,29 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		if (FlxG.keys.justPressed.ENTER) {
+			var shouldConfirm:Bool = false;
 			switch (pageIndex) {
 				case 0:
 					if (curCharID != characterIDs.bf) {
 						characterIDs.bf = curCharID;
-						confirmThing();
+						shouldConfirm = true;
 					}
 				case 1:
 					if (curCharID != characterIDs.dad) {
 						characterIDs.dad = curCharID;
-						confirmThing();
+						shouldConfirm = true;
 					}
 				case 2:
 					if (curCharID != characterIDs.gf) {
 						characterIDs.gf = curCharID;
-						confirmThing();
+						shouldConfirm = true;
 					}
 			}
-			Save.instance.modOptions.set("FunkerSelector", characterIDs);
-			Save.instance.flush();
+			if (shouldConfirm) {
+				confirmThing();
+				Save.instance.modOptions.set("FunkerSelector", characterIDs);
+				Save.instance.flush();
+			}
 		}
 	}
 
@@ -560,17 +562,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (charDesc != null)
 			remove(charDesc);
 
-		switch (pageIndex) {
-			case 0:
-				selectText.text = 'PLAYABLE CHARACTERS';
-				selectText.color = 0xFF2DB2D2;
-			case 1:
-				selectText.text = 'OPPONENT CHARACTERS';
-				selectText.color = 0xFFAF66CE;
-			case 2:
-				selectText.text = 'GIRLFRIEND CHARACTERS';
-				selectText.color = 0xFFA7004C;
+		selected.visible = switch (pageIndex) {
+			case 0: curCharID == characterIDs.bf;
+			case 1: curCharID == characterIDs.dad;
+			case 2: curCharID == characterIDs.gf;
+			default: false;
 		}
+
+		selectText.text = topText[pageIndex];
+		selectText.color = topTextColor[pageIndex];
 		selectText.screenCenter(0x01);
 
 		characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);

@@ -198,7 +198,6 @@ class CharacterHandler extends Module {
 								if (char == null)
 									continue;
 								FlxG.bitmap.remove(char);
-								Assets.cache.removeBitmapData(jsonChar);
 								char.persist = false;
 								char.destroyOnNoUse = true;
 								char.destroy();

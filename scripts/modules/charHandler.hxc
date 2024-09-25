@@ -16,6 +16,8 @@ import flixel.util.FlxSave;
 import funkin.util.assets.DataAssets;
 import openfl.display3D.textures.RectangleTexture;
 import funkin.data.freeplay.player.PlayerRegistry;
+import funkin.data.song.SongRegistry;
+import funkin.play.ResultState;
 import funkin.modding.PolymodErrorHandler;
 import openfl.display.BitmapData;
 import flixel.graphics.FlxGraphic;
@@ -117,6 +119,7 @@ class CharacterHandler extends Module {
 	function onSubStateOpenEnd(event) {
 		super.onSubStateOpenEnd(event);
 		var state = event.targetState;
+		SongRegistry.instance.loadEntries(); // Resetting the song entries to fix a bug with base game's playable characters lol
 		if (Std.isOfType(state, FreeplayState)) {
 			charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
 			charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
@@ -146,6 +149,10 @@ class CharacterHandler extends Module {
 				};
 			});
 		}
+		if (Std.isOfType(state, ResultState)) {
+			// More playable character shit
+			state.playerCharacterId = PlayState.instance.currentChart.characters.player;
+		}
 	}
 
 	/**
@@ -155,6 +162,7 @@ class CharacterHandler extends Module {
 	 */
 	override function onStateChangeBegin(event) {
 		super.onStateChangeBegin(event);
+		SongRegistry.instance.loadEntries(); // Resetting the song entries to fix a bug with base game's playable characters lol
 		if (Std.isOfType(event.targetState, PlayState)) {
 			PauseSubState.musicSuffix = '';
 			GameOverSubState.musicSuffix = '';
@@ -407,7 +415,7 @@ class CharacterHandler extends Module {
 			switch (type) {
 				case 'bf':
 					character.initHealthIcon(false);
-					if (PlayerRegistry.instance.fetchEntry(id) != null) PlayState.instance.currentChart.characters.player = id;
+					if (PlayerRegistry.instance.isCharacterOwned(id)) PlayState.instance.currentChart.characters.player = id;
 				case 'dad':
 					character.initHealthIcon(true);
 			}

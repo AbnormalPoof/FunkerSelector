@@ -155,7 +155,8 @@ class CharacterHandler extends Module {
 			// If the original player is part of a Playable Character, we don't do this.
 			PlayState.instance.currentChart.characters.player = ogCharID;
 			state.playerCharacterId = null;
-			if (PlayerRegistry.instance.isCharacterOwned(ogCharID)) state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);
+			if (PlayerRegistry.instance.isCharacterOwned(ogCharID))
+				state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);
 		}
 	}
 
@@ -336,10 +337,9 @@ class CharacterHandler extends Module {
 	}
 
 	function onSongEnd() {
-		if (PlayerRegistry.instance.isCharacterOwned(characterIDs.bf) 
-    && PlayState.instance.currentStage.getBoyfriend() != null 
-    && PlayState.instance.currentStage.getBoyfriend().characterId == characterIDs.bf) {
-    
+		if (PlayerRegistry.instance.isCharacterOwned(characterIDs.bf)
+			&& PlayState.instance.currentStage.getBoyfriend() != null
+			&& PlayState.instance.currentStage.getBoyfriend().characterId == characterIDs.bf) {
 			PlayState.instance.currentChart.characters.player = characterIDs.bf;
 		}
 	}

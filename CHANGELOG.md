@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - You can now specify a song's variation ID. So you can have character variations for specific song variations.
 - Funker Selector should now work in unison with base game's character select!
   - Example: Selecting Pico (Playable) will now play his respective animations in the Results Screen!
+- Added Pico (Christmas)
 ### Changed
 - Rewritten all the code for Character replacement, the code should look a lot cleaner now.
 - Reformatted all of the code for better readability.

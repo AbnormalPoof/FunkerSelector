@@ -3,11 +3,11 @@
   "characterID": "pico-christmas",
   "characterType": "bf",
   "description": {
-    "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand..."
+    "text": "Pico, all dressed up for the holidays! Featured in Eggnog (Pico Mix), and added in an update dedicated to him."
   },
   "characterMenu":
   {
-    "position": [150, 250],
+    "position": [100, 200],
     "scale": 1
   }
 }

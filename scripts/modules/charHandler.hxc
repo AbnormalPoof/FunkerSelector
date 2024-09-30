@@ -151,7 +151,8 @@ class CharacterHandler extends Module {
 		}
 		if (Std.isOfType(state, ResultState)) {
 			// More playable character shit
-			state.playerCharacterId = PlayState.instance.currentChart.characters.player;
+			// The results anim will still play!! It's just Freeplay won't bug out when we do this.
+			state.playerCharacterId = null;
 		}
 	}
 

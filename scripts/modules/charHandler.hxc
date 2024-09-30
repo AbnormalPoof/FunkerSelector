@@ -52,6 +52,7 @@ class CharacterHandler extends Module {
 		preloadSprites: true
 	}
 	var voiceList:Array<String>;
+	var ogCharID:String = null;
 
 	/**
 	 * currentCachedTextures gets cleared everytime we load into a song.
@@ -119,7 +120,6 @@ class CharacterHandler extends Module {
 	function onSubStateOpenEnd(event) {
 		super.onSubStateOpenEnd(event);
 		var state = event.targetState;
-		SongRegistry.instance.loadEntries(); // Resetting the song entries to fix a bug with base game's playable characters lol
 		if (Std.isOfType(state, FreeplayState)) {
 			charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
 			charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
@@ -153,7 +153,9 @@ class CharacterHandler extends Module {
 			// More playable character shit
 			// The results anim will still play!! It's just Freeplay won't bug out when we do this.
 			// If the original player is part of a Playable Character, we don't do this.
-			if (!PlayerRegistry.instance.isCharacterOwned(PlayState.instance.currentChart.characters.player)) state.playerCharacterId = null;
+			PlayState.instance.currentChart.characters.player = ogCharID;
+			state.playerCharacterId = null;
+			if (PlayerRegistry.instance.isCharacterOwned(ogCharID)) state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);
 		}
 	}
 
@@ -164,11 +166,11 @@ class CharacterHandler extends Module {
 	 */
 	override function onStateChangeBegin(event) {
 		super.onStateChangeBegin(event);
-		SongRegistry.instance.loadEntries(); // Resetting the song entries to fix a bug with base game's playable characters lol
 		if (Std.isOfType(event.targetState, PlayState)) {
 			PauseSubState.musicSuffix = '';
 			GameOverSubState.musicSuffix = '';
 			GameOverSubState.blueBallSuffix = '';
+			SongRegistry.instance.loadEntries();
 		}
 	}
 
@@ -317,6 +319,9 @@ class CharacterHandler extends Module {
 		// since module variables persist between state changes.
 		voiceList = [null, null];
 
+		// Saving the original character ID.
+		ogCharID = PlayState.instance.currentChart.characters.player;
+
 		// Replace and swap out the characters.
 		replaceChar(characterIDs.bf, 'bf');
 		replaceChar(characterIDs.gf, 'gf');
@@ -327,6 +332,15 @@ class CharacterHandler extends Module {
 		if (voiceList[0] != null || voiceList[1] != null) {
 			PlayState.instance.vocals.stop();
 			PlayState.instance.vocals = replaceVocals(voiceList);
+		}
+	}
+
+	function onSongEnd() {
+		if (PlayerRegistry.instance.isCharacterOwned(characterIDs.bf) 
+    && PlayState.instance.currentStage.getBoyfriend() != null 
+    && PlayState.instance.currentStage.getBoyfriend().characterId == characterIDs.bf) {
+    
+			PlayState.instance.currentChart.characters.player = characterIDs.bf;
 		}
 	}
 
@@ -416,7 +430,6 @@ class CharacterHandler extends Module {
 			switch (type) {
 				case 'bf':
 					character.initHealthIcon(false);
-					if (PlayerRegistry.instance.isCharacterOwned(id)) PlayState.instance.currentChart.characters.player = id;
 				case 'dad':
 					character.initHealthIcon(true);
 			}

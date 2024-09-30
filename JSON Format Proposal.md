@@ -1,4 +1,4 @@
-# This is the original proposal I wrote when developing the JSON system. I left it here in the mod for... fun, I guess? This doesn't really reflect the final format, and has some stuff that isn't implemented yet!
+# This is the original proposal I wrote when developing the JSON system. I left it here in the mod for fun. This has some stuff that was never implemented.
 
 ## Proposal: New JSON format.
 

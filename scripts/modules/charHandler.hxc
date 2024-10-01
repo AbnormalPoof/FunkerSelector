@@ -427,12 +427,6 @@ class CharacterHandler extends Module {
 
 		if (character != null) {
 			oldChar.destroy();
-			switch (type) {
-				case 'bf':
-					character.initHealthIcon(false);
-				case 'dad':
-					character.initHealthIcon(true);
-			}
 			character.zIndex = charZIndex;
 			PlayState.instance.currentStage.addCharacter(character, charType);
 			if (characterData != null && type == 'bf') {

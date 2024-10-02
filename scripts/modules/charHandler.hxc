@@ -16,6 +16,8 @@ import flixel.util.FlxSave;
 import funkin.util.assets.DataAssets;
 import openfl.display3D.textures.RectangleTexture;
 import funkin.data.freeplay.player.PlayerRegistry;
+import funkin.util.Constants;
+import funkin.modding.PolymodErrorHandler;
 import funkin.data.song.SongRegistry;
 import funkin.play.ResultState;
 import funkin.modding.PolymodErrorHandler;
@@ -62,6 +64,17 @@ class CharacterHandler extends Module {
 
 	function new() {
 		super("CharacterHandler");
+	}
+
+	function onCreate(event) {
+		super.onCreate(event);
+		// The FIRST thing we check is the game version.
+		// Funker Selector does not work properly on v0.5.0!
+		if (Constants.VERSION == "v0.5.0") {
+			PolymodErrorHandler.showAlert("Funker Selector Error", "Funker Selector is not supported on " + Constants.VERSION);
+			return;
+		}
+		
 		save = new FlxSave();
 
 		// Initializing Funker Selector's save data if it's not found.

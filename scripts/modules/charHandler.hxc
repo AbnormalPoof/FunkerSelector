@@ -41,20 +41,23 @@ import String;
  * Freeplay, along with character replacement.
  */
 class CharacterHandler extends Module {
-	var charText:AtlasText;
-	var charSelectIcon:FunkinSprite;
 
-	var characterIDs:Dynamic = {
-		bf: 'default',
-		gf: 'default',
-		dad: 'default'
-	}
-	var funkerSettings:Dynamic = {
-		potatoMode: false,
-		preloadSprites: true
-	}
+	/**
+	 * The character IDs.
+	 * This is retrieved from the save data.
+	 */
+	public var characterIDs:Dynamic;
+
+	/**
+	 * The preferences for Funker Selector specifically.
+	 * This is retrieved from the save data.
+	 */
+	public var funkerSettings:Dynamic;
+
+	/**
+	 * The current voice list, used for vocal replacement.
+	 */
 	var voiceList:Array<String>;
-	var ogCharID:String = null;
 
 	/**
 	 * currentCachedTextures gets cleared everytime we load into a song.
@@ -62,46 +65,77 @@ class CharacterHandler extends Module {
 	 */
 	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
 
+	var ogCharID:String = null;
+
+	var charText:AtlasText;
+	var charSelectIcon:FunkinSprite;
+
 	function new() {
 		super("CharacterHandler");
-	}
 
-	function onCreate(event) {
-		super.onCreate(event);
 		// The FIRST thing we check is the game version.
 		// Funker Selector does not work properly on v0.5.0!
 		if (Constants.VERSION == "v0.5.0") {
 			PolymodErrorHandler.showAlert("Funker Selector Error", "Funker Selector is not supported on " + Constants.VERSION);
+			this.active = false;
 			return;
 		}
+
+		// Initialize the save data.
+		initializeSave();
+	}
+
+	/**
+	 * Retrieves Character IDs and Preferences from the save data.
+	 */
+	function initializeSave():Void {
+		var save:FlxSave = new FlxSave();
+
+		var defaultCharacterIDs:Dynamic = {
+			bf: 'default',
+			gf: 'default',
+			dad: 'default'
+		};
 		
-		save = new FlxSave();
-
-		// Initializing Funker Selector's save data if it's not found.
-		if (Save.instance.modOptions.get("FunkerSelector") == null) {
-			Save.instance.modOptions.set("FunkerSelector", characterIDs);
-			Save.instance.flush();
-		} else {
-			characterIDs = Save.instance.modOptions.get("FunkerSelector");
-		}
-
-		if (Save.instance.modOptions.get("FunkerSelectorSettings") == null) {
-			Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
-			Save.instance.flush();
-		} else {
-			funkerSettings = Save.instance.modOptions.get("FunkerSelectorSettings");
-		}
-
-		// Backwards compatability with the old save system.
-		if (save.bind("characterselect", "kagaminerinlen")) {
-			if (save.data.characterselect != null) {
-				characterIDs.bf = save.data.characterselect;
-				save.data.characterselect = null;
-				save.flush();
-				Save.instance.modOptions.set("FunkerSelector", characterIDs);
+		var defaultSettings:Dynamic = {
+			potatoMode: false,
+			preloadSprites: true
+		};
+		
+  	if (Save.instance.modOptions.get("FunkerSelector") == null) {
+				// Backwards compatability with the old save system from v1.1 and under.
+				if (save.bind("characterselect", "kagaminerinlen")) {
+					if (save.data.characterselect != null) {
+						defaultCharacterIDs.bf = save.data.characterselect;
+						save.data.characterselect = null;
+						save.close();
+					}
+				}
+				Save.instance.modOptions.set("FunkerSelector", defaultCharacterIDs);
 				Save.instance.flush();
-			}
-		}
+				characterIDs = defaultCharacterIDs;
+				trace('[Funker Selector] Successfully created save data:\n\nBoyfriend: ' + characterIDs.bf + '\nGirlfriend: ' + characterIDs.gf + '\nOpponent: ' + characterIDs.dad);
+    } else {
+        characterIDs = Save.instance.modOptions.get("FunkerSelector");
+				trace('[Funker Selector] Successfully retrieved save data:\n\nBoyfriend: ' + characterIDs.bf + '\nGirlfriend: ' + characterIDs.gf + '\nOpponent: ' + characterIDs.dad);
+    }
+
+  	if (Save.instance.modOptions.get("FunkerSelectorSettings") == null) {
+        Save.instance.modOptions.set("FunkerSelectorSettings", defaultSettings);
+        Save.instance.flush();
+        funkerSettings = defaultSettings;
+				trace('[Funker Selector] Successfully created save data:\n\nSimplify UI: ' + funkerSettings.potatoMode + '\nPreload Sprites: ' + funkerSettings.preloadSprites);
+    } else {
+        funkerSettings = Save.instance.modOptions.get("FunkerSelectorSettings");
+				trace('[Funker Selector] Successfully retrieved save data:\n\nSimplify UI: ' + funkerSettings.potatoMode + '\nPreload Sprites: ' + funkerSettings.preloadSprites);
+    }
+	}
+
+	function onCreate(event) {
+		super.onCreate(event);
+
+		// Cache the sprites for JSON characters.
+		// This is only done once.
 		if (!funkerSettings.potatoMode) {
 			if (funkerSettings.preloadSprites)
 				cacheJSONSparrows();
@@ -112,9 +146,11 @@ class CharacterHandler extends Module {
 		super.onUpdate(event);
 		if (Std.isOfType(FlxG.state.subState, FreeplayState)) {
 			if (charSelectIcon != null && charText != null) {
+				// TODO: Fix this maybe? Something broke in v0.5.0 that makes this not work anymore!
 				charSelectIcon.visible = FlxG.state.subState.alsoOrangeLOL != null ? FlxG.state.subState.alsoOrangeLOL.visible : true;
 				charText.visible = FlxG.state.subState.alsoOrangeLOL != null ? FlxG.state.subState.alsoOrangeLOL.visible : true;
 			}
+
 			// Open the CharacterMenu substate.
 			// We need to make a new one everytime since it gets destroyed when it's closed.
 			if (FlxG.keys.justPressed.G && charText.visible) {
@@ -127,12 +163,13 @@ class CharacterHandler extends Module {
 	}
 
 	/**
-	 * UI stuff for Freeplay.
-	 * Sets up the Character Select button.
+	 * Stuff for Results and Freeplay.
 	 */
 	function onSubStateOpenEnd(event) {
 		super.onSubStateOpenEnd(event);
 		var state = event.targetState;
+
+		// Set up the Character Select button.
 		if (Std.isOfType(state, FreeplayState)) {
 			charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
 			charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
@@ -162,9 +199,11 @@ class CharacterHandler extends Module {
 				};
 			});
 		}
+
+		// Results screen bullshit.
 		if (Std.isOfType(state, ResultState)) {
 			// More playable character shit
-			// The results anim will still play!! It's just Freeplay won't bug out when we do this.
+			// The results anim will still play, it's just Freeplay won't bug out when we do this.
 			// If the original player is part of a Playable Character, we don't do this.
 			PlayState.instance.currentChart.characters.player = ogCharID;
 			state.playerCharacterId = null;
@@ -175,7 +214,7 @@ class CharacterHandler extends Module {
 
 	/**
 	 * Resetting Game Over and Pause Menu suffixes.
-	 * We put this in onStateChangeBegin instead of onStateChangeEnd, otherwise,
+	 * We put this in `onStateChangeBegin();` instead of `onStateChangeEnd();`, otherwise,
 	 * scripted characters will have their suffixes overridden!
 	 */
 	override function onStateChangeBegin(event) {
@@ -184,12 +223,17 @@ class CharacterHandler extends Module {
 			PauseSubState.musicSuffix = '';
 			GameOverSubState.musicSuffix = '';
 			GameOverSubState.blueBallSuffix = '';
+
+			// Reload the song entries since `PlayState.instance.currentChart.characters.player` 
+			// doesn't reset properly when we change it.
+			// TODO: Find the root cause and fix this in Funkin's source code.
 			SongRegistry.instance.loadEntries();
 		}
 	}
 
 	override function onStateChangeEnd(event) {
 		super.onStateChangeEnd(event);
+
 		// Options Menu stuff
 		if (Std.isOfType(event.targetState, OptionsState)) {
 			var prefs = event.targetState.pages.get("preferences");
@@ -232,7 +276,8 @@ class CharacterHandler extends Module {
 
 	/**
 	 * Parse a Funker Selector JSON file and return the data.
-	 * @param characterID
+	 * @param characterID The character ID to use.
+	 * @return The JSON data.
 	 */
 	function parseJSONData(characterID:String = 'default'):Void {
 		if (Assets.exists(Paths.json('funkerSelector/' + characterID))) {

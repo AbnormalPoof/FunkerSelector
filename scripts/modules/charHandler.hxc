@@ -1,6 +1,5 @@
 import funkin.modding.module.Module;
 import funkin.ui.freeplay.FreeplayState;
-import funkin.ui.freeplay.backcards.BackingCard;
 import funkin.ui.AtlasText;
 import funkin.play.PlayState;
 import funkin.play.PlayStatePlaylist;
@@ -160,11 +159,6 @@ class CharacterHandler extends Module {
 
 	function onUpdate(event) {
 		super.onUpdate(event);
-
-		if (charSelectIcon != null && charText != null) {
-			charSelectIcon.visible = BackingCard.alsoOrangeLOL != null ? BackingCard.alsoOrangeLOL.visible : true;
-			charText.visible = BackingCard.alsoOrangeLOL != null ? BackingCard.alsoOrangeLOL.visible : true;
-		}
 
 		if (Std.isOfType(FlxG.state.subState, FreeplayState)) {
 			// Open the CharacterMenu substate.

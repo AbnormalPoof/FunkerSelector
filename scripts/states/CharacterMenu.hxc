@@ -1,8 +1,6 @@
 import flixel.FlxG;
 import funkin.graphics.FunkinSprite;
 import funkin.audio.FunkinSound;
-import openfl.utils.Assets;
-import funkin.Paths;
 import funkin.play.character.CharacterDataParser;
 import funkin.play.character.BaseCharacter;
 import funkin.graphics.FunkinCamera;

@@ -92,6 +92,21 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			bopTimer = 0;
 		}
 
+		if (FlxG.keys.justPressed.ESCAPE) {
+			if (hotkeyCam.visible) {
+				hotkeyCam.visible = false;
+			} else {
+				FunkinSound.playOnce(Paths.sound('cancelMenu'));
+
+				// Scripted characters overwrite the suffixes when
+				// they're shown. So we want to manually reset them!
+				PauseSubState.musicSuffix = '';
+				GameOverSubState.musicSuffix = '';
+				GameOverSubState.blueBallSuffix = '';
+				close();
+			}
+		}
+
 		if (!hotkeyCam.visible) {
 			handleKeyShit();
 		}
@@ -469,21 +484,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				selectedTextVisibility();
 				Save.instance.modOptions.set("FunkerSelector", characterIDs);
 				Save.instance.flush();
-			}
-		}
-
-		if (FlxG.keys.justPressed.ESCAPE) {
-			if (hotkeyCam.visible) {
-				hotkeyCam.visible = false;
-			} else {
-				FunkinSound.playOnce(Paths.sound('cancelMenu'));
-
-				// Scripted characters overwrite the suffixes when
-				// they're shown. So we want to manually reset them!
-				PauseSubState.musicSuffix = '';
-				GameOverSubState.musicSuffix = '';
-				GameOverSubState.blueBallSuffix = '';
-				close();
 			}
 		}
 

@@ -20,7 +20,6 @@ import funkin.util.Constants;
 import funkin.modding.PolymodErrorHandler;
 import funkin.data.song.SongRegistry;
 import funkin.play.ResultState;
-import funkin.modding.PolymodErrorHandler;
 import openfl.display.BitmapData;
 import flixel.graphics.FlxGraphic;
 import openfl.display3D.textures.TextureBase;

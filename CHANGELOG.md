@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2024-10-04
+## Changed
+- Fixed an issue where the Hotkey menu couldn't be closed with ESCAPE.
+- Fixed an issue where JSON characters were re-cached everytime the game was hot-reloaded with F5.
+- Cleaned up a lot of the code for `charHandler` and added comments.
+## Removed
+- Funker Selector will no longer work on v0.5.0
+  - This is due to functions in the code that do not work on v0.5.0.
+    - Please use v0.5.1 instead.
+
 ## [1.4.0] - 2024-09-12
 ### Added
 - v0.5.0 support.

@@ -10,6 +10,7 @@ import funkin.play.character.CharacterType;
 import funkin.ui.options.OptionsState;
 import funkin.play.PauseSubState;
 import funkin.play.GameOverSubState;
+import lime.app.Application;
 import flixel.FlxG;
 import flixel.util.FlxSave;
 import funkin.util.assets.DataAssets;
@@ -56,6 +57,12 @@ class CharacterHandler extends Module {
 	var voiceList:Array<String>;
 
 	/**
+	 * An array of unsupported game versions.
+	 * TODO: Make this a version rule or something if it's possible.
+	 */
+	var unsupportedVersions:Array<String> = ["0.5.0"];
+
+	/**
 	 * currentCachedTextures gets cleared everytime we load into a song.
 	 * It'd be annoying to have to re-cache everything everytime we exit!
 	 */
@@ -70,9 +77,10 @@ class CharacterHandler extends Module {
 		super("CharacterHandler");
 
 		// The FIRST thing we check is the game version.
-		// Funker Selector does not work properly on v0.5.0!
-		if (Constants.VERSION == "v0.5.0") {
-			PolymodErrorHandler.showAlert("Funker Selector Error", "Funker Selector is not supported on " + Constants.VERSION);
+		// We use `lime.app.Application` instead of `Constants.VERSION` because the latter
+		// has added suffixes depending on if the game is a debug build or not.
+		if (unsupportedVersions.indexOf(Application.current.meta.get('version')) != -1) {
+			PolymodErrorHandler.showAlert("Funker Selector Error", "Funker Selector is not supported on v" + Application.current.meta.get('version'));
 			this.active = false;
 			return;
 		}

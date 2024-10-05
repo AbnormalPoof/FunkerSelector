@@ -83,7 +83,12 @@ class CharacterHandler extends Module {
 		// We use `lime.app.Application` instead of `Constants.VERSION` because the latter
 		// has added suffixes depending on if the game is a debug build or not.
 		if (isVersionBelow(Application.current.meta.get('version'), supportedVersion)) {
-			PolymodErrorHandler.showAlert("Funker Selector Error", "Funker Selector is not supported on Friday Night Funkin' v" + Application.current.meta.get('version') + ".\n\nPlease update to v" + supportedVersion + "!");
+			PolymodErrorHandler.showAlert("Funker Selector Error",
+				"Funker Selector is not supported on Friday Night Funkin' v"
+				+ Application.current.meta.get('version')
+				+ ".\n\nPlease update to v"
+				+ supportedVersion
+				+ "!");
 			this.active = false;
 			return;
 		}
@@ -586,14 +591,16 @@ class CharacterHandler extends Module {
 		var verTwoSplit = versionTwo.split(".");
 
 		for (i in 0...Math.max(verOneSplit.length, verTwoSplit.length)) {
-				var verOnePart = i < verOneSplit.length ? Std.parseInt(verOneSplit[i]) : 0;
-				var verTwoPart = i < verTwoSplit.length ? Std.parseInt(verTwoSplit[i]) : 0;
+			var verOnePart = i < verOneSplit.length ? Std.parseInt(verOneSplit[i]) : 0;
+			var verTwoPart = i < verTwoSplit.length ? Std.parseInt(verTwoSplit[i]) : 0;
 
-				// If Version 1 is below Version 2, we return true.
-				if (verOnePart < verTwoPart) return true;
+			// If Version 1 is below Version 2, we return true.
+			if (verOnePart < verTwoPart)
+				return true;
 
-				// If Version 1 is ABOVE Version 2, we return false.
-				if (verOnePart > verTwoPart) return false;
+			// If Version 1 is ABOVE Version 2, we return false.
+			if (verOnePart > verTwoPart)
+				return false;
 		}
 
 		// Else, we return false anyway if they're the same!

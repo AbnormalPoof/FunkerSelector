@@ -67,7 +67,8 @@ class CharacterHandler extends Module {
 
 	/**
 	 * currentCachedTextures gets cleared everytime we load into a song.
-	 * It'd be annoying to have to re-cache everything everytime we exit!
+	 * It'd be annoying to have to re-cache everything everytime we exit, so we
+	 * keep track of JSON characters in a separate map instead.
 	 */
 	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
 
@@ -164,7 +165,6 @@ class CharacterHandler extends Module {
 
 	function onCreate(event) {
 		super.onCreate(event);
-
 		// Cache the sprites for JSON characters.
 		// This is only done once.
 		if (!funkerSettings.potatoMode) {
@@ -175,7 +175,6 @@ class CharacterHandler extends Module {
 
 	function onUpdate(event) {
 		super.onUpdate(event);
-
 		if (Std.isOfType(FlxG.state.subState, FreeplayState)) {
 			// Open the CharacterMenu substate.
 			// We need to make a new one everytime since it gets destroyed when it's closed.
@@ -194,7 +193,6 @@ class CharacterHandler extends Module {
 	function onSubStateOpenEnd(event) {
 		super.onSubStateOpenEnd(event);
 		var state = event.targetState;
-
 		// Set up the Character Select button.
 		if (Std.isOfType(state, FreeplayState)) {
 			charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
@@ -232,10 +230,12 @@ class CharacterHandler extends Module {
 			// More playable character shit
 			// The results anim will still play, it's just Freeplay won't bug out when we do this.
 			// If the original player is part of a Playable Character, we don't do this.
-			PlayState.instance.currentChart.characters.player = ogCharID;
-			state.playerCharacterId = null;
-			if (PlayerRegistry.instance.isCharacterOwned(ogCharID))
-				state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);
+			if (PlayState.instance.currentStage.getBoyfriend() != null && PlayState.instance.currentStage.getBoyfriend().characterId == characterIDs.bf) {
+				PlayState.instance.currentChart.characters.player = ogCharID;
+				state.playerCharacterId = null;
+				if (PlayerRegistry.instance.isCharacterOwned(ogCharID))
+					state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);
+			}
 		}
 	}
 
@@ -421,6 +421,11 @@ class CharacterHandler extends Module {
 		}
 	}
 
+	/**
+	 * Changing `player` in `currentChart` to trick the Results Screen
+	 * into loading the Results Screen animations for the currently
+	 * selected character if they exist.
+	 */
 	function onSongEnd() {
 		if (PlayerRegistry.instance.isCharacterOwned(characterIDs.bf)
 			&& PlayState.instance.currentStage.getBoyfriend() != null

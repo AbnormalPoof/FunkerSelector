@@ -1,22 +1,22 @@
 import flixel.FlxG;
-import funkin.graphics.FunkinSprite;
-import funkin.audio.FunkinSound;
-import funkin.play.character.CharacterDataParser;
-import funkin.play.character.BaseCharacter;
-import funkin.graphics.FunkinCamera;
-import funkin.ui.MusicBeatSubState;
-import funkin.play.components.HealthIcon;
+import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
-import flixel.text.FlxText;
-import funkin.save.Save;
-import funkin.modding.module.ModuleHandler;
+import funkin.audio.FunkinSound;
+import funkin.graphics.FunkinCamera;
+import funkin.graphics.FunkinSprite;
 import funkin.modding.PolymodErrorHandler;
-import haxe.Json;
-import funkin.util.assets.DataAssets;
-import funkin.play.PauseSubState;
+import funkin.modding.module.ModuleHandler;
 import funkin.play.GameOverSubState;
+import funkin.play.PauseSubState;
+import funkin.play.character.BaseCharacter;
+import funkin.play.character.CharacterDataParser;
+import funkin.play.components.HealthIcon;
+import funkin.save.Save;
+import funkin.ui.MusicBeatSubState;
+import funkin.util.assets.DataAssets;
+import haxe.Json;
 import Std;
 
 /**

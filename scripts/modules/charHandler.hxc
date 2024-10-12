@@ -510,27 +510,34 @@ class CharacterHandler extends Module {
 				}
 			}
 		}
-		var charZIndex:Int = oldChar.zIndex;
-		var character = CharacterDataParser.fetchCharacter(id);
+
 		var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-'
 			+ PlayState.instance.currentVariation : '';
 		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
 
-		if (character != null) {
-			oldChar.destroy();
-			character.zIndex = charZIndex;
-			PlayState.instance.currentStage.addCharacter(character, charType);
-			if (characterData != null && type == 'bf') {
-				PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null
-					&& characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : PauseSubState.musicSuffix;
-				GameOverSubState.musicSuffix = (characterData.gameOverMusicSuffix != null
-					&& characterData.gameOverMusicSuffix != '') ? characterData.gameOverMusicSuffix : GameOverSubState.musicSuffix;
-				GameOverSubState.blueBallSuffix = (characterData.blueBallSuffix != null
-					&& characterData.blueBallSuffix != '') ? characterData.blueBallSuffix : GameOverSubState.blueBallSuffix;
+		// Don't bother replacing the character if both character IDs match.
+		if (oldChar.characterId != id) {
+			var charZIndex:Int = oldChar.zIndex;
+			var character = CharacterDataParser.fetchCharacter(id);
+
+			if (character != null) {
+				oldChar.destroy();
+				character.zIndex = charZIndex;
+				PlayState.instance.currentStage.addCharacter(character, charType);
+			} else {
+				PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + type + ' character. How the fuck???');
 			}
-		} else {
-			PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + type + ' character. How the fuck???');
 		}
+
+		if (characterData != null && type == 'bf') {
+			PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null
+				&& characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : PauseSubState.musicSuffix;
+			GameOverSubState.musicSuffix = (characterData.gameOverMusicSuffix != null
+				&& characterData.gameOverMusicSuffix != '') ? characterData.gameOverMusicSuffix : GameOverSubState.musicSuffix;
+			GameOverSubState.blueBallSuffix = (characterData.blueBallSuffix != null
+				&& characterData.blueBallSuffix != '') ? characterData.blueBallSuffix : GameOverSubState.blueBallSuffix;
+		}
+
 		switch (type) {
 			case 'bf':
 				if (Assets.exists(voiceFile)) {

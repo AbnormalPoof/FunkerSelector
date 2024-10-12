@@ -528,9 +528,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				characterSprite.playAnimation(animation, true, true);
 			}
 		}
-		if (charIcon != null && charIcon.hasAnimation('winning')) {
+		if (charIcon?.hasAnimation('winning')) {
 			// Play the winning animation if it's available.
-			charIcon.playAnimation('winning');
+			charIcon?.playAnimation('winning');
 
 			// I wanted this really cool effect where the icons in the icon grid would also
 			// play the winning animation!
@@ -632,19 +632,17 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		// Making it not look so awkward when "Simplify UI" is turned on.
-		if (simplifyUI && charIcon != null) {
-			charIcon.setPosition(250, 270);
-			charIcon.size.set(2, 2);
+		if (simplifyUI) {
+			charIcon?.setPosition(250, 270);
+			charIcon?.size.set(2, 2);
 		}
 
 		if (!simplifyUI) {
 			for (icon in iconGrid) {
-				if (icon != null) {
-					if (curCharID != 'default') {
-						icon.configure(charIconData.healthIcon);
-					} else {
-						icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-					}
+				if (curCharID != 'default') {
+					icon?.configure(charIconData.healthIcon);
+				} else {
+					icon?.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 				}
 			}
 		}

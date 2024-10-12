@@ -348,7 +348,8 @@ class CharacterHandler extends Module {
 			switch (charData.renderType) {
 				case 'multisparrow':
 					for (anim in charData.animations) {
-						cacheSprite(Paths.image(anim?.assetPath));
+						if (anim.assetPath != null)
+							cacheSprite(Paths.image(anim.assetPath));
 					}
 				case 'animateatlas':
 					cacheSprite(Paths.image(charData.assetPath + '/spritemap1'));

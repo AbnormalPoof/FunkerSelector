@@ -184,6 +184,11 @@ You can have multiple song IDs by utilizing an Array like so:
 ```
 The character ID we want to use.
 
+```json
+"songVariation": "erect"
+```
+The song's variation ID we want to use.
+
 Funker Selector will prioritize character variations over the base character ID. If no variations exist, the base character ID you set will be used instead.
 
 ## Conclusion

@@ -266,7 +266,7 @@ class CharacterHandler extends Module {
 		if (Std.isOfType(event.targetState, OptionsState)) {
 			var prefs = event.targetState.pages.get("preferences");
 			if (prefs != null) {
-				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length + 30, "-- FUNKER SELECTOR --", "bold"));
+				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length + 30, "-- FUNKER SELECTOR --", "bold", () -> {})).fireInstantly = true;
 
 				prefs.createPrefItemCheckbox("Simplify UI", "Is the new Fancy UI too much for your device? No problem!", (value) -> {
 					funkerSettings.potatoMode = value;
@@ -297,7 +297,7 @@ class CharacterHandler extends Module {
 						}
 					}, funkerSettings.preloadSprites);
 
-				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold"));
+				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold", () -> {})).fireInstantly = true;
 			}
 		}
 	}

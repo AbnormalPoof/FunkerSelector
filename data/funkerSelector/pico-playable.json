@@ -9,5 +9,12 @@
   {
     "position": [150, 200],
     "scale": 1
-  }
+  },
+  "characterVariations": [
+    {
+      "songID": ["spookeez", "south"],
+      "characterID": "pico-dark",
+      "songVariation": "erect"
+    }
+  ]
 }

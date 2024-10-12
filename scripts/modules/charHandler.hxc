@@ -230,8 +230,7 @@ class CharacterHandler extends Module {
 			// More playable character shit
 			// The results anim will still play, it's just Freeplay won't bug out when we do this.
 			// If the original player is part of a Playable Character, we don't do this.
-			if (PlayState.instance.currentStage.getBoyfriend() != null
-				&& PlayState.instance.currentStage.getBoyfriend().characterId == characterIDs.bf) {
+			if (PlayState.instance.currentStage.getBoyfriend()?.characterId == characterIDs.bf) {
 				PlayState.instance.currentChart.characters.player = ogCharID;
 				state.playerCharacterId = null;
 				if (PlayerRegistry.instance.isCharacterOwned(ogCharID))
@@ -349,9 +348,7 @@ class CharacterHandler extends Module {
 			switch (charData.renderType) {
 				case 'multisparrow':
 					for (anim in charData.animations) {
-						if (anim.assetPath != null) {
-							cacheSprite(Paths.image(anim.assetPath));
-						}
+						cacheSprite(Paths.image(anim?.assetPath));
 					}
 				case 'animateatlas':
 					cacheSprite(Paths.image(charData.assetPath + '/spritemap1'));
@@ -429,8 +426,7 @@ class CharacterHandler extends Module {
 	 */
 	function onSongEnd() {
 		if (PlayerRegistry.instance.isCharacterOwned(characterIDs.bf)
-			&& PlayState.instance.currentStage.getBoyfriend() != null
-			&& PlayState.instance.currentStage.getBoyfriend().characterId == characterIDs.bf) {
+			&& PlayState.instance.currentStage.getBoyfriend()?.characterId == characterIDs.bf) {
 			PlayState.instance.currentChart.characters.player = characterIDs.bf;
 		}
 	}

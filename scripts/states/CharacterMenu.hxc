@@ -304,11 +304,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 */
 	function charJSONCheck(string:String):Bool {
 		if (Assets.exists(Paths.json('characters/' + string))) {
-			for (json in DataAssets.listDataFilesInPath('characters/')) {
-				if (json == string) {
-					return true;
-				}
-			}
+			var characterFiles = DataAssets.listDataFilesInPath('characters/');
+			return characterFiles.indexOf(string) != -1;
 		}
 		return false;
 	}

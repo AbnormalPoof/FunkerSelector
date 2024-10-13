@@ -63,7 +63,7 @@ class CharacterHandler extends Module {
 	 * 
 	 * TODO: Add a proper version rule. (Like ranges and stuff.)
 	 */
-	var supportedVersion:String = "0.5.1";
+	var supportedVersion:String = "0.5.2";
 
 	/**
 	 * currentCachedTextures gets cleared everytime we load into a song.

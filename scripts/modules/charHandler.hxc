@@ -175,7 +175,7 @@ class CharacterHandler extends Module {
 
 	function onUpdate(event) {
 		super.onUpdate(event);
-		if (Std.isOfType(FlxG.state.subState, FreeplayState)) {
+		if (FlxG.state.subState is FreeplayState) {
 			// Open the CharacterMenu substate.
 			// We need to make a new one everytime since it gets destroyed when it's closed.
 			if (FlxG.keys.justPressed.G && charText.visible) {
@@ -194,7 +194,7 @@ class CharacterHandler extends Module {
 		super.onSubStateOpenEnd(event);
 		var state = event.targetState;
 		// Set up the Character Select button.
-		if (Std.isOfType(state, FreeplayState)) {
+		if (state is FreeplayState) {
 			charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
 			charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
 			charSelectIcon.animation.addByPrefix('idle', 'idle', 24, true);
@@ -226,7 +226,7 @@ class CharacterHandler extends Module {
 		}
 
 		// Results screen bullshit.
-		if (Std.isOfType(state, ResultState)) {
+		if (state is ResultState) {
 			// More playable character shit
 			// The results anim will still play, it's just Freeplay won't bug out when we do this.
 			// If the original player is part of a Playable Character, we don't do this.
@@ -246,7 +246,7 @@ class CharacterHandler extends Module {
 	 */
 	override function onStateChangeBegin(event) {
 		super.onStateChangeBegin(event);
-		if (Std.isOfType(event.targetState, PlayState)) {
+		if (event.targetState is PlayState) {
 			PauseSubState.musicSuffix = '';
 			GameOverSubState.musicSuffix = '';
 			GameOverSubState.blueBallSuffix = '';
@@ -262,7 +262,7 @@ class CharacterHandler extends Module {
 		super.onStateChangeEnd(event);
 
 		// Options Menu stuff
-		if (Std.isOfType(event.targetState, OptionsState)) {
+		if (event.targetState is OptionsState) {
 			var prefs = event.targetState.pages.get("preferences");
 			if (prefs != null) {
 				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length + 30, "-- FUNKER SELECTOR --", "bold", () -> {})).fireInstantly = true;
@@ -478,16 +478,16 @@ class CharacterHandler extends Module {
 				var songMatch = false;
 				var variationMatch = false;
 
-				if (Std.isOfType(variation.songID, Array)) {
+				if (variation.songID is Array) {
 					songMatch = (variation.songID.indexOf(PlayState.instance.currentSong.id) != -1);
-				} else if (Std.isOfType(variation.songID, String)) {
+				} else if (variation.songID is String) {
 					songMatch = (variation.songID == PlayState.instance.currentSong.id);
 				}
 
 				if (variation.songVariation != null) {
-					if (Std.isOfType(variation.songVariation, Array)) {
+					if (variation.songVariation is Array) {
 						variationMatch = (variation.songVariation.indexOf(PlayState.instance.currentVariation) != -1);
-					} else if (Std.isOfType(variation.songVariation, String)) {
+					} else if (variation.songVariation is String) {
 						variationMatch = (variation.songVariation == PlayState.instance.currentVariation);
 					}
 				} else {

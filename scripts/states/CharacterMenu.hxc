@@ -61,6 +61,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
 	var simplifyUI:Bool = Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode;
 
+	/**
+	 * DEBUG: Enables debug popups as an alternative to traces.
+	 */
+	var debugMode:Bool;
+
 	public function new() {
 		super();
 	}
@@ -68,6 +73,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	public override function create():Void {
 		super.create();
 
+		this.debugMode = ModuleHandler.getModule("CharacterHandler").scriptGet('debugMode');
 		setupUIStuff();
 		initChars();
 		updateCharInfo();
@@ -140,6 +146,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		var tempArray = [];
 
 		for (funker in funkerJSONs) {
+			if (debugMode)
+				PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Loading JSON data for ' + funker);
+
 			try {
 				data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
 			} catch (e:Dynamic) {
@@ -197,12 +206,18 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			if (data.characterType != null) {
 				switch (data.characterType) {
 					case 'bf', 'player':
+						if (debugMode)
+							PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Pushing ID ' + data.characterID + ' to "PLAYABLE CHARACTERS"');
 						if (charArrayBF.indexOf(data.characterID) == -1)
 							charArrayBF.push(data.characterID);
 					case 'gf':
+						if (debugMode)
+							PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Pushing ID ' + data.characterID + ' to "GIRLFRIEND CHARACTERS"');
 						if (charArrayGF.indexOf(data.characterID) == -1)
 							charArrayGF.push(data.characterID);
 					case 'dad', 'opponent':
+						if (debugMode)
+							PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Pushing ID ' + data.characterID + ' to "OPPONENT CHARACTERS"');
 						if (charArrayDad.indexOf(data.characterID) == -1)
 							charArrayDad.push(data.characterID);
 					default:
@@ -216,6 +231,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 							charArrayBF.push(data.characterID);
 				}
 			} else {
+				if (debugMode)
+					PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Pushing ID ' + data.characterID + 'to "PLAYABLE CHARACTERS"');
 				if (charArrayBF.indexOf(data.characterID) == -1)
 					charArrayBF.push(data.characterID);
 			}
@@ -407,6 +424,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		WindowUtil.setWindowTitle('Friday Night Funkin\' - Funker Selector Menu');
 
 		FlxTween.tween(bg, {alpha: 0.5}, 0.5, {ease: FlxEase.quartOut});
+
+		if (debugMode)
+			PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'UI has been set up.');
 	}
 
 	/**
@@ -653,5 +673,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		selected.y = charDesc.y - 60;
 
 		add(charDesc);
+
+		if (debugMode)
+			PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Updated character information.');
 	}
 }

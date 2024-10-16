@@ -597,8 +597,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		// Legacy Characters will not have their sprites loaded.
 		// If "Simplify UI" is enabled in the Options Menu, the sprites will not load as well.
-
-		// TODO: Why the fuck are they disappearing
 		if (characterData != null && !simplifyUI) {
 			characterSprite = CharacterDataParser.fetchCharacter(curCharID, true);
 			if (characterSprite != null) {

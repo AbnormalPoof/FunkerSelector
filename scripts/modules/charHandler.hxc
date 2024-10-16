@@ -27,7 +27,7 @@ import funkin.util.assets.DataAssets;
 import funkin.util.VersionUtil;
 import haxe.Json;
 import haxe.Exception;
-import haxe.ds.ObjectMap;
+import haxe.ds.StringMap;
 import lime.app.Application;
 import openfl.display.BitmapData;
 import openfl.display3D.textures.RectangleTexture;
@@ -69,7 +69,7 @@ class CharacterHandler extends Module {
 	 * It'd be annoying to have to re-cache everything everytime we exit, so we
 	 * keep track of JSON characters in a separate map instead.
 	 */
-	var cachedJSONSparrows:ObjectMap<String, FlxGraphic> = new ObjectMap();
+	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
 
 	/**
 	 * DEBUG: Enables debug popups as an alternative to traces.
@@ -87,7 +87,7 @@ class CharacterHandler extends Module {
 		// The FIRST thing we check is the game version.
 		// We use `lime.app.Application` instead of `Constants.VERSION` because the latter
 		// has added suffixes depending on if the game is a debug build or not.
-		if (!VersionUtil.validateVersionStr(Application.current.meta.get('version'), supportedVersion)) {
+		if (!VersionUtil.validateVersionStr(Application.current.meta.get('version'), supportedVersionRule)) {
 			PolymodErrorHandler.showAlert("Funker Selector Error",
 				"Funker Selector is not supported on Friday Night Funkin' v"
 				+ Application.current.meta.get('version')
@@ -95,6 +95,9 @@ class CharacterHandler extends Module {
 			this.active = false;
 			return;
 		}
+
+		// Initialize the save data.
+		initializeSave();
 	}
 
 	/**
@@ -177,8 +180,6 @@ class CharacterHandler extends Module {
 
 	function onCreate(event) {
 		super.onCreate(event);
-		// Initialize the save data.
-		initializeSave();
 
 		// Cache the sprites for JSON characters.
 		// This is only done once.
@@ -396,7 +397,7 @@ class CharacterHandler extends Module {
 			bitmap = BitmapData.fromTexture(texture);
 			var graphic:FlxGraphic = FlxGraphic.fromBitmapData(bitmap, false, path);
 			graphic.persist = true;
-			cachedJSONSparrows.set(path, graphic);
+			cachedJSONSparrows.set(path);
 			trace('[Funker Selector] Successfully cached graphic: ' + path);
 		} else {
 			trace('[ERROR] Failed to cache graphic: ' + path);

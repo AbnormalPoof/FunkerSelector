@@ -70,7 +70,7 @@ class CharacterHandler extends Module {
 	 * It'd be annoying to have to re-cache everything everytime we exit, so we
 	 * keep track of JSON characters in a separate map instead.
 	 */
-	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
+	var cachedJSONSparrows:ObjectMap<String, FlxGraphic> = new ObjectMap();
 
 	/**
 	 * DEBUG: Enables debug popups as an alternative to traces.
@@ -98,9 +98,6 @@ class CharacterHandler extends Module {
 			this.active = false;
 			return;
 		}
-
-		// Initialize the save data.
-		initializeSave();
 	}
 
 	/**
@@ -183,12 +180,13 @@ class CharacterHandler extends Module {
 
 	function onCreate(event) {
 		super.onCreate(event);
+		// Initialize the save data.
+		initializeSave();
+
 		// Cache the sprites for JSON characters.
 		// This is only done once.
-		if (!funkerSettings.potatoMode) {
-			if (funkerSettings.preloadSprites)
-				cacheJSONSparrows();
-		}
+		if (funkerSettings.preloadSprites && !funkerSettings.potatoMode)
+			cacheJSONSparrows();
 	}
 
 	function onUpdate(event) {

@@ -64,7 +64,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	/**
 	 * DEBUG: Enables debug popups as an alternative to traces.
 	 */
-	var debugMode:Bool;
+	var debugMode:Bool = ModuleHandler.getModule("CharacterHandler").scriptGet('debugMode');
 
 	public function new() {
 		super();
@@ -73,7 +73,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	public override function create():Void {
 		super.create();
 
-		this.debugMode = ModuleHandler.getModule("CharacterHandler").scriptGet('debugMode');
 		setupUIStuff();
 		initChars();
 		updateCharInfo();
@@ -114,9 +113,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 		}
 
-		if (!hotkeyCam.visible) {
+		if (!hotkeyCam.visible)
 			handleKeyShit();
-		}
 	}
 
 	/**
@@ -407,9 +405,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		charName.y = 110;
 
 		add(bg);
-		if (!simplifyUI) {
+		if (!simplifyUI)
 			createIconGrid(150, 0.2);
-		}
 		add(leftDifficultyArrow);
 		add(rightDifficultyArrow);
 		add(selectText);
@@ -543,12 +540,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		FunkinSound.playOnce(Paths.sound('confirmMenu'));
 		if (!simplifyUI) {
 			characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
-			animation = (characterData != null
-				&& characterData.characterMenu != null
-				&& characterData.characterMenu.selectedAnim != null) ? characterData.characterMenu.selectedAnim : 'hey';
-			if (characterSprite != null) {
-				characterSprite.playAnimation(animation, true, true);
-			}
+			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
+			characterSprite?.playAnimation(animation, true, true);
 		}
 		if (charIcon?.hasAnimation('winning')) {
 			// Play the winning animation if it's available.
@@ -604,6 +597,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		// Legacy Characters will not have their sprites loaded.
 		// If "Simplify UI" is enabled in the Options Menu, the sprites will not load as well.
+
+		// TODO: Why the fuck are they disappearing
 		if (characterData != null && !simplifyUI) {
 			characterSprite = CharacterDataParser.fetchCharacter(curCharID, true);
 			if (characterSprite != null) {
@@ -616,8 +611,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		if (curCharID != 'default') {
-			charName.text = charIconData.name;
-			charIcon.configure(charIconData.healthIcon);
+			charName.text = charIconData?.name;
+			charIcon.configure(charIconData?.healthIcon);
 			charIcon.size.set(1, 1);
 			if (characterData != null) {
 				charIcon.setPosition(550, 160);
@@ -662,7 +657,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (!simplifyUI) {
 			for (icon in iconGrid) {
 				if (curCharID != 'default') {
-					icon?.configure(charIconData.healthIcon);
+					icon?.configure(charIconData?.healthIcon);
 				} else {
 					icon?.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 				}

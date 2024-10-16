@@ -24,9 +24,10 @@ import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
 import funkin.util.MemoryUtil;
 import funkin.util.assets.DataAssets;
+import funkin.util.VersionUtil;
 import haxe.Json;
 import haxe.Exception;
-import haxe.ds.StringMap;
+import haxe.ds.ObjectMap;
 import lime.app.Application;
 import openfl.display.BitmapData;
 import openfl.display3D.textures.RectangleTexture;
@@ -60,10 +61,8 @@ class CharacterHandler extends Module {
 	 * The current supported game version.
 	 * NOTE: Only change this if there's breaking changes that
 	 * make it not function on older versions!!
-	 * 
-	 * TODO: Add a proper version rule. (Like ranges and stuff.)
 	 */
-	var supportedVersion:String = "0.5.2";
+	var supportedVersionRule:String = ">=0.5.2 <0.6.0";
 
 	/**
 	 * currentCachedTextures gets cleared everytime we load into a song.
@@ -88,13 +87,11 @@ class CharacterHandler extends Module {
 		// The FIRST thing we check is the game version.
 		// We use `lime.app.Application` instead of `Constants.VERSION` because the latter
 		// has added suffixes depending on if the game is a debug build or not.
-		if (isVersionBelow(Application.current.meta.get('version'), supportedVersion)) {
+		if (!VersionUtil.validateVersionStr(Application.current.meta.get('version'), supportedVersion)) {
 			PolymodErrorHandler.showAlert("Funker Selector Error",
 				"Funker Selector is not supported on Friday Night Funkin' v"
 				+ Application.current.meta.get('version')
-				+ ".\n\nPlease update to v"
-				+ supportedVersion
-				+ "!");
+				+ ".\n\nPlease update to the latest version.");
 			this.active = false;
 			return;
 		}
@@ -623,33 +620,5 @@ class CharacterHandler extends Module {
 		result.opponentVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.opponent);
 
 		return result;
-	}
-
-	/**
-	 * Shitty helper function for comparing 2 version strings.
-	 * It works so whatever.
-	 * @param versionOne The version we're using.
-	 * @param versionTwo The version we're comparing versionOne with.
-	 * @return Bool
-	 */
-	function isVersionBelow(versionOne:String, versionTwo:String):Bool {
-		var verOneSplit = versionOne.split(".");
-		var verTwoSplit = versionTwo.split(".");
-
-		for (i in 0...Math.max(verOneSplit.length, verTwoSplit.length)) {
-			var verOnePart = i < verOneSplit.length ? Std.parseInt(verOneSplit[i]) : 0;
-			var verTwoPart = i < verTwoSplit.length ? Std.parseInt(verTwoSplit[i]) : 0;
-
-			// If Version 1 is below Version 2, we return true.
-			if (verOnePart < verTwoPart)
-				return true;
-
-			// If Version 1 is ABOVE Version 2, we return false.
-			if (verOnePart > verTwoPart)
-				return false;
-		}
-
-		// Else, we return false anyway if they're the same!
-		return false;
 	}
 }

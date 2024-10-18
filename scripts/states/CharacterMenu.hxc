@@ -54,9 +54,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 	var charIndex:Int = 0;
 	var pageIndex:Int = 0;
-	var songBPM = ModuleHandler.getModule("CharacterHandler").scriptGet('freeplayBPM');
-	var bopInterval:Float = 60 / songBPM;
-	var bopTimer:Float = 0;
+	var songBPM:Float = ModuleHandler.getModule("CharacterHandler").scriptGet('freeplayBPM');
 
 	var curCharID:String = 'default';
 	var characterSprite:BaseCharacter;
@@ -83,43 +81,37 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	public override function update(elapsed:Float):Void {
 		super.update(elapsed);
 
-		bopTimer += elapsed;
+		conductorInUse.update();
+
+		curCharArray = getCurrentPage();
 
 		numberThing.text = "< " + (charIndex + 1) + " / " + curCharArray.length + " >";
 		numberThing.screenCenter(0x01);
 
-		curCharArray = getCurrentPage();
-
-		if (bopTimer >= bopInterval) {
-			bopTimer = 0;
-			danceToBeat();
-		}
-
-		if (FlxG.keys.justPressed.ESCAPE) {
-			if (hotkeyCam.visible) {
-				hotkeyCam.visible = false;
-			} else {
-				FunkinSound.playOnce(Paths.sound('cancelMenu'));
-
-				// Scripted characters overwrite the suffixes when
-				// they're shown. So we want to manually reset them!
-				PauseSubState.musicSuffix = '';
-				GameOverSubState.musicSuffix = '';
-				GameOverSubState.blueBallSuffix = '';
-
-				WindowUtil.setWindowTitle('Friday Night Funkin\'');
-				close();
-			}
-		}
-
-		if (!hotkeyCam.visible)
-			handleKeyShit();
+		handleKeyShit();
 	}
 
-	function danceToBeat():Void {
+	function beatHit():Void {
 		bopDaThing();
 		if (characterSprite != null)
 			characterSprite.dance();
+	}
+
+	/**
+	 * Get the current page index and return the associated array.
+	 * @return Returns an array associated with the page index.
+	 */
+	function getCurrentPage():Array<String> {
+		switch (pageIndex) {
+			case 0:
+				return charArrayBF;
+			case 1:
+				return charArrayDad;
+			case 2:
+				return charArrayGF;
+			default:
+				return [];
+		}
 	}
 
 	/**
@@ -294,23 +286,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	}
 
 	/**
-	 * Get the current page index and return the associated array.
-	 * @return Returns an array associated with the page index.
-	 */
-	function getCurrentPage():Array<String> {
-		switch (pageIndex) {
-			case 0:
-				return charArrayBF;
-			case 1:
-				return charArrayDad;
-			case 2:
-				return charArrayGF;
-			default:
-				return [];
-		}
-	}
-
-	/**
 	 * This is basically just comparing strings.
 	 * I wrote this function because OpenFL Assets is case-insensitive
 	 * on Windows and macOS. This is for an edge case where the JSON filename
@@ -429,6 +404,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		if (debugMode)
 			PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'UI has been set up.');
+
+		conductorInUse.forceBPM(songBPM);
 	}
 
 	/**
@@ -478,79 +455,99 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * Reponsible for handling inputs in the menu.
 	 */
 	function handleKeyShit():Void {
-		if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT) {
-			FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-			charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + curCharArray.length) % curCharArray.length;
-			curCharID = curCharArray[charIndex];
-			updateCharInfo();
-		}
+		if (FlxG.keys.justPressed.ESCAPE) {
+			if (hotkeyCam.visible) {
+				hotkeyCam.visible = false;
+			} else {
+				FunkinSound.playOnce(Paths.sound('cancelMenu'));
 
-		leftDifficultyArrow.animation.play(FlxG.keys.pressed.LEFT ? 'press' : 'idle');
-		rightDifficultyArrow.animation.play(FlxG.keys.pressed.RIGHT ? 'press' : 'idle');
+				// Scripted characters overwrite the suffixes when
+				// they're shown. So we want to manually reset them!
+				PauseSubState.musicSuffix = '';
+				GameOverSubState.musicSuffix = '';
+				GameOverSubState.blueBallSuffix = '';
 
-		if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E) {
-			FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-			pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
-			charIndex = 0;
-			curCharID = curCharArray[charIndex];
-			updateCharInfo();
-		}
-
-		if (FlxG.keys.justPressed.J) {
-			FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-			jumpToCurSelected();
-		}
-
-		if (FlxG.keys.justPressed.F) {
-			var shouldPlaySound:Bool = false;
-			if (characterIDs.bf != 'default') {
-				characterIDs.bf = 'default';
-				shouldPlaySound = true;
-			}
-			if (characterIDs.dad != 'default') {
-				characterIDs.dad = 'default';
-				shouldPlaySound = true;
-			}
-			if (characterIDs.gf != 'default') {
-				characterIDs.gf = 'default';
-				shouldPlaySound = true;
-			}
-			if (shouldPlaySound) {
-				FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
-				selectedTextVisibility();
-				Save.instance.modOptions.set("FunkerSelector", characterIDs);
-				Save.instance.flush();
+				WindowUtil.setWindowTitle('Friday Night Funkin\'');
+				ModuleHandler.callEvent(new ScriptEvent(EXITED_SUBSTATE));
+				close();
 			}
 		}
 
-		if (FlxG.keys.justPressed.D) {
-			hotkeyCam.visible = true;
-		}
-
-		if (FlxG.keys.justPressed.ENTER) {
-			var shouldConfirm:Bool = false;
-			switch (pageIndex) {
-				case 0:
-					if (curCharID != characterIDs.bf) {
-						characterIDs.bf = curCharID;
-						shouldConfirm = true;
-					}
-				case 1:
-					if (curCharID != characterIDs.dad) {
-						characterIDs.dad = curCharID;
-						shouldConfirm = true;
-					}
-				case 2:
-					if (curCharID != characterIDs.gf) {
-						characterIDs.gf = curCharID;
-						shouldConfirm = true;
-					}
+		if (!hotkeyCam.visible) {
+			if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT) {
+				FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+				charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + curCharArray.length) % curCharArray.length;
+				curCharID = curCharArray[charIndex];
+				updateCharInfo();
 			}
-			if (shouldConfirm) {
-				confirmThing();
-				selectedTextVisibility();
-				Save.instance.modOptions.set("FunkerSelector", characterIDs);
-				Save.instance.flush();
+
+			leftDifficultyArrow.animation.play(FlxG.keys.pressed.LEFT ? 'press' : 'idle');
+			rightDifficultyArrow.animation.play(FlxG.keys.pressed.RIGHT ? 'press' : 'idle');
+
+			if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E) {
+				FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+				pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
+				charIndex = 0;
+				curCharID = curCharArray[charIndex];
+				updateCharInfo();
+			}
+
+			if (FlxG.keys.justPressed.J) {
+				FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+				jumpToCurSelected();
+			}
+
+			if (FlxG.keys.justPressed.F) {
+				var shouldPlaySound:Bool = false;
+				if (characterIDs.bf != 'default') {
+					characterIDs.bf = 'default';
+					shouldPlaySound = true;
+				}
+				if (characterIDs.dad != 'default') {
+					characterIDs.dad = 'default';
+					shouldPlaySound = true;
+				}
+				if (characterIDs.gf != 'default') {
+					characterIDs.gf = 'default';
+					shouldPlaySound = true;
+				}
+				if (shouldPlaySound) {
+					FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
+					selectedTextVisibility();
+					Save.instance.modOptions.set("FunkerSelector", characterIDs);
+					Save.instance.flush();
+				}
+			}
+
+			if (FlxG.keys.justPressed.D) {
+				hotkeyCam.visible = true;
+			}
+
+			if (FlxG.keys.justPressed.ENTER) {
+				var shouldConfirm:Bool = false;
+				switch (pageIndex) {
+					case 0:
+						if (curCharID != characterIDs.bf) {
+							characterIDs.bf = curCharID;
+							shouldConfirm = true;
+						}
+					case 1:
+						if (curCharID != characterIDs.dad) {
+							characterIDs.dad = curCharID;
+							shouldConfirm = true;
+						}
+					case 2:
+						if (curCharID != characterIDs.gf) {
+							characterIDs.gf = curCharID;
+							shouldConfirm = true;
+						}
+				}
+				if (shouldConfirm) {
+					confirmThing();
+					selectedTextVisibility();
+					Save.instance.modOptions.set("FunkerSelector", characterIDs);
+					Save.instance.flush();
+				}
 			}
 		}
 	}

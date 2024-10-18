@@ -75,6 +75,11 @@ class CharacterHandler extends Module {
 	 */
 	var debugMode:Bool = false;
 
+	/**
+	 * Some janky shit for passing the BPM through CharacterMenu don't worry about it.
+	 */
+	var freeplayBPM:Float = null;
+
 	var ogCharID:String = null;
 
 	var charText:AtlasText;
@@ -179,8 +184,9 @@ class CharacterHandler extends Module {
 		if (FlxG.state.subState is FreeplayState) {
 			// Open the CharacterMenu substate.
 			// We need to make a new one everytime since it gets destroyed when it's closed.
-			if (FlxG.keys.justPressed.G && charText.visible) {
-				var charSelect:FlxSubState = ScriptedMusicBeatSubState.init("CharacterSelectSubState", [getBPM((FlxG.state.subState))]);
+			if (FlxG.keys.justPressed.G && charText.visible && !FlxG.state.subState.busy) {
+				freeplayBPM = getBPM((FlxG.state.subState));
+				var charSelect:FlxSubState = ScriptedMusicBeatSubState.init("CharacterSelectSubState");
 				charSelect.camera = FlxG.state.subState.funnyCam;
 				FlxG.state.subState.persistentUpdate = false;
 				FlxG.state.subState.openSubState(charSelect);

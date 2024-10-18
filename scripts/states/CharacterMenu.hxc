@@ -72,9 +72,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 */
 	var EXITED_SUBSTATE:String = "EXITED_SUBSTATE";
 
-	/**
-	 * @param BPM The BPM to use.
-	 */
 	public function new() {
 		super();
 	}

@@ -212,9 +212,6 @@ class CharacterHandler extends Module {
 		var daSongCapsule = freeplay.grpCapsules.members[freeplay.curSelected];
 		var songBPM = daSongCapsule.freeplayData.songStartingBpm;
 
-		PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Song Capsule?: ' + (daSongCapsule != null));
-		PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Song BPM?: ' + (songBPM != null));
-
 		return songBPM;
 	}
 

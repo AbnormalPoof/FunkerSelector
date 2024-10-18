@@ -75,8 +75,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	public override function create():Void {
 		super.create();
 
-		PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'BPM: ' + songBPM);
-
 		setupUIStuff();
 		initChars();
 		updateCharInfo();

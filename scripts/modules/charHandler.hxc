@@ -72,6 +72,11 @@ class CharacterHandler extends Module {
 	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
 
 	/**
+	 * Weird janky shit for passing the BPM through CharacterMenu.
+	 */
+	var freeplayBPM:Float;
+
+	/**
 	 * DEBUG: Enables debug popups as an alternative to traces.
 	 */
 	var debugMode:Bool = false;
@@ -190,15 +195,27 @@ class CharacterHandler extends Module {
 	function onUpdate(event) {
 		super.onUpdate(event);
 		if (FlxG.state.subState is FreeplayState) {
+
 			// Open the CharacterMenu substate.
 			// We need to make a new one everytime since it gets destroyed when it's closed.
 			if (FlxG.keys.justPressed.G && charText.visible) {
+				freeplayBPM = getBPM((FlxG.state.subState));
 				var charSelect:FlxSubState = ScriptedMusicBeatSubState.init("CharacterSelectSubState");
 				charSelect.camera = FlxG.state.subState.funnyCam;
 				FlxG.state.subState.persistentUpdate = false;
 				FlxG.state.subState.openSubState(charSelect);
 			}
 		}
+	}
+
+	function getBPM(freeplay:Dynamic):Float {
+		var daSongCapsule = freeplay.grpCapsules.members[freeplay.curSelected];
+		var songBPM = daSongCapsule.freeplayData.songStartingBpm;
+
+		PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Song Capsule?: ' + (daSongCapsule != null));
+		PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Song BPM?: ' + (songBPM != null));
+
+		return songBPM;
 	}
 
 	/**

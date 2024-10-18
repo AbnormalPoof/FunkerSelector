@@ -54,6 +54,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 	var charIndex:Int = 0;
 	var pageIndex:Int = 0;
+	var songBPM = ModuleHandler.getModule("CharacterHandler").scriptGet('freeplayBPM');
+	var bopInterval:Float = 60 / songBPM;
 	var bopTimer:Float = 0;
 
 	var curCharID:String = 'default';
@@ -73,6 +75,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	public override function create():Void {
 		super.create();
 
+		PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'BPM: ' + songBPM);
+
 		setupUIStuff();
 		initChars();
 		updateCharInfo();
@@ -81,7 +85,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	public override function update(elapsed:Float):Void {
 		super.update(elapsed);
 
-		// I would use Conductor's forceBPM() instead of a timer, but it doesn't really work...
 		bopTimer += elapsed;
 
 		numberThing.text = "< " + (charIndex + 1) + " / " + curCharArray.length + " >";
@@ -89,11 +92,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		curCharArray = getCurrentPage();
 
-		if (bopTimer >= 0.5) {
-			bopDaThing();
-			if (characterSprite != null)
-				characterSprite.dance();
+		if (bopTimer >= bopInterval) {
 			bopTimer = 0;
+			danceToBeat();
 		}
 
 		if (FlxG.keys.justPressed.ESCAPE) {
@@ -115,6 +116,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		if (!hotkeyCam.visible)
 			handleKeyShit();
+	}
+
+	function danceToBeat():Void {
+		bopDaThing();
+		if (characterSprite != null)
+			characterSprite.dance();
 	}
 
 	/**

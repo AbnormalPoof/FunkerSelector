@@ -12,6 +12,7 @@ import funkin.play.GameOverSubState;
 import funkin.play.PauseSubState;
 import funkin.play.character.BaseCharacter;
 import funkin.play.character.CharacterDataParser;
+import funkin.modding.events.ScriptEvent;
 import funkin.play.components.HealthIcon;
 import funkin.save.Save;
 import funkin.ui.MusicBeatSubState;
@@ -61,6 +62,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
 	var simplifyUI:Bool = Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode;
 
+	/**
+	 * Script Event called when this SubState is closed.
+	 */
+	var EXITED_SUBSTATE:String = "EXITED_SUBSTATE";
+  
 	public function new() {
 		super();
 	}

@@ -20,6 +20,8 @@ import funkin.save.Save;
 import funkin.ui.AtlasText;
 import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.options.OptionsState;
+import funkin.ui.freeplay.FreeplayDJ;
+import funkin.ui.freeplay.FreeplayDJState;
 import funkin.util.Constants;
 import funkin.util.MemoryUtil;
 import funkin.util.assets.DataAssets;
@@ -69,6 +71,11 @@ class CharacterHandler extends Module {
 	 * keep track of JSON characters in a separate map instead.
 	 */
 	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
+
+	/**
+	 * Some janky shit for passing the BPM through CharacterMenu don't worry about it.
+	 */
+	var freeplayBPM:Float = null;
 
 	/**
 	 * Some janky shit for passing the BPM through CharacterMenu don't worry about it.
@@ -315,6 +322,70 @@ class CharacterHandler extends Module {
 			return Json.parse(Assets.getText(Paths.json('funkerSelector/' + characterID)));
 		}
 		return null;
+	}
+
+	function onScriptEvent(event) {
+		if (event.type == "EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
+			var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+			if (ownedCharID != null && ownedCharID != FlxG.state.subState.dj.characterId) {
+				transitionToNewDJ(FlxG.state.subState);
+			}
+		}
+	}
+
+	/**
+	 * Swap out the Freeplay DJ.
+	 * @param freeplay The Freeplay SubState we're using. 
+	 */
+	function transitionToNewDJ(freeplay:FreeplayState):Void {
+		var freeplayDJ = freeplay.dj;
+		var playableCharData = freeplayDJ.playableCharData;
+
+		if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect'))) {
+			freeplay.busy = true;
+			freeplayDJ.currentState = FreeplayDJState.CharSelect;
+			var animPrefix = freeplayDJ.playableCharData.getAnimationPrefix('charSelect');
+			freeplayDJ.playFlashAnimation(animPrefix, true, false, false);
+			freeplayDJ.anim.onComplete.add(function() {
+				if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect')) {
+
+					var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+					var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
+
+					freeplayDJ.destroy();
+					FlxG.state.subState.remove(freeplayDJ);
+					FlxG.state.subState.dj = new FreeplayDJ(640, 366, playableCharId);
+					FlxG.state.subState.exitMovers.set([FlxG.state.subState.dj], {
+						x: -FlxG.state.subState.dj.width * 1.6,
+						speed: 0.5
+					});
+					FlxG.state.subState.exitMoversCharSel.set([FlxG.state.subState.dj], {
+						y: -175,
+						speed: 0.8,
+						wait: 0.1
+					});
+					FlxG.state.subState.dj.camera = FlxG.state.subState.funnyCam;
+					FlxG.state.subState.add(FlxG.state.subState.dj);
+					FlxG.state.subState.backingCard.applyExitMovers(FlxG.state.subState.exitMovers, FlxG.state.subState.exitMoversCharSel);
+					FlxG.state.subState.dj.currentState = FreeplayDJState.Intro;
+					var animPrefix = FlxG.state.subState.dj.playableCharData.getAnimationPrefix('intro');
+					FlxG.state.subState.dj.playFlashAnimation(animPrefix, true, false, false, 3);
+					reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3));
+					FlxG.state.subState.busy = false;
+				}
+			});
+		}
+	}
+
+	/**
+	 * Replaces the backing text.
+	 * @param freeplay The Freeplay SubState we're using.
+	 * @param text1 The 1st string.
+	 * @param text2 The 2nd string.
+	 * @param text3 The 3rd string.
+	 */
+	function reapplyBackingText(freeplay:FreeplayState, text1:String, text2:String, text3:String) {
+
 	}
 
 	/**

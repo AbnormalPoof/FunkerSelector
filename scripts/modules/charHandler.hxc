@@ -1,7 +1,6 @@
 import Array;
 import flixel.FlxG;
 import flixel.graphics.FlxGraphic;
-import flixel.util.FlxSave;
 import funkin.audio.FunkinSound;
 import funkin.audio.VoicesGroup;
 import funkin.data.freeplay.player.PlayerRegistry;
@@ -103,8 +102,6 @@ class CharacterHandler extends Module {
 	 * Retrieves Character IDs and Preferences from the save data.
 	 */
 	function initializeSave():Void {
-		var save:FlxSave = new FlxSave();
-
 		var defaultCharacterIDs:Dynamic = {
 			bf: 'default',
 			gf: 'default',
@@ -117,15 +114,6 @@ class CharacterHandler extends Module {
 		};
 
 		if (Save.instance.modOptions.get("FunkerSelector") == null) {
-			// Backwards compatability with the old save system from v1.1 and under.
-			if (save.bind("characterselect", "kagaminerinlen")) {
-				if (save.data.characterselect != null) {
-					defaultCharacterIDs.bf = save.data.characterselect;
-					save.data.characterselect = null;
-					save.close();
-				}
-			}
-
 			Save.instance.modOptions.set("FunkerSelector", defaultCharacterIDs);
 			Save.instance.flush();
 			characterIDs = defaultCharacterIDs;

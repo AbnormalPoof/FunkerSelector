@@ -77,7 +77,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		setupUIStuff();
 		initChars();
-		updateCharInfo();
+		jumpToCurSelected();
 	}
 
 	public override function update(elapsed:Float):Void {
@@ -450,6 +450,31 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	}
 
 	/**
+	 * Flash the screen with a specific color.
+	 */
+	function flashScreen(color:FlxColor, duration:Float, ?alpha:Float = 1) {
+		var duration:Float = duration;
+		var alpha:Float = alpha;
+
+		var white = new FunkinSprite(0, 0);
+		white.makeSolidColor(FlxG.width, FlxG.height, color);
+		white.alpha = 0;
+		this.add(white);
+
+		FlxTween.tween(white, {alpha: alpha}, duration, {
+			ease: FlxEase.quadOut,
+			onComplete: function(twn:FlxTween) {
+				FlxTween.tween(white, {alpha: alpha}, duration, {
+					ease: FlxEase.quadOut,
+					onComplete: function(twn:FlxTween) {
+						this.remove(white);
+					}
+				});
+			}
+		});
+	}
+
+	/**
 	 * Reponsible for handling inputs in the menu.
 	 */
 	function handleKeyShit():Void {
@@ -473,18 +498,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		if (FlxG.keys.justPressed.J) {
 			FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-			switch (pageIndex) {
-				case 0:
-					charIndex = charArrayBF.indexOf(characterIDs.bf);
-					curCharID = characterIDs.bf;
-				case 1:
-					charIndex = charArrayDad.indexOf(characterIDs.dad);
-					curCharID = characterIDs.dad;
-				case 2:
-					charIndex = charArrayGF.indexOf(characterIDs.gf);
-					curCharID = characterIDs.gf;
-			}
-			updateCharInfo();
+			jumpToCurSelected();
 		}
 
 		if (FlxG.keys.justPressed.F) {
@@ -541,12 +555,31 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 	}
 
+	/**
+	 * Jumps to the currently selected character.
+	 */
+	function jumpToCurSelected():Void {
+		switch (pageIndex) {
+			case 0:
+				charIndex = charArrayBF.indexOf(characterIDs.bf);
+				curCharID = characterIDs.bf;
+			case 1:
+				charIndex = charArrayDad.indexOf(characterIDs.dad);
+				curCharID = characterIDs.dad;
+			case 2:
+				charIndex = charArrayGF.indexOf(characterIDs.gf);
+				curCharID = characterIDs.gf;
+		}
+		updateCharInfo();
+	}
+
 	function confirmThing():Void {
 		FunkinSound.playOnce(Paths.sound('confirmMenu'));
 		if (!simplifyUI) {
 			characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
 			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
-			characterSprite?.playAnimation(animation, true, true);
+			if (characterSprite != null)
+				characterSprite.playAnimation(animation, true, true);
 		}
 		if (charIcon?.hasAnimation('winning')) {
 			// Play the winning animation if it's available.
@@ -572,6 +605,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				});
 			}
 		}
+
+		flashScreen(0xFFFFFFFF, 0.03, 0.1);
 	}
 
 	function selectedTextVisibility():Void {

@@ -62,7 +62,7 @@ class CharacterHandler extends Module {
 	 * NOTE: Only change this if there's breaking changes that
 	 * make it not function on older versions!!
 	 */
-	var supportedVersionRule:String = ">=0.5.2 <0.6.0";
+	var supportedVersionRule:String = ">=0.5.2 <0.5.3";
 
 	/**
 	 * currentCachedTextures gets cleared everytime we load into a song.
@@ -70,11 +70,6 @@ class CharacterHandler extends Module {
 	 * keep track of JSON characters in a separate map instead.
 	 */
 	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
-
-	/**
-	 * Weird janky shit for passing the BPM through CharacterMenu.
-	 */
-	var freeplayBPM:Float;
 
 	/**
 	 * DEBUG: Enables debug popups as an alternative to traces.
@@ -197,8 +192,7 @@ class CharacterHandler extends Module {
 			// Open the CharacterMenu substate.
 			// We need to make a new one everytime since it gets destroyed when it's closed.
 			if (FlxG.keys.justPressed.G && charText.visible) {
-				freeplayBPM = getBPM((FlxG.state.subState));
-				var charSelect:FlxSubState = ScriptedMusicBeatSubState.init("CharacterSelectSubState");
+				var charSelect:FlxSubState = ScriptedMusicBeatSubState.init("CharacterSelectSubState", [getBPM((FlxG.state.subState))]);
 				charSelect.camera = FlxG.state.subState.funnyCam;
 				FlxG.state.subState.persistentUpdate = false;
 				FlxG.state.subState.openSubState(charSelect);
@@ -206,6 +200,11 @@ class CharacterHandler extends Module {
 		}
 	}
 
+	/**
+	 * Gets the BPM of the currently selected song in Freeplay.
+	 * @param freeplay The Freeplay SubState to use as a dynamic object.
+	 * @return The BPM.
+	 */
 	function getBPM(freeplay:Dynamic):Float {
 		var daSongCapsule = freeplay.grpCapsules.members[freeplay.curSelected];
 		var songBPM = daSongCapsule?.freeplayData?.songStartingBpm;

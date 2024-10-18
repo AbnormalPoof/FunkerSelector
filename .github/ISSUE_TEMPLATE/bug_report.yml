@@ -1,6 +1,6 @@
 name: Bug
 description: Report a bug with Funker Selector.
-labels: ["Bug", "Awaiting Review"]
+labels: ["status: pending triage", "type: minor bug"]
 title: "Bug: "
 body:
   - type: input

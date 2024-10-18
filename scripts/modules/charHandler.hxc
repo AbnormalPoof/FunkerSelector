@@ -71,11 +71,6 @@ class CharacterHandler extends Module {
 	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
 
 	/**
-	 * DEBUG: Enables debug popups as an alternative to traces.
-	 */
-	var debugMode:Bool = false;
-
-	/**
 	 * Some janky shit for passing the BPM through CharacterMenu don't worry about it.
 	 */
 	var freeplayBPM:Float = null;
@@ -123,26 +118,20 @@ class CharacterHandler extends Module {
 			Save.instance.flush();
 			characterIDs = defaultCharacterIDs;
 
-			if (debugMode) {
-				PolymodErrorHandler.showAlert('[DEBUG] Funker Selector',
-					'Successfully created save data:\n\nBoyfriend: '
-					+ characterIDs.bf
-					+ '\nGirlfriend: '
-					+ characterIDs.gf
-					+ '\nOpponent: '
-					+ characterIDs.dad);
-			}
+			trace('[Funker Selector] Successfully created save data:\n\nBoyfriend: '
+				+ characterIDs.bf
+				+ '\nGirlfriend: '
+				+ characterIDs.gf
+				+ '\nOpponent: '
+				+ characterIDs.dad);
 		} else {
 			characterIDs = Save.instance.modOptions.get("FunkerSelector");
-			if (debugMode) {
-				PolymodErrorHandler.showAlert('[DEBUG] Funker Selector',
-					'Successfully retrieved save data:\n\nBoyfriend: '
-					+ characterIDs.bf
-					+ '\nGirlfriend: '
-					+ characterIDs.gf
-					+ '\nOpponent: '
-					+ characterIDs.dad);
-			}
+			trace('[Funker Selector] Successfully retrieved save data:\n\nBoyfriend: '
+				+ characterIDs.bf
+				+ '\nGirlfriend: '
+				+ characterIDs.gf
+				+ '\nOpponent: '
+				+ characterIDs.dad);
 		}
 
 		if (Save.instance.modOptions.get("FunkerSelectorSettings") == null) {
@@ -150,23 +139,17 @@ class CharacterHandler extends Module {
 			Save.instance.flush();
 			funkerSettings = defaultSettings;
 
-			if (debugMode) {
-				PolymodErrorHandler.showAlert('[DEBUG] Funker Selector',
-					'Successfully created save data:\n\nSimplify UI: '
-					+ funkerSettings.potatoMode
-					+ '\nPreload Sprites: '
-					+ funkerSettings.preloadSprites);
-			}
+			trace('[Funker Selector] Successfully created save data:\n\nSimplify UI: '
+				+ funkerSettings.potatoMode
+				+ '\nPreload Sprites: '
+				+ funkerSettings.preloadSprites);
 		} else {
 			funkerSettings = Save.instance.modOptions.get("FunkerSelectorSettings");
 
-			if (debugMode) {
-				PolymodErrorHandler.showAlert('[DEBUG] Funker Selector',
-					'Successfully retrieved save data:\n\nSimplify UI: '
-					+ funkerSettings.potatoMode
-					+ '\nPreload Sprites: '
-					+ funkerSettings.preloadSprites);
-			}
+			trace('[Funker Selector] Successfully created save data:\n\nSimplify UI: '
+				+ funkerSettings.potatoMode
+				+ '\nPreload Sprites: '
+				+ funkerSettings.preloadSprites);
 		}
 	}
 
@@ -346,8 +329,7 @@ class CharacterHandler extends Module {
 		var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
 		var data = null;
 		for (funker in funkerJSONs) {
-			if (debugMode)
-				PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Loading JSON data for ' + funker);
+			trace('[Funker Selector] Loading JSON data for ' + funker);
 
 			// Exceptions continue the loop so there's no need for a continue; here.
 			try {
@@ -392,8 +374,7 @@ class CharacterHandler extends Module {
 	function cacheSprite(path:String) {
 		if (cachedJSONSparrows.exists(path))
 			return;
-		if (debugMode)
-			PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Caching sprite ' + path);
+		trace('[Funker Selector] Caching sprite ' + path);
 		var bitmap:BitmapData = Assets.getBitmapData(path);
 		if (bitmap != null) {
 			var texture:RectangleTexture = FlxG.stage.context3D.createRectangleTexture(bitmap.width, bitmap.height, "bgra", true);
@@ -439,8 +420,7 @@ class CharacterHandler extends Module {
 
 		// If at least ONE of them was changed (means a vocal file was found), replace the vocals.
 		if (voiceList[0] != null || voiceList[1] != null) {
-			if (debugMode)
-				PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);
+			trace('[Funker Selector] Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);
 			PlayState.instance.vocals.stop();
 			PlayState.instance.vocals = replaceVocals(voiceList);
 		}
@@ -476,8 +456,7 @@ class CharacterHandler extends Module {
 		if (id == 'default')
 			return;
 
-		if (debugMode)
-			PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Replacing type ' + type + 'with id ' + id);
+		trace('[Funker Selector] Replacing type ' + type + ' with id ' + id);
 
 		switch (type) {
 			case 'bf':
@@ -528,8 +507,7 @@ class CharacterHandler extends Module {
 					characterData = parseJSONData(variation.characterID) != null ? parseJSONData(variation.characterID) : characterData;
 
 					if (charJSONCheck(variation.characterID)) {
-						if (debugMode)
-							PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'Variation found: ' + variation.characterID);
+						trace('[Funker Selector] Variation found: ' + variation.characterID);
 						id = variation.characterID;
 					} else {
 						PolymodErrorHandler.showAlert('Funker Selector Error',
@@ -557,8 +535,7 @@ class CharacterHandler extends Module {
 				PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + type + ' character. How the fuck???');
 			}
 		} else {
-			if (debugMode)
-				PolymodErrorHandler.showAlert('[DEBUG] Funker Selector', 'ID ' + id + ' and ID ' + oldChar.characterID + ' match. Not replacing...');
+			trace('[Funker Selector] ID ' + id + ' and ID ' + oldChar.characterID + ' match. Not replacing...');
 		}
 
 		if (characterData != null && type == 'bf') {
@@ -570,14 +547,8 @@ class CharacterHandler extends Module {
 				&& characterData.blueBallSuffix != '') ? characterData.blueBallSuffix : GameOverSubState.blueBallSuffix;
 		}
 
-		if (debugMode)
-			PolymodErrorHandler.showAlert('[DEBUG] Funker Selector',
-				'Suffixes\n\nPause Music: '
-				+ PauseSubState.musicSuffix
-				+ '\nGame Over Music: '
-				+ GameOverSubState.musicSuffix
-				+ '\nGame Over SFX: '
-				+ GameOverSubState.blueBallSuffix);
+		trace('[Funker Selector] Suffixes\n\nPause Music: ' + PauseSubState.musicSuffix + '\nGame Over Music: ' + GameOverSubState.musicSuffix
+			+ '\nGame Over SFX: ' + GameOverSubState.blueBallSuffix);
 
 		switch (type) {
 			case 'bf':

@@ -1,6 +1,6 @@
 name: Enhancement
 description: Suggest a new feature for the mod.
-labels: ["Enhancement", "Awaiting Review"]
+labels: ["status: pending triage", "type: enhancement"]
 title: "Enhancement: "
 body:
   - type: markdown

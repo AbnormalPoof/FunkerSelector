@@ -389,7 +389,7 @@ class CharacterHandler extends Module {
 					FlxG.state.subState.add(freeplayDJ);
 					freeplayDJ.currentState = FreeplayDJState.Intro;
 					var animPrefix = freeplayDJ.playableCharData.getAnimationPrefix('intro');
-					freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 4);
+					freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 3);
 					reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
 						playableChar.getFreeplayDJText(3));
 					FlxG.state.subState.busy = false;

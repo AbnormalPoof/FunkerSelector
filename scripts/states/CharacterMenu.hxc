@@ -66,7 +66,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * Script Event called when this SubState is closed.
 	 */
 	var EXITED_SUBSTATE:String = "EXITED_SUBSTATE";
-  
+
 	public function new() {
 		super();
 	}

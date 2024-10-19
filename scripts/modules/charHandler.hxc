@@ -379,7 +379,11 @@ class CharacterHandler extends Module {
 	 * @param text3 The 3rd string.
 	 */
 	function reapplyBackingText(freeplay:FreeplayState, text1:String, text2:String, text3:String) {
-		var funnyScrollArray:Array<Dynamic> = [freeplay.backingCard.funnyScroll, freeplay.backingCard.funnyScroll2, freeplay.backingCard.funnyScroll3];
+		var funnyScrollArray:Array<Dynamic> = [
+			freeplay.backingCard.funnyScroll,
+			freeplay.backingCard.funnyScroll2,
+			freeplay.backingCard.funnyScroll3
+		];
 		var moreWaysArray:Array<Dynamic> = [freeplay.backingCard.moreWays, freeplay.backingCard.moreWays2];
 		for (scrollText in funnyScrollArray) {
 			setupTextGroup(scrollText, 60, FlxG.width / 2, text1, -3.8, false);
@@ -388,7 +392,7 @@ class CharacterHandler extends Module {
 		for (scrollText in moreWaysArray) {
 			setupTextGroup(scrollText, 43, FlxG.width, text2, 6.8, true);
 		}
-		
+
 		setupTextGroup(freeplay.backingCard.txtNuts, 43, FlxG.width / 2, text3, 3.5, true);
 
 		freeplay.backingCard.funnyScroll.funnyColor = 0xFFFF9963;
@@ -401,24 +405,23 @@ class CharacterHandler extends Module {
 	function setupTextGroup(textObject:Dynamic, size:Int = 10, widthShit:Int = 1, text:String = "FUCK", speed:Float = 1.0, bold:Bool = false):Void {
 		textObject.grpTexts.clear();
 		var testText:FlxText = new FlxText(0, 0, 0, text, size);
-    testText.font = "5by7";
-    testText.bold = bold;
-    testText.updateHitbox();
-    textObject.grpTexts.add(testText);
+		testText.font = "5by7";
+		testText.bold = bold;
+		testText.updateHitbox();
+		textObject.grpTexts.add(testText);
 
 		var needed:Int = Math.ceil(widthShit / testText.frameWidth) + 1;
 
-    for (i in 0...needed)
-    {
-      var lmfao:Int = i + 1;
+		for (i in 0...needed) {
+			var lmfao:Int = i + 1;
 
-      var coolText:FlxText = new FlxText((lmfao * testText.frameWidth) + (lmfao * 20), 0, 0, text, size);
+			var coolText:FlxText = new FlxText((lmfao * testText.frameWidth) + (lmfao * 20), 0, 0, text, size);
 
-      coolText.font = "5by7";
-      coolText.bold = bold;
-      coolText.updateHitbox();
-      textObject.grpTexts.add(coolText);
-    }
+			coolText.font = "5by7";
+			coolText.bold = bold;
+			coolText.updateHitbox();
+			textObject.grpTexts.add(coolText);
+		}
 
 		textObject.speed = speed;
 	}

@@ -4,6 +4,7 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
 import funkin.audio.FunkinSound;
+import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.graphics.FunkinCamera;
 import funkin.graphics.FunkinSprite;
 import funkin.modding.PolymodErrorHandler;
@@ -14,6 +15,7 @@ import funkin.play.character.BaseCharacter;
 import funkin.play.character.CharacterDataParser;
 import funkin.play.components.HealthIcon;
 import funkin.save.Save;
+import funkin.ui.freeplay.charselect.PlayableCharacter;
 import funkin.ui.MusicBeatSubState;
 import funkin.util.assets.DataAssets;
 import funkin.util.WindowUtil;
@@ -192,6 +194,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					+ ')\n\nThis character will behave as a Legacy Character if the specified Character ID isn\'t invalid or a duplicate.');
 			}
 
+			if ((data.mustUnlock != null && data.mustUnlock) && !shouldShowCharacter(data.characterID)) continue;
+
 			if (data.characterType != null) {
 				switch (data.characterType) {
 					case 'bf', 'player':
@@ -296,6 +300,20 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			return characterFiles.indexOf(string) != -1;
 		}
 		return false;
+	}
+
+	/**
+	 * Wether or not the character should be shown.
+	 * @param characterID The character ID we're using.
+	 * @return Bool
+	 */
+	function shouldShowCharacter(characterID:String):Bool {
+		if (PlayerRegistry.instance.isCharacterOwned(characterID)) {
+				var ownerID:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+				var playableCharacter:PlayableCharacter = PlayerRegistry.instance.fetchEntry(ownerID);
+				return playableCharacter != null && playableCharacter.isUnlocked();
+		}
+		return true;
 	}
 
 	/**

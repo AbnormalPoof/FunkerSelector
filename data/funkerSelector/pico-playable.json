@@ -2,6 +2,7 @@
   "version": "1.0.0",
   "characterID": "pico-playable",
   "characterType": "bf",
+  "mustUnlock": true,
   "description": {
     "text": "It's Pico from the 1999 Flash Game: 'Pico's School'! featured as an opponent in Week 3, and as a playable character in WeekEnd 1."
   },

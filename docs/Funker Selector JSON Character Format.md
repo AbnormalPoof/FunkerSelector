@@ -33,7 +33,8 @@ Now, you don't have to include ***every*** variable in here. In fact, here are o
 {
   "version": "1.0.0",
   "characterID": "bf",
-  "characterType": "bf"
+  "characterType": "bf",
+  "mustUnlock": false
 }
 ```
 
@@ -62,6 +63,12 @@ The Character ID to use, this is ***needed*** or else the character will not sho
 ```
 The character type, accepted values are: `bf`, `gf`, `dad`, `player`, and `opponent`.
 (`player` and `opponent` are just aliases for `bf` and `dad` respectively.)
+
+```json
+"mustUnlock": false
+```
+Wether or not you need to unlock the character's associated Playable Character first in order for them to be shown.
+This won't do anything if the Character ID isn't associated with a Playable Character.
 
 ---
 

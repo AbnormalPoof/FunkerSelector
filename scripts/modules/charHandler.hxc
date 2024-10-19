@@ -34,6 +34,7 @@ import lime.app.Application;
 import openfl.display.BitmapData;
 import openfl.display3D.textures.RectangleTexture;
 import openfl.display3D.textures.TextureBase;
+import funkin.util.ReflectUtil;
 import Std;
 import String;
 
@@ -118,7 +119,8 @@ class CharacterHandler extends Module {
 
 		var defaultSettings:Dynamic = {
 			potatoMode: false,
-			preloadSprites: true
+			preloadSprites: true,
+			djSwapping: false
 		};
 
 		if (Save.instance.modOptions.get("FunkerSelector") == null) {
@@ -150,14 +152,30 @@ class CharacterHandler extends Module {
 			trace('[Funker Selector] Successfully created save data:\n\nSimplify UI: '
 				+ funkerSettings.potatoMode
 				+ '\nPreload Sprites: '
-				+ funkerSettings.preloadSprites);
+				+ funkerSettings.preloadSprites
+				+ '\nDJ Replacement: '
+				+ funkerSettings.djSwapping);
 		} else {
 			funkerSettings = Save.instance.modOptions.get("FunkerSelectorSettings");
+
+			// We check if there's any missing settings in the save file
+			// and add them if needed.
+			for (key in ReflectUtil.getAnonymousFieldsOf(defaultSettings)) {
+				if (!ReflectUtil.hasAnonymousField(funkerSettings, key)) {
+					trace('[Funker Selector] Missing setting ' + key + '! Applying the default value.');
+					funkerSettings[key] = defaultSettings[key];
+				}
+			}
+
+			Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
+			Save.instance.flush();
 
 			trace('[Funker Selector] Successfully created save data:\n\nSimplify UI: '
 				+ funkerSettings.potatoMode
 				+ '\nPreload Sprites: '
-				+ funkerSettings.preloadSprites);
+				+ funkerSettings.preloadSprites
+				+ '\nDJ Replacement: '
+				+ funkerSettings.djSwapping);
 		}
 	}
 
@@ -308,6 +326,13 @@ class CharacterHandler extends Module {
 						}
 					}, funkerSettings.preloadSprites);
 
+				prefs.createPrefItemCheckbox("DJ Replacement", "When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.",
+					(value) -> {
+						funkerSettings.djSwapping = value;
+						Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
+						Save.instance.flush();
+					}, funkerSettings.djSwapping);
+
 				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold", () -> {})).fireInstantly = true;
 			}
 		}
@@ -326,12 +351,14 @@ class CharacterHandler extends Module {
 	}
 
 	function onScriptEvent(event) {
-		if (event.type == "EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
-			var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
-			var freeplayDJ = PlayerRegistry.instance.fetchEntry(ownedCharID)?.getFreeplayDJData();
-			if (ownedCharID != null && ownedCharID != FlxG.state.subState.dj.characterId) {
-				if (freeplayDJ != null) {
-					transitionToNewDJ(FlxG.state.subState);
+		if (funkerSettings.djSwapping) {
+			if (event.type == "EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
+				var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+				var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
+				if (playableChar != null && ownedCharID != FlxG.state.subState.dj.characterId) {
+					if (playableChar.getFreeplayDJData() != null) {
+						transitionToNewDJ(FlxG.state.subState);
+					}
 				}
 			}
 		}

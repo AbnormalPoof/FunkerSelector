@@ -2,6 +2,7 @@
   "version": "1.0.0",
   "characterID": "pico-christmas",
   "characterType": "bf",
+  "mustUnlock": true,
   "description": {
     "text": "Pico, all dressed up for the holidays! Featured in Eggnog (Pico Mix), and added in an update dedicated to him."
   },

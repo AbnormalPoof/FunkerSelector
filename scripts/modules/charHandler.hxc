@@ -140,7 +140,7 @@ class CharacterHandler extends Module {
 
 		return characterIDs;
 	}
-	
+
 	/**
 	 * Retrieves the preferences from the save data.
 	 * @return The saved preferences as a dynamic object.

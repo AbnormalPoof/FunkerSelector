@@ -457,7 +457,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				GameOverSubState.blueBallSuffix = '';
 
 				WindowUtil.setWindowTitle('Friday Night Funkin\'');
-				ModuleHandler.callEvent(new ScriptEvent(EXITED_SUBSTATE));
 				close();
 			}
 		}

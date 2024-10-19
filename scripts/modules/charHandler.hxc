@@ -352,7 +352,7 @@ class CharacterHandler extends Module {
 
 	function onScriptEvent(event) {
 		if (funkerSettings.djSwapping) {
-			if (event.type == "EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
+			if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
 				var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
 				var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
 				if (playableChar != null && ownedCharID != FlxG.state.subState.dj.characterId) {

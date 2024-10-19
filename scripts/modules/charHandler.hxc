@@ -429,6 +429,15 @@ class CharacterHandler extends Module {
 		freeplay.backingCard.moreWays2.funnyColor = 0xFFFFF383;
 	}
 
+	/**
+	 * Sets up `grpTexts` for a `BGScrollingText` object
+	 * @param textObject The object we are using
+	 * @param size The text size
+	 * @param widthShit The width or something IDK
+	 * @param text The text itself
+	 * @param speed The speed of the text scrolling
+	 * @param bold Wether or not the text is bold
+	 */
 	function setupTextGroup(textObject:Dynamic, size:Int = 10, widthShit:Int = 1, text:String = "FUCK", speed:Float = 1.0, bold:Bool = false):Void {
 		textObject.grpTexts.clear();
 		var testText:FlxText = new FlxText(0, 0, 0, text, size);

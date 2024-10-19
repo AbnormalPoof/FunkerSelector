@@ -77,11 +77,6 @@ class CharacterHandler extends Module {
 	 */
 	var freeplayBPM:Float = null;
 
-	/**
-	 * Some janky shit for passing the BPM through CharacterMenu don't worry about it.
-	 */
-	var freeplayBPM:Float = null;
-
 	var ogCharID:String = null;
 
 	var charText:AtlasText;

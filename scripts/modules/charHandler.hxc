@@ -88,8 +88,7 @@ class CharacterHandler extends Module {
 		// has added suffixes depending on if the game is a debug build or not.
 		if (!VersionUtil.validateVersionStr(Application.current.meta.get('version'), supportedVersionRule)) {
 			PolymodErrorHandler.showAlert("Funker Selector Error",
-				"Funker Selector is not supported on Friday Night Funkin' v" + Application.current.meta.get('version') +
-				".\n\nPlease update to the latest version.");
+				"Funker Selector is not supported on Friday Night Funkin' v" + Application.current.meta.get('version') + ".");
 			this.active = false;
 			return;
 		}

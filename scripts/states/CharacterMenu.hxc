@@ -194,7 +194,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					+ ')\n\nThis character will behave as a Legacy Character if the specified Character ID isn\'t invalid or a duplicate.');
 			}
 
-			if ((data.mustUnlock != null && data.mustUnlock) && !shouldShowCharacter(data.characterID)) continue;
+			if ((data.mustUnlock != null && data.mustUnlock) && !shouldShowCharacter(data.characterID))
+				continue;
 
 			if (data.characterType != null) {
 				switch (data.characterType) {
@@ -309,9 +310,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 */
 	function shouldShowCharacter(characterID:String):Bool {
 		if (PlayerRegistry.instance.isCharacterOwned(characterID)) {
-				var ownerID:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
-				var playableCharacter:PlayableCharacter = PlayerRegistry.instance.fetchEntry(ownerID);
-				return playableCharacter != null && playableCharacter.isUnlocked();
+			var ownerID:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+			var playableCharacter:PlayableCharacter = PlayerRegistry.instance.fetchEntry(ownerID);
+			return playableCharacter != null && playableCharacter.isUnlocked();
 		}
 		return true;
 	}

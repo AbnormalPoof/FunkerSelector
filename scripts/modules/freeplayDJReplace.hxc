@@ -47,7 +47,7 @@ class DJReplace extends Module {
 					freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 3);
 					if (FlxG.state.subState.backingCard.funnyScroll != null)
 						reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
-						playableChar.getFreeplayDJText(3));
+							playableChar.getFreeplayDJText(3));
 					FlxG.state.subState.busy = false;
 				}
 			});

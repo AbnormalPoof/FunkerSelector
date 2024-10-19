@@ -1,4 +1,6 @@
+import flixel.FlxG;
 import flixel.text.FlxText;
+import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.ui.freeplay.FreeplayDJ;

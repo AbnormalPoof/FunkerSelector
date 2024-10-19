@@ -326,8 +326,8 @@ class CharacterHandler extends Module {
 						}
 					}, funkerSettings.preloadSprites);
 
-				prefs.createPrefItemCheckbox("DJ Replacement", "When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.",
-					(value) -> {
+				prefs.createPrefItemCheckbox("DJ Replacement",
+					"When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.", (value) -> {
 						funkerSettings.djSwapping = value;
 						Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
 						Save.instance.flush();

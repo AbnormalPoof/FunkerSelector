@@ -106,6 +106,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * sprites displayed, and neither a description. Their health
 	 * icon will take place of where their sprites are supposed to be.
 	 * 
+	 * Legacy characters will be removed in v2.0.0
+	 * 
 	 * -- JSON Characters --
 	 * 
 	 * JSON Characters are loaded from `data/funkerSelector/` and

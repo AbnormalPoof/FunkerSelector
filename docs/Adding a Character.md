@@ -37,7 +37,7 @@ The resulting file hierarchy should look like this:
 #### Method 2: charSelectList
 
 > [!WARNING]  
-> This method is deprecated. I recommend using the JSON method instead.
+> Legacy character support will be removed in v2.0.0. Please use the JSON system instead!
 
 1. In your Mod, create a new folder called `_append`.
 2. Inside `_append`, create a new folder called `data`.

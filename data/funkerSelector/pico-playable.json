@@ -5,7 +5,7 @@
   "mustUnlock": true,
   "description": {
     "text": "It's Pico from the 1999 Flash Game: 'Pico's School'! featured as an opponent in Week 3, and as a playable character in WeekEnd 1.",
-    "unlockCondition": "Beat WeekEnd 1 to unlock."
+    "unlockCondition": "Beat WeekEnd 1."
   },
   "characterMenu":
   {

@@ -665,7 +665,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 						characterSprite.color = 0xFF000000;
 
 					var unlockHint = characterData.description != null
-						&& characterData.description.unlockCondition != null ? "\n\nHint: " + characterData.description.unlockCondition : "";
+						&& characterData.description.unlockCondition != null ? "\n\nUnlock Condition: " + characterData.description.unlockCondition : "";
 
 					configureText(charDesc, "This character is locked! I wonder who it could be..." + unlockHint, null, null, Paths.font("PhantomMuff.ttf"));
 				} else {

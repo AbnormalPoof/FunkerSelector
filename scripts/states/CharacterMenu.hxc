@@ -45,7 +45,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 	// Arrays that are used in combination with pageIndex.
 	var charArrays:Array<String> = [charArrayBF, charArrayDad, charArrayGF];
-	var characterIDsArray:Array<String> = [characterIDs.bf, characterIDs.gf, characterIDs.dad];
+	var characterIDsArray:Array<String> = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 
 	var lockedCharMap:StringMap<Dynamic> = new StringMap();
 
@@ -82,6 +82,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		super.update(elapsed);
 
 		conductorInUse.update();
+
+		// Updating the array with the latest changes
+		characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 
 		numberThing.text = "< " + (charIndex + 1) + " / " + charArrays[pageIndex].length + " >";
 		numberThing.screenCenter(0x01);
@@ -312,24 +315,27 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
 		bg.alpha = 0;
 
-		selectText = new FlxText(170, 400, 0, 'PLACEHOLDER');
-		selectText.setFormat(Paths.font("PhantomMuff.ttf"), 50);
+		selectText = configureText(null, null, [170, 10], 50, Paths.font("PhantomMuff.ttf"));
 		selectText.screenCenter(0x01);
-		selectText.y = 10;
 
-		numberThing = new FlxText(170, 400, 0, 'PLACEHOLDER');
-		numberThing.setFormat(Paths.font("PhantomMuff.ttf"), 45, null, 'center');
+		numberThing = configureText(null, null, [170, 60], 45, Paths.font("PhantomMuff.ttf"));
 		numberThing.color = 0xFFE3E1E1;
-		numberThing.y = 60;
 
-		selected = new FlxText(720, 220, 0, '(SELECTED)');
-		selected.setFormat(Paths.font("PhantomMuff.ttf"), 50, null, 'center');
+		selected = configureText(null, '(SELECTED)', [720, 220], 50, Paths.font("PhantomMuff.ttf"));
 		selected.color = 0xFF53FF38;
 		selected.visible = false;
 
-		hotkeyText = new FlxText(990, 15, 0, 'D - Hotkeys');
-		hotkeyText.setFormat(Paths.font("PhantomMuff.ttf"), 45, null, 'center');
+		hotkeyText = configureText(null, 'D - Hotkeys', [990, 15], 45, Paths.font("PhantomMuff.ttf"));
 		hotkeyText.color = 0xFFE3E1E1;
+
+		hotkeys = configureText(null,
+			'F - Reset everything to default.\n\nJ - Jump to the currently selected character.\n\nQ - Switch to the previous page.\n\nE - Switch to the next page.\n\nESC - Close this.',
+			[350, 80], 40, Paths.font("PhantomMuff.ttf"));
+		hotkeys.camera = hotkeyCam;
+		hotkeys.wordWrap = true;
+		hotkeys.fieldWidth = 600;
+
+		charName = configureText(null, null, [170, 110], 70, Paths.font("PhantomMuff.ttf"));
 
 		leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
 		leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
@@ -349,18 +355,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		keyBox.alpha = 0.8;
 		keyBox.screenCenter();
 
-		hotkeys = new FlxText(350, 80, 0,
-			'F - Reset everything to default.\n\nJ - Jump to the currently selected character.\n\nQ - Switch to the previous page.\n\nE - Switch to the next page.\n\nESC - Close this.');
-		hotkeys.setFormat(Paths.font("PhantomMuff.ttf"), 40);
-		hotkeys.camera = hotkeyCam;
-		hotkeys.wordWrap = true;
-		hotkeys.fieldWidth = 600;
-
 		charIcon = new HealthIcon('dad', 0);
-
-		charName = new FlxText(170, 400, 0, 'PLACEHOLDER');
-		charName.setFormat(Paths.font("PhantomMuff.ttf"), 70);
-		charName.y = 110;
 
 		add(bg);
 		if (!simplifyUI)
@@ -503,8 +498,23 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				var shouldConfirm:Bool = false;
 				if (curCharID != characterIDsArray[pageIndex]) {
 					if (!lockedCharMap.exists(curCharID)) {
-						characterIDsArray[pageIndex] = curCharID;
-						shouldConfirm = true;
+						switch (pageIndex) {
+							case 0:
+								if (characterIDs.bf != curCharID) {
+									characterIDs.bf = curCharID;
+									shouldConfirm = true;
+								}
+							case 1:
+								if (characterIDs.dad != curCharID) {
+									characterIDs.dad = curCharID;
+									shouldConfirm = true;
+								}
+							case 2:
+								if (characterIDs.gf != curCharID) {
+									characterIDs.gf = curCharID;
+									shouldConfirm = true;
+								}
+						}
 					}
 				}
 				if (shouldConfirm) {
@@ -566,19 +576,40 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	}
 
 	function selectedTextVisibility():Bool {
-		return curCharID == characterIDsArray[pageIndex];
+		switch (pageIndex) {
+			case 0:
+				return curCharID == characterIDs.bf;
+			case 1:
+				return curCharID == characterIDs.dad;
+			case 2:
+				return curCharID == characterIDs.gf;
+			default:
+				return false;
+		}
 	}
 
-	function configureText(object:FlxText, ?text:String = "", ?xOffset:Int = 0, ?yOffset:Int = 0, ?size:Int = 38, ?font:String = null):FlxText {
-
-		if (text == null) text = "";
-		if (xOffset == null) xOffset = "";
-		if (yOffset == null) yOffset = "";
-		if (size == null) size = 38;
+	/**
+	 * Helper function for configuring an FlxText
+	 * @param object The FlxText object
+	 * @param text The text itself
+	 * @param offsets The offsets as an array
+	 * @param size The size of the text
+	 * @param font The font
+	 * @return A FlxText object
+	 */
+	function configureText(object:FlxText, ?text:String = "", ?offsets:Array<Int>, ?size:Int = 38, ?font:String = null):FlxText {
+		if (text == null)
+			text = "";
+		if (offsets == null)
+			offsets = [0, 0];
+		if (size == null)
+			size = 38;
+		if (object == null)
+			object = new FlxText(0, 0, 0, "PLACEHOLDER");
 
 		object.text = text;
-		object.x += xOffset;
-		object.y += yOffset;
+		object.x += offsets[0];
+		object.y += offsets[1];
 		if (font != null)
 			object.setFormat(font, size, null, 'center');
 
@@ -618,21 +649,18 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				add(characterSprite);
 			}
 		}
-		
+
 		switch (curCharID) {
 			case 'default':
 				charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-				charName.size = 70;
 				charName.text = "DEFAULT";
-				configureText(charDesc, "This is the Default character defined by the song.", -20);
+				configureText(charDesc, "This is the Default character defined by the song.", [-20, 0], 50, Paths.font("PhantomMuff.ttf"));
 			default:
 				if (lockedCharMap.exists(curCharID)) {
 					charName.text = "LOCKED";
 
 					if (characterSprite != null)
 						characterSprite.color = 0xFF000000;
-
-					charIcon?.color = 0xFF000000;
 
 					var unlockHint = characterData.description != null
 						&& characterData.description.unlockCondition != null ? "\n\nHint: " + characterData.description.unlockCondition : "";
@@ -645,8 +673,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					charIcon.setPosition(550, 160);
 
 					var descText:String = (characterData.description?.text != null) ? characterData.description.text : "No description was specified in the JSON file.";
+					var offsets:Array<Int> = [
+						characterData.description?.offsets != null ? characterData.description?.offsets[0] : 0,
+						characterData.description?.offsets != null ? characterData.description?.offsets[1] : 0
+					];
 
-					configureText(charDesc, descText, characterData.description?.offsets?[0], characterData.description?.offsets?[1], Paths.font("PhantomMuff.ttf"), characterData.description?.size);
+					configureText(charDesc, descText, offsets, characterData.description?.size, Paths.font("PhantomMuff.ttf"));
 				}
 		}
 
@@ -663,6 +695,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				} else {
 					icon?.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 				}
+			}
+		}
+
+		if (charIcon != null) {
+			if (lockedCharMap.exists(curCharID)) {
+				charIcon.visible = false;
+			} else {
+				charIcon.visible = true;
 			}
 		}
 

@@ -43,15 +43,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var charArrayDad:Array<String> = ['default'];
 	var charArrayGF:Array<String> = ['default'];
 
+	// Arrays that are used in combination with pageIndex.
+	var charArrays:Array<String> = [charArrayBF, charArrayDad, charArrayGF];
+	var characterIDsArray:Array<String> = [characterIDs.bf, characterIDs.gf, characterIDs.dad];
+
 	var lockedCharMap:StringMap<Dynamic> = new StringMap();
 
 	// For the top text in the menu.
 	var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "GIRLFRIEND CHARACTERS"];
 	var topTextColor = [0xFF2DB2D2, 0xFFAF66CE, 0xFFA7004C];
-
-	// The current array.
-	// If this didn't exist, we'd have to put switch statements for pageIndex everywhere!
-	var curCharArray:Array<String> = [];
 
 	var pages:Array<String> = ['bf', 'dad', 'gf'];
 	var charIcon:HealthIcon;
@@ -83,9 +83,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		conductorInUse.update();
 
-		curCharArray = getCurrentPage();
-
-		numberThing.text = "< " + (charIndex + 1) + " / " + curCharArray.length + " >";
+		numberThing.text = "< " + (charIndex + 1) + " / " + charArrays[pageIndex].length + " >";
 		numberThing.screenCenter(0x01);
 
 		handleKeyShit();
@@ -95,23 +93,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		bopDaThing();
 		if (characterSprite != null)
 			characterSprite.dance();
-	}
-
-	/**
-	 * Get the current page index and return the associated array.
-	 * @return Returns an array associated with the page index.
-	 */
-	function getCurrentPage():Array<String> {
-		switch (pageIndex) {
-			case 0:
-				return charArrayBF;
-			case 1:
-				return charArrayDad;
-			case 2:
-				return charArrayGF;
-			default:
-				return [];
-		}
 	}
 
 	/**
@@ -286,7 +267,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	}
 
 	/**
-	 * This is basically just comparing strings.
+	 * Check if the JSON file in `data/characters/` ACTUALLY exists.
+	 * 
 	 * I wrote this function because OpenFL Assets is case-insensitive
 	 * on Windows and macOS. This is for an edge case where the JSON filename
 	 * in data/characters/ has different capitalization than the Character ID
@@ -488,8 +470,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (!hotkeyCam.visible) {
 			if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT) {
 				FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-				charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + curCharArray.length) % curCharArray.length;
-				curCharID = curCharArray[charIndex];
+				charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + charArrays[pageIndex].length) % charArrays[pageIndex].length;
+				curCharID = charArrays[pageIndex][charIndex];
 				updateCharInfo();
 			}
 
@@ -500,7 +482,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
 				pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
 				charIndex = 0;
-				curCharID = curCharArray[charIndex];
+				curCharID = charArrays[pageIndex][charIndex];
 				updateCharInfo();
 			}
 
@@ -525,7 +507,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				}
 				if (shouldPlaySound) {
 					FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
-					selectedTextVisibility();
+					selected.visible = selectedTextVisibility();
 					Save.instance.modOptions.set("FunkerSelector", characterIDs);
 					Save.instance.flush();
 				}
@@ -537,32 +519,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 			if (FlxG.keys.justPressed.ENTER) {
 				var shouldConfirm:Bool = false;
-				switch (pageIndex) {
-					case 0:
-						if (curCharID != characterIDs.bf) {
-							if (!lockedCharMap.exists(curCharID)) {
-								characterIDs.bf = curCharID;
-								shouldConfirm = true;
-							}
-						}
-					case 1:
-						if (curCharID != characterIDs.dad) {
-							if (!lockedCharMap.exists(curCharID)) {
-								characterIDs.dad = curCharID;
-								shouldConfirm = true;
-							}
-						}
-					case 2:
-						if (curCharID != characterIDs.gf) {
-							if (!lockedCharMap.exists(curCharID)) {
-								characterIDs.gf = curCharID;
-								shouldConfirm = true;
-							}
-						}
+				if (curCharID != characterIDsArray[pageIndex]) {
+					if (!lockedCharMap.exists(curCharID)) {
+						characterIDsArray[pageIndex] = curCharID;
+						shouldConfirm = true;
+					}
 				}
 				if (shouldConfirm) {
 					confirmThing();
-					selectedTextVisibility();
+					selected.visible = selectedTextVisibility();
 					Save.instance.modOptions.set("FunkerSelector", characterIDs);
 					Save.instance.flush();
 				} else {
@@ -577,17 +542,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * Jumps to the currently selected character.
 	 */
 	function jumpToCurSelected():Void {
-		switch (pageIndex) {
-			case 0:
-				charIndex = charArrayBF.indexOf(characterIDs.bf);
-				curCharID = characterIDs.bf;
-			case 1:
-				charIndex = charArrayDad.indexOf(characterIDs.dad);
-				curCharID = characterIDs.dad;
-			case 2:
-				charIndex = charArrayGF.indexOf(characterIDs.gf);
-				curCharID = characterIDs.gf;
-		}
+		charIndex = charArrays[pageIndex].indexOf(characterIDsArray[pageIndex]);
+		curCharID = characterIDsArray[pageIndex];
 		updateCharInfo();
 	}
 
@@ -610,14 +566,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				for (i in 0...iconGrid.length) {
 					var icon = iconGrid[i];
 					new FlxTimer().start(0.01 * i, function() {
-						icon.playAnimation('winning');
+						icon?.playAnimation('winning');
 					});
 				}
 				new FlxTimer().start(0.3, function() {
 					for (i in 0...iconGrid.length) {
 						var icon = iconGrid[i];
 						new FlxTimer().start(0.01 * i, function() {
-							icon.playAnimation('idle');
+							icon?.playAnimation('idle');
 						});
 					}
 				});
@@ -627,13 +583,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		flashScreen(0xFFFFFFFF, 0.03, 0.1);
 	}
 
-	function selectedTextVisibility():Void {
-		selected.visible = switch (pageIndex) {
-			case 0: curCharID == characterIDs.bf;
-			case 1: curCharID == characterIDs.dad;
-			case 2: curCharID == characterIDs.gf;
-			default: false;
-		}
+	function selectedTextVisibility():Bool {
+		return curCharID == characterIDsArray[pageIndex];
 	}
 
 	/**
@@ -648,7 +599,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		selectText.text = topText[pageIndex];
 		selectText.color = topTextColor[pageIndex];
 		selectText.screenCenter(0x01);
-		selectedTextVisibility();
+		selected.visible = selectedTextVisibility();
 
 		characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
 		charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
@@ -670,17 +621,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (curCharID != 'default') {
 			if (lockedCharMap.exists(curCharID)) {
 				charName.text = "LOCKED";
-				charIcon.configure(charIconData?.healthIcon);
-				charIcon.size.set(1, 1);
-				charIcon.setPosition(550, 160);
-				charIcon.visible = false;
 
-				if (characterSprite != null) characterSprite.color = 0xFF000000;
+				if (characterSprite != null)
+					characterSprite.color = 0xFF000000;
 
 				var unlockHint = characterData.description != null
-					&& characterData.description.unlockCondition != null ? characterData.description.unlockCondition : "";
+					&& characterData.description.unlockCondition != null ? "\n\nHint: " + characterData.description.unlockCondition : "";
 
-				charDesc = new FlxText(600, 300, 0, "This character is locked! I wonder who it could be...\n\nHint: " + unlockHint);
+				charDesc = new FlxText(600, 300, 0, "This character is locked! I wonder who it could be..." + unlockHint);
 				charDesc.setFormat(Paths.font("PhantomMuff.ttf"), characterData.description != null && characterData.description.size != null ? characterData.description.size : 38,
 					null, 'center');
 				charDesc.x += characterData.description != null
@@ -693,7 +641,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				charName.text = charIconData?.name;
 				charIcon.configure(charIconData?.healthIcon);
 				charIcon.size.set(1, 1);
-				charIcon.visible = true;
 				if (characterData != null) {
 					charIcon.setPosition(550, 160);
 					charDesc = new FlxText(600, 300, 0, characterData.description != null && (characterData.description.text != null
@@ -710,8 +657,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					charIcon.setPosition(250, 270);
 					charIcon.size.set(2, 2);
 					charDesc = new FlxText(600, 310, 0,
-						if (simplifyUI) "This is a legacy character. Thus, it does not have a description." else
-							"This is a legacy character. Thus, it does not have a description, nor does it have its sprites displayed here.");
+						"This is a legacy character. Thus, it does not have a description" + if (simplifyUI) ", nor does it have its sprites displayed here." else ".");
 					charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 38, null, 'center');
 					charDesc.wordWrap = true;
 					charDesc.fieldWidth = 550;
@@ -719,7 +665,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 		} else {
 			charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-			charIcon.visible = true;
 			charName.text = "DEFAULT";
 			charName.size = 70;
 			charDesc = new FlxText(580, 300, 0, "This is the Default character defined by the song.");
@@ -744,6 +689,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					icon?.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 				}
 			}
+		}
+
+		if (lockedCharMap.exists(curCharID) && charIcon != null) {
+			charIcon.visible = false;
+		} else {
+			charIcon.visible = true;
 		}
 
 		charName.screenCenter(0x01);

@@ -174,7 +174,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 
 			// DEBUG: Testing locked characters
-			lockedCharMap.set('pico-playable', data);
+			if (data.characterID == 'pico-playable')
+				lockedCharMap.set(data.characterID, data);
 
 			if (data.characterType != null) {
 				switch (data.characterType) {

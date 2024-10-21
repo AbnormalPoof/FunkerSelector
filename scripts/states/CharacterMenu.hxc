@@ -173,14 +173,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				continue;
 			}
 
-			if ((data.mustUnlock != null && data.mustUnlock) && !shouldShowCharacter(data.characterID)) {
+			if (data.mustUnlock && data.unlockMethod != null && !shouldShowCharacter(data.characterID, data.unlockMethod)) {
 				trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
 				lockedCharMap.set(data.characterID, data);
 			}
-
-			// DEBUG: Testing locked characters
-			if (data.characterID == 'pico-playable')
-				lockedCharMap.set(data.characterID, data);
 
 			if (data.characterType != null) {
 				switch (data.characterType) {
@@ -280,15 +276,29 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	/**
 	 * Wether or not the character should be shown.
 	 * @param characterID The character ID we're using.
+	 * @param unlockType The method we're using to determine if this character is unlocked.
 	 * @return Bool
+	 * 
+	 * Unlock Methods:
+	 * - playableCharacter: Checks if the associated playable character is unlocked.
+	 * - song: Checks if the song has been beaten on the specified difficulty list.
+	 * - storyWeek: Checks if the week has been beaten on the specified difficulty list.
 	 */
-	function shouldShowCharacter(characterID:String):Bool {
-		if (PlayerRegistry.instance.isCharacterOwned(characterID)) {
-			var ownerID:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
-			var playableCharacter:PlayableCharacter = PlayerRegistry.instance.fetchEntry(ownerID);
-			return playableCharacter != null && playableCharacter.isUnlocked();
+	function shouldShowCharacter(characterID:String, unlockMethod:Dynamic):Bool {
+		switch (unlockMethod.type) {
+			case 'playableCharacter':
+				if (PlayerRegistry.instance.isCharacterOwned(characterID)) {
+					var ownerID:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+					var playableCharacter:PlayableCharacter = PlayerRegistry.instance.fetchEntry(ownerID);
+					return playableCharacter != null && playableCharacter.isUnlocked();
+				}
+			case "song":
+				return Save.instance.hasBeatenSong(unlockMethod.songID, unlockMethod.difficultyList);
+			case 'storyWeek':
+				return Save.instance.hasBeatenLevel(unlockMethod.levelID, unlockMethod.difficultyList);
+			default:
+				return true;
 		}
-		return true;
 	}
 
 	/**

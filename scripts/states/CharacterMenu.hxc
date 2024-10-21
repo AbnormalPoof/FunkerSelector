@@ -111,9 +111,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * If no character ID exists in the file (or the character ID is invalid), the character will be skipped. 
 	 */
 	function initChars():Void {
-		var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
-		var data = null;
-		var tempArray = [];
+		var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
+		var data:Dynamic = null;
+		var tempArray:Array<String> = [];
 
 		for (funker in funkerJSONs) {
 			trace('[Funker Selector] Loading JSON data for ' + funker);

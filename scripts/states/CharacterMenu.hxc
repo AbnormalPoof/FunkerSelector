@@ -45,6 +45,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 	// Arrays that are used in combination with pageIndex.
 	var charArrays:Array<String> = [charArrayBF, charArrayDad, charArrayGF];
+
+	// NOTE: For writing, access characterIDs directly. This is only for reading.
 	var characterIDsArray:Array<String> = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 
 	var lockedCharMap:StringMap<Dynamic> = new StringMap();

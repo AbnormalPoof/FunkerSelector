@@ -67,7 +67,7 @@ The character type, accepted values are: `bf`, `gf`, `dad`, `player`, and `oppon
 ```json
 "mustUnlock": false
 ```
-Wether or not you need to unlock the character's associated Playable Character first in order for them to be shown.
+Wether or not you need to unlock the character's associated Playable Character first in order for them to be playable.
 This won't do anything if the Character ID isn't associated with a Playable Character.
 
 ---
@@ -109,6 +109,11 @@ This is a short description of the character, with a few properties:
 "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand..."
 ``` 
 The text itself.
+
+```json
+"unlockCondition": "Beat WeekEnd 1 to unlock."
+``` 
+The unlock condition that's shown if the character is locked. This overrides the description text!
 
 ```json
 "size": 35

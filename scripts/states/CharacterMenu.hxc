@@ -567,6 +567,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					Save.instance.flush();
 				} else {
 					FunkinSound.playOnce(Paths.sound('cancelMenu'));
+					flashScreen(0xFFFF0000, 0.03, 0.1);
 				}
 			}
 		}

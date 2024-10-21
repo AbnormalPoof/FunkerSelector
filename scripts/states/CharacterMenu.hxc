@@ -20,6 +20,7 @@ import funkin.ui.MusicBeatSubState;
 import funkin.util.assets.DataAssets;
 import funkin.util.WindowUtil;
 import haxe.Json;
+import haxe.ds.StringMap;
 import Std;
 
 /**
@@ -41,6 +42,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var charArrayBF:Array<String> = ['default'];
 	var charArrayDad:Array<String> = ['default'];
 	var charArrayGF:Array<String> = ['default'];
+
+	var lockedCharMap:StringMap<Dynamic> = new StringMap();
 
 	// For the top text in the menu.
 	var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "GIRLFRIEND CHARACTERS"];
@@ -194,8 +197,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					+ ')\n\nThis character will behave as a Legacy Character if the specified Character ID isn\'t invalid or a duplicate.');
 			}
 
-			if ((data.mustUnlock != null && data.mustUnlock) && !shouldShowCharacter(data.characterID))
-				continue;
+			if ((data.mustUnlock != null && data.mustUnlock) && !shouldShowCharacter(data.characterID)) {
+				trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
+				lockedCharMap.set(data.characterID, data);
+			}
 
 			if (data.characterType != null) {
 				switch (data.characterType) {
@@ -535,18 +540,24 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				switch (pageIndex) {
 					case 0:
 						if (curCharID != characterIDs.bf) {
-							characterIDs.bf = curCharID;
-							shouldConfirm = true;
+							if (!lockedCharMap.exists(curCharID)) {
+								characterIDs.bf = curCharID;
+								shouldConfirm = true;
+							}
 						}
 					case 1:
 						if (curCharID != characterIDs.dad) {
-							characterIDs.dad = curCharID;
-							shouldConfirm = true;
+							if (!lockedCharMap.exists(curCharID)) {
+								characterIDs.dad = curCharID;
+								shouldConfirm = true;
+							}
 						}
 					case 2:
 						if (curCharID != characterIDs.gf) {
-							characterIDs.gf = curCharID;
-							shouldConfirm = true;
+							if (!lockedCharMap.exists(curCharID)) {
+								characterIDs.gf = curCharID;
+								shouldConfirm = true;
+							}
 						}
 				}
 				if (shouldConfirm) {
@@ -554,6 +565,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					selectedTextVisibility();
 					Save.instance.modOptions.set("FunkerSelector", characterIDs);
 					Save.instance.flush();
+				} else {
+					FunkinSound.playOnce(Paths.sound('cancelMenu'));
 				}
 			}
 		}
@@ -652,14 +665,21 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 		}
 
+		// TODO: What the fuck refactor this bullfuckery
 		if (curCharID != 'default') {
-			charName.text = charIconData?.name;
-			charIcon.configure(charIconData?.healthIcon);
-			charIcon.size.set(1, 1);
-			if (characterData != null) {
+			if (lockedCharMap.exists(curCharID)) {
+				charName.text = "LOCKED";
+				charIcon.configure(charIconData?.healthIcon);
+				charIcon.size.set(1, 1);
 				charIcon.setPosition(550, 160);
-				charDesc = new FlxText(600, 300, 0, characterData.description != null && (characterData.description.text != null
-					|| characterData.description.text != '') ? characterData.description.text : "No description was specified in the JSON file.");
+				charIcon.visible = false;
+
+				if (characterSprite != null) characterSprite.color = 0xFF000000;
+
+				var unlockHint = characterData.description != null
+					&& characterData.description.unlockCondition != null ? characterData.description.unlockCondition : "";
+
+				charDesc = new FlxText(600, 300, 0, "This character is locked! I wonder who it could be...\n\nHint: " + unlockHint);
 				charDesc.setFormat(Paths.font("PhantomMuff.ttf"), characterData.description != null && characterData.description.size != null ? characterData.description.size : 38,
 					null, 'center');
 				charDesc.x += characterData.description != null
@@ -669,17 +689,36 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				charDesc.wordWrap = true;
 				charDesc.fieldWidth = 550;
 			} else {
-				charIcon.setPosition(250, 270);
-				charIcon.size.set(2, 2);
-				charDesc = new FlxText(600, 310, 0,
-					if (simplifyUI) "This is a legacy character. Thus, it does not have a description." else
-						"This is a legacy character. Thus, it does not have a description, nor does it have its sprites displayed here.");
-				charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 38, null, 'center');
-				charDesc.wordWrap = true;
-				charDesc.fieldWidth = 550;
+				charName.text = charIconData?.name;
+				charIcon.configure(charIconData?.healthIcon);
+				charIcon.size.set(1, 1);
+				charIcon.visible = true;
+				if (characterData != null) {
+					charIcon.setPosition(550, 160);
+					charDesc = new FlxText(600, 300, 0, characterData.description != null && (characterData.description.text != null
+						|| characterData.description.text != '') ? characterData.description.text : "No description was specified in the JSON file.");
+					charDesc.setFormat(Paths.font("PhantomMuff.ttf"), characterData.description != null && characterData.description.size != null ? characterData.description.size : 38,
+						null, 'center');
+					charDesc.x += characterData.description != null
+						&& characterData.description.offsets != null ? characterData.description.offsets[0] : 0;
+					charDesc.y += characterData.description != null
+						&& characterData.description.offsets != null ? characterData.description.offsets[1] : 0;
+					charDesc.wordWrap = true;
+					charDesc.fieldWidth = 550;
+				} else {
+					charIcon.setPosition(250, 270);
+					charIcon.size.set(2, 2);
+					charDesc = new FlxText(600, 310, 0,
+						if (simplifyUI) "This is a legacy character. Thus, it does not have a description." else
+							"This is a legacy character. Thus, it does not have a description, nor does it have its sprites displayed here.");
+					charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 38, null, 'center');
+					charDesc.wordWrap = true;
+					charDesc.fieldWidth = 550;
+				}
 			}
 		} else {
 			charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+			charIcon.visible = true;
 			charName.text = "DEFAULT";
 			charName.size = 70;
 			charDesc = new FlxText(580, 300, 0, "This is the Default character defined by the song.");

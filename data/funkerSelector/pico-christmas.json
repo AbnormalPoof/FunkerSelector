@@ -4,7 +4,8 @@
   "characterType": "bf",
   "mustUnlock": true,
   "description": {
-    "text": "Pico, all dressed up for the holidays! Featured in Eggnog (Pico Mix), and added in an update dedicated to him."
+    "text": "Pico, all dressed up for the holidays! Featured in Eggnog (Pico Mix), and added in an update dedicated to him.",
+    "unlockCondition": "Beat WeekEnd 1 to unlock."
   },
   "characterMenu":
   {

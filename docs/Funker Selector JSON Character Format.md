@@ -67,8 +67,56 @@ The character type, accepted values are: `bf`, `gf`, `dad`, `player`, and `oppon
 ```json
 "mustUnlock": false
 ```
-Wether or not you need to unlock the character's associated Playable Character first in order for them to be playable.
-This won't do anything if the Character ID isn't associated with a Playable Character.
+Wether or not you need to unlock the character first in order for them to be playable.
+You'll have to specify an unlock method.
+
+---
+
+#### Unlock data
+```json
+"unlockMethod": {
+  "type": "playableCharacter"
+}
+```
+This is the unlock method used to determine if the character should be unlocked. There are 3 methods:
+
+##### Method 1: Playable Character
+```json
+"type": "playableCharacter"
+```
+The character ID's associated Playable Character has to be unlocked.
+
+##### Method 2: Song
+```json
+"type": "song"
+```
+A song has to be beaten, this has 2 associated properties:
+
+```json
+"songID": "spookeez"
+```
+The song ID.
+
+```json
+"difficultyList": ["erect", "nightmare"]
+```
+The required difficulties, defaults to `["easy", "normal", "hard"]`.
+
+##### Method 3: Story Week
+```json
+"type": "storyWeek"
+```
+A week in story mode has to be beaten, this has 2 associated properties:
+
+```json
+"levelID": "weekend1"
+```
+The level ID.
+
+```json
+"difficultyList": ["hard"]
+```
+The required difficulties, defaults to `["easy", "normal", "hard"]`.
 
 ---
 

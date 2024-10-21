@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The characters now bop to the BPM of the currently selected song in Freeplay.
 - The Freeplay DJ will now change if your character is associated with a Playable Character (and has valid Freeplay DJ data).
   - You can disable this in the Options Menu.
-- New `mustUnlock` variable for JSON characters. If enabled, your character will become locked until you unlocked its associated Playable Character.
+- New `mustUnlock` variable for JSON characters. If enabled, your character will become locked until you meet a requirement specified in the JSON file.
+  - Please see the documentation on how to do this. 
   - In addition: Pico (Playable) and Pico (Christmas) are now locked, requiring you to beat WeekEnd 1 to unlock them.
   - There's also a new `unlockCondition` variable for description data.
 - The window title will change if you're in the Character Menu.

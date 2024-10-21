@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Pico (Playable) will now change to Pico (Dark) if Spookeez Erect or South Erect is selected.
 ### Removed
 - Removed backwards compatability with the legacy save system from v1.1 and under.
+- Removed legacy character support, please use the JSON system from now on.
 
 ## [1.4.1] - 2024-10-04
 ### Changed

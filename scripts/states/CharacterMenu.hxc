@@ -173,6 +173,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				lockedCharMap.set(data.characterID, data);
 			}
 
+			// DEBUG: Testing locked characters
+			lockedCharMap.set('pico-playable', data);
+
 			if (data.characterType != null) {
 				switch (data.characterType) {
 					case 'bf', 'player':
@@ -565,15 +568,19 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		return curCharID == characterIDsArray[pageIndex];
 	}
 
-	function configureText(object:FlxText, ?text:String = "", ?xOffset:Int = 0, ?yOffset:Int = 0):FlxText {
+	function configureText(object:FlxText, ?text:String = "", ?xOffset:Int = 0, ?yOffset:Int = 0, ?size:Int = 38, ?font:String = null):FlxText {
 
 		if (text == null) text = "";
 		if (xOffset == null) xOffset = "";
 		if (yOffset == null) yOffset = "";
+		if (size == null) size = 38;
 
 		object.text = text;
 		object.x += xOffset;
 		object.y += yOffset;
+		if (font != null)
+			object.setFormat(font, size, null, 'center');
+
 		return object;
 	}
 
@@ -616,9 +623,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 				charName.size = 70;
 				charName.text = "DEFAULT";
-				charDesc.text = "This is the Default character defined by the song.";
-				charDesc.x += -20;
-				charDesc.fieldWidth += 50;
+				configureText(charDesc, "This is the Default character defined by the song.", -20);
 			default:
 				if (lockedCharMap.exists(curCharID)) {
 					charName.text = "LOCKED";
@@ -626,10 +631,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					if (characterSprite != null)
 						characterSprite.color = 0xFF000000;
 
+					charIcon?.color = 0xFF000000;
+
 					var unlockHint = characterData.description != null
 						&& characterData.description.unlockCondition != null ? "\n\nHint: " + characterData.description.unlockCondition : "";
 
-					configureText(charDesc, "This character is locked! I wonder who it could be..." + unlockHint);
+					configureText(charDesc, "This character is locked! I wonder who it could be..." + unlockHint, null, null, Paths.font("PhantomMuff.ttf"));
 				} else {
 					charName.text = charIconData?.name;
 					charIcon.configure(charIconData?.healthIcon);
@@ -638,21 +645,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 					var descText:String = (characterData.description?.text != null) ? characterData.description.text : "No description was specified in the JSON file.";
 
-					configureText(charDesc, descText, characterData.description?.offsets?[0], characterData.description?.offsets?[1]);
+					configureText(charDesc, descText, characterData.description?.offsets?[0], characterData.description?.offsets?[1], Paths.font("PhantomMuff.ttf"), characterData.description?.size);
 				}
 		}
-		
+
 		// Making it not look so awkward when "Simplify UI" is turned on.
 		if (simplifyUI || curCharID == 'default') {
 			charIcon?.setPosition(250, 270);
 			charIcon?.size.set(2, 2);
-		}
-
-		if (curCharID != 'default') {
-			charDesc.setFormat(Paths.font("PhantomMuff.ttf"), characterData.description != null && characterData.description.size != null ? characterData.description.size : 38,
-				null, 'center');
-		} else {
-			charDesc.setFormat(Paths.font("PhantomMuff.ttf"), 50, null, 'center');
 		}
 
 		if (!simplifyUI) {
@@ -663,12 +663,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					icon?.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 				}
 			}
-		}
-
-		if (lockedCharMap.exists(curCharID) && charIcon != null) {
-			charIcon.visible = false;
-		} else {
-			charIcon.visible = true;
 		}
 
 		charName.screenCenter(0x01);

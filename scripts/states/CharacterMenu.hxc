@@ -57,7 +57,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 	var seenUnlocks:Array<String> = [];
 
-	var lockedCharMap:StringMap<Dynamic> = new StringMap();
+	var lockedCharMap:StringMap<String, Dynamic> = new StringMap();
+	var jsonCharacterCache:StringMap<String, Dynamic> = ModuleHandler.getModule("CharacterHandler").scriptGet('jsonCharacterCache');
 
 	// For the top text in the menu.
 	var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "GIRLFRIEND CHARACTERS"];
@@ -76,12 +77,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
 	var simplifyUI:Bool = Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode;
 	var preferredSFX:String = Save.instance.modOptions.get("FunkerSelectorSettings").preferredSFX;
+
 	var busy:Bool = false;
 
 	/**
 	 * DEBUG: Force the unlock animation.
 	 */
-	var debug_TestUnlock:Bool = true;
+	var debug_TestUnlock:Bool = false;
 
 	public function new() {
 		super();
@@ -138,19 +140,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	function initChars():Void {
 		var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
 		var data:Dynamic = null;
-		var tempArray:Array<String> = [];
 
 		for (funker in funkerJSONs) {
-			trace('[Funker Selector] Loading JSON data for ' + funker);
+			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
-			try {
-				data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
-			} catch (e:Dynamic) {
-				trace(':('); // If only catch blocks actually worked in HScript...
-			}
-
-			// If the parsing succeeds, then they get pushed to a temporary array.
-			tempArray.push(funker);
+			var data:Dynamic = jsonCharacterCache.get(funker);
+			if (data == null) continue;
 
 			// If the "characterID" field was not found.
 			if (data.characterID == null) {
@@ -243,16 +238,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				trace('[Funker Selector] Pushing ID ' + data.characterID + ' to "PLAYABLE CHARACTERS"');
 				if (charArrayBF.indexOf(data.characterID) == -1)
 					charArrayBF.push(data.characterID);
-			}
-		}
-
-		// VERY BASIC ERROR HANDLING!!
-		for (funker in funkerJSONs) {
-			if (tempArray.indexOf(funker) == -1) {
-				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-					'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
-					'":\n\nThis character was not loaded due to an issue with their JSON file. Please make sure the syntax is correct.');
-				continue;
 			}
 		}
 	}
@@ -668,7 +653,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			FunkinSound.playOnce(Paths.sound('confirmMenu'));
 		}
 		if (!simplifyUI) {
-			characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
+			characterData = jsonCharacterCache.get(curCharID);
 			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
 			if (characterSprite != null)
 				characterSprite.playAnimation(animation, true, true);
@@ -804,7 +789,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		charDesc.fieldWidth = 550;
 		charDesc.camera = uiCam;
 
-		characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
+		characterData = jsonCharacterCache.get(curCharID);
 		charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
 
 		// If "Simplify UI" is enabled in the Options Menu, the sprites will not load.

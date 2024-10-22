@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - In turn, Funker Selector now requires FNF v0.5.2 and above due to breaking changes.
 - Better version checking, now using a proper version rule instead of an array of unsupported versions.
 - Pico (Playable) will now change to Pico (Dark) if Spookeez Erect or South Erect is selected.
+- JSON character data is now cached. If you are making a JSON character and don't see the changes immediately. Press F5 to hot-reload.
 ### Removed
 - Removed backwards compatability with the legacy save system from v1.1 and under.
 - Removed legacy character support, please use the JSON system from now on.

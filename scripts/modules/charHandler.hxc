@@ -73,10 +73,8 @@ class CharacterHandler extends Module {
 
 	/**
 	 * Cache for JSON character data.
-	 * 
-	 * TODO: Implement this.
 	 */
-	var jsonCharacterCache:StringMap<String> = new StringMap();
+	var jsonCharacterCache:StringMap<String, Dynamic> = new StringMap();
 
 	/**
 	 * Some janky shit for passing the BPM through CharacterMenu don't worry about it.
@@ -104,8 +102,8 @@ class CharacterHandler extends Module {
 		// Initialize the save data.
 		initializeSave();
 
-		// Parses and loads JSON characters.
-		loadJSONCharData();
+		// Parses and caches JSON character data.
+		loadJSONDataCache();
 	}
 
 	/**
@@ -349,28 +347,25 @@ class CharacterHandler extends Module {
 	 * cached as they won't show up in the menu.
 	 */
 	function cacheJSONSparrows():Void {
-		var funkerJSONs = DataAssets.listDataFilesInPath('funkerSelector/');
-		var data = null;
+		var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
 		for (funker in funkerJSONs) {
-			trace('[Funker Selector] Loading JSON data for ' + funker);
+			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
-			// Exceptions continue the loop so there's no need for a continue; here.
-			try {
-				data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
-			} catch (e:Dynamic) {
-				trace(':(');
+			var data:Dynamic = jsonCharacterCache.get(funker);
+			if (data == null) continue;
+
+			if (data.characterID == null) {
+				trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker))
+					+ '! The "characterID" field does not exist.');
+				continue;
 			}
 
 			if (!charJSONCheck(data.characterID)) {
 				trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
 				continue;
 			}
+
 			var charData = CharacterDataParser.parseCharacterData(data.characterID);
-			if (data.characterID == null) {
-				trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker))
-					+ '! The "characterID" field does not exist.');
-				continue;
-			}
 
 			switch (charData.renderType) {
 				case 'multisparrow':
@@ -385,6 +380,30 @@ class CharacterHandler extends Module {
 				default:
 					cacheSprite(Paths.image(charData.assetPath));
 			}
+		}
+	}
+
+	/**
+	 * Loads and caches the JSON data for characters.
+	 */
+	function loadJSONDataCache():Void {
+		var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
+		var data:Dynamic = null;
+		var tempArray:Array<String> = [];
+		for (funker in funkerJSONs) {
+			trace('[Funker Selector] Loading JSON data for ' + funker);
+
+			// Exceptions continue the loop so there's no need for a continue; here.
+			try {
+				data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
+			} catch (e:Dynamic) {
+				trace(':(');
+			}
+
+			// If the parsing succeeds, then they get pushed to a temporary array.
+			tempArray.push(funker);
+
+			jsonCharacterCache.set(funker, data);
 		}
 	}
 

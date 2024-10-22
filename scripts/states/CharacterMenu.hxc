@@ -51,7 +51,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 	/**
 	 * A filtered character array for the current page.
-	 * We still use this array since `CharacterMenu` is built around them.
+	 * We still use this array since `CharacterMenu` is built around Arrays.
 	 */
 	var filteredKeys:Array<String> = [];
 

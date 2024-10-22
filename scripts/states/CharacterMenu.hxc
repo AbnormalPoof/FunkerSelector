@@ -188,7 +188,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		for (funker in funkerJSONs) {
 			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
-			if (!jsonCharacterCache.exists(funker)) continue;
 			var data:Dynamic = jsonCharacterCache.get(funker);
 			if (data == null) continue;
 

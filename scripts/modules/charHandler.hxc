@@ -282,7 +282,7 @@ class CharacterHandler extends Module {
 			if (prefs != null) {
 				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length + 30, "-- FUNKER SELECTOR --", "bold", () -> {})).fireInstantly = true;
 
-				prefs.createPrefItemCheckbox("Simplify UI", "Is the new Fancy UI too much for your device? No problem!", (value) -> {
+				prefs.createPrefItemCheckbox("Simplify UI", "Simplifies the UI and disables character sprite caching.", (value) -> {
 					funkerSettings.potatoMode = value;
 					Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
 					Save.instance.flush();
@@ -353,7 +353,6 @@ class CharacterHandler extends Module {
 		for (funker in funkerJSONs) {
 			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
-			if (!jsonCharacterCache.exists(funker)) continue;
 			var data:Dynamic = jsonCharacterCache.get(funker);
 			if (data == null) continue;
 
@@ -398,7 +397,7 @@ class CharacterHandler extends Module {
 
 			// Exceptions continue the loop so there's no need for a continue; here.
 			try {
-				data = Json.parse(Assets.getText(Paths.json('funkerSelector/' + funker)));
+				data = parseJSONData(funker);
 			} catch (e:Dynamic) {
 				trace(':(');
 			}
@@ -409,7 +408,7 @@ class CharacterHandler extends Module {
 			jsonCharacterCache.set(funker, data);
 		}
 
-		// VERY BASIC ERROR HANDLING!!
+		// If a character ID doesn't exist in the array, then something definitely went wrong
 		for (funker in funkerJSONs) {
 			if (tempArray.indexOf(funker) == -1) {
 				trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(Paths.json('funkerSelector/' + funker))) + "!\nIs the syntax correct?";

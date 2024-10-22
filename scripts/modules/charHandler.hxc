@@ -353,6 +353,7 @@ class CharacterHandler extends Module {
 		for (funker in funkerJSONs) {
 			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
+			if (!jsonCharacterCache.exists(funker)) continue;
 			var data:Dynamic = jsonCharacterCache.get(funker);
 			if (data == null) continue;
 
@@ -406,6 +407,14 @@ class CharacterHandler extends Module {
 			tempArray.push(funker);
 
 			jsonCharacterCache.set(funker, data);
+		}
+
+		// VERY BASIC ERROR HANDLING!!
+		for (funker in funkerJSONs) {
+			if (tempArray.indexOf(funker) == -1) {
+				trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(Paths.json('funkerSelector/' + funker))) + "!\nIs the syntax correct?";
+				continue;
+			}
 		}
 	}
 

@@ -46,6 +46,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 	/**
 	 * Arrays for each character.
+	 * 
+	 * TODO: Rework this to use one StringMap instead.
 	 */
 	var charArrayBF:Array<String> = ['default'];
 	var charArrayDad:Array<String> = ['default'];
@@ -68,7 +70,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	/**
 	 * A map of all the locked characters.
 	 */
-	var lockedCharMap:StringMap<String, Dynamic> = new StringMap();
+	var lockedCharMap:StringMap<String> = new StringMap();
 
 	/**
 	 * The JSON character cache, which is retrieved from `charHandler`.
@@ -118,7 +120,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	/**
 	 * DEBUG: Force the unlock animation.
 	 */
-	var debug_TestUnlock:Bool = false;
+	var debug_TestUnlock:Bool = true;
 
 	public function new() {
 		super();
@@ -216,6 +218,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 			// If the specified Character ID does not match the filename of the JSON
 			// TODO: Add a solution to this, so the filename and Character ID can be different
+			// Maybe through character cache?
 			if (data.characterID != funker) {
 				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
 					'In "'

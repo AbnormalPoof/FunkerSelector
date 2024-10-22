@@ -47,7 +47,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	/**
 	 * Arrays for each character.
 	 * 
-	 * TODO: Rework this to use one StringMap instead..
+	 * TODO: Rework this to use one StringMap instead.
 	 */
 	var charArrayBF:Array<String> = ['default'];
 	var charArrayDad:Array<String> = ['default'];

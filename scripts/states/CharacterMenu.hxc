@@ -78,6 +78,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var preferredSFX:String = Save.instance.modOptions.get("FunkerSelectorSettings").preferredSFX;
 	var busy:Bool = false;
 
+	var debug_TestUnlock:Bool = false;
+
 	public function new() {
 		super();
 	}
@@ -196,9 +198,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
 					lockedCharMap.set(data.characterID, data);
 				} else {
-					if (seenUnlocks.indexOf(data.characterID) == -1) {
-						trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
-						lockedCharMap.set(data.characterID, data);
+					if (!debug_TestUnlock) {
+						if (seenUnlocks.indexOf(data.characterID) == -1) {
+							trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
+							lockedCharMap.set(data.characterID, data);
+						}
+					} else {
+							trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
+							lockedCharMap.set(data.characterID, data);
 					}
 				}
 			}
@@ -865,12 +872,18 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		// Do the unlock animation if we haven't seen it yet.
 		if (lockedCharMap.exists(curCharID) && isCharacterUnlocked(curCharID, characterData.unlockMethod)) {
-			if (seenUnlocks.indexOf(curCharID) == -1) {
-				lockedCharMap.remove(curCharID);
-				seenUnlocks.push(curCharID);
-				Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
-				Save.instance.flush();
-				doUnlockAnimation();
+			if (!debug_TestUnlock) {
+				if (seenUnlocks.indexOf(curCharID) == -1) {
+					lockedCharMap.remove(curCharID);
+					seenUnlocks.push(curCharID);
+					Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
+					Save.instance.flush();
+					doUnlockAnimation();
+				}
+			} else {
+					lockedCharMap.remove(curCharID);
+					seenUnlocks.push(curCharID);
+					doUnlockAnimation();
 			}
 		}
 

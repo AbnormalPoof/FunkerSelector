@@ -97,6 +97,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			seenUnlocks = Save.instance.modOptions.get("FunkerSelector-SeenChars");
 		}
 
+		trace("SEEN UNLOCK ANIMATIONS: " + seenUnlocks);
+
 		setupUIStuff();
 		initChars();
 		jumpToCurSelected();
@@ -418,22 +420,22 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
 			lockedChill.animation.addByPrefix('denied', 'cannot select0', 24, false);
 			lockedChill.animation.addByPrefix('death', 'locked man explodes0', 24, false);
-			lockedChill.camera = spriteCam;
-
-			lockedChill.animation.play('idle');
-			lockedChill.animation.finishCallback = function(_) {
-				lockedChill.offset.set();
-				lockedChill.animation.play('idle');
-			};
-			lockedChill.scale.set(1.2, 1.2);
-			lockedChill.visible = false;
 		} else {
 			// TODO: Implement this.
-			lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/lock_' + FlxG.random.int(1, 6));
+			lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locks/lock_' + FlxG.random.int(1, 6));
 			lockedChill.animation.addByPrefix('idle', 'lock idle', 24, false);
 			lockedChill.animation.addByPrefix('denied', 'lock cannot select0', 24, false);
 			lockedChill.animation.addByPrefix('death', 'LOCK UNLOCKING', 24, false);
 		}
+		lockedChill.camera = spriteCam;
+
+		lockedChill.animation.play('idle');
+		lockedChill.animation.finishCallback = function(_) {
+			lockedChill.offset.set();
+			lockedChill.animation.play('idle');
+		};
+		lockedChill.scale.set(1.2, 1.2);
+		lockedChill.visible = false;
 
 		newGraphic = FunkinSprite.createSparrow(840, 250, 'freeplay/freeplayCapsule/new');
 		newGraphic.animation.addByPrefix('new', 'NEW notif', 24);
@@ -466,8 +468,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		add(hotkeyText);
 		add(charIcon);
 		add(charName);
-		if (!simplifyUI)
-			add(lockedChill);
+		add(lockedChill);
 		add(keyBox);
 		add(hotkeys);
 		add(newGraphic);

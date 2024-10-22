@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
-  "characterID": "mom-car",
+  "characterID": "pico-playable",
   "characterType": "bf",
-  "mustUnlock": false,
+  "mustUnlock": true,
   "unlockMethod": {
     "type": "playableCharacter"
   },

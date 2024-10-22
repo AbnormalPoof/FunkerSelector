@@ -78,7 +78,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var preferredSFX:String = Save.instance.modOptions.get("FunkerSelectorSettings").preferredSFX;
 	var busy:Bool = false;
 
-	var debug_TestUnlock:Bool = false;
+	/**
+	 * DEBUG: Force the unlock animation.
+	 */
+	var debug_TestUnlock:Bool = true;
 
 	public function new() {
 		super();

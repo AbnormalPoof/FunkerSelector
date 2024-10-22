@@ -182,8 +182,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		for (funker in funkerJSONs) {
 			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
-			if (!jsonCharacterCache.exists(funker))
-				continue;
 			var data:Dynamic = jsonCharacterCache.get(funker);
 			if (data == null)
 				continue;
@@ -670,6 +668,21 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * Jumps to the currently selected character.
 	 */
 	function jumpToCurSelected():Void {
+    // In the event that the saved character ID no longer exists, we fallback to default.
+		if (!jsonNameMap.exists(characterIDsArray[pageIndex]) && characterIDsArray[pageIndex] != 'default') {
+			trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
+			switch (pageIndex) {
+				case 0:
+					characterIDs.bf = 'default';
+				case 1:
+					characterIDs.dad = 'default';
+				case 2:
+					characterIDs.gf = 'default';
+			}
+			// Save everything
+			Save.instance.modOptions.set("FunkerSelector", characterIDs);
+			Save.instance.flush();
+		}
 		charIndex = filteredKeys.indexOf(characterIDsArray[pageIndex]);
 		curCharID = characterIDsArray[pageIndex];
 		updateCharInfo();

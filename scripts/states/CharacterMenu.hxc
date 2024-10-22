@@ -84,7 +84,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	public override function create():Void {
 		super.create();
 
- 		if (Save.instance.modOptions.get("FunkerSelector-SeenChars") == null) {
+		if (Save.instance.modOptions.get("FunkerSelector-SeenChars") == null) {
 			Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
 			Save.instance.flush();
 		} else {
@@ -426,11 +426,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		charIcon.camera = uiCam;
 
 		unlockSound = new FunkinSound();
-    unlockSound.loadEmbedded(Paths.sound('CS_unlock'));
+		unlockSound.loadEmbedded(Paths.sound('CS_unlock'));
 		unlockSound.volume = 1;
 
 		perfectRank = new FunkinSound();
-    perfectRank.loadEmbedded(Paths.sound('ranks/perfect'));
+		perfectRank.loadEmbedded(Paths.sound('ranks/perfect'));
 		perfectRank.volume = 1;
 
 		add(bg);
@@ -702,31 +702,34 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	function doUnlockAnimation():Void {
 		busy = true;
 		FlxG.sound.music?.fadeOut();
-		FlxTween.tween(uiCam, {alpha: 0}, 1, {ease: FlxEase.quartOut, onComplete: function(twn:FlxTween) {
-			unlockSound.play(false);
-			new FlxTimer().start(1.45, function() {
-				lockedChill.offset.set(170, 220);
-				lockedChill.animation.play('death');
-				lockedChill.animation.callback = function(name, frame) {
-				if (name == 'death' && frame == 36) {
-						perfectRank.play(false, 0.5);
-						flashScreen(0xFFFFFFFF, 0.05, 1);
-						new FlxTimer().start(0.025, function() {
-							updateCharInfo();
-							uiCam.shake(0.01, 0.2);
-							spriteCam.shake(0.01, 0.2);
-							FlxG.state.subState.funnyCam.shake(0.01, 0.2);
-						});
-						if (characterSprite != null && !characterSprite.visible) {
-							characterSprite.visible = true;
+		FlxTween.tween(uiCam, {alpha: 0}, 1, {
+			ease: FlxEase.quartOut,
+			onComplete: function(twn:FlxTween) {
+				unlockSound.play(false);
+				new FlxTimer().start(1.45, function() {
+					lockedChill.offset.set(170, 220);
+					lockedChill.animation.play('death');
+					lockedChill.animation.callback = function(name, frame) {
+						if (name == 'death' && frame == 36) {
+							perfectRank.play(false, 0.5);
+							flashScreen(0xFFFFFFFF, 0.05, 1);
+							new FlxTimer().start(0.025, function() {
+								updateCharInfo();
+								uiCam.shake(0.01, 0.2);
+								spriteCam.shake(0.01, 0.2);
+								FlxG.state.subState.funnyCam.shake(0.01, 0.2);
+							});
+							if (characterSprite != null && !characterSprite.visible) {
+								characterSprite.visible = true;
+							}
+							busy = false;
+							uiCam.alpha = 1;
+							FlxG.sound.music?.fadeIn();
 						}
-						busy = false;
-						uiCam.alpha = 1;
-						FlxG.sound.music?.fadeIn();
 					}
-				}
-			});
-		}});
+				});
+			}
+		});
 	}
 
 	/**
@@ -832,7 +835,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (lockedCharMap.exists(curCharID)) {
 			if (isCharacterUnlocked(curCharID, characterData.unlockMethod)) {
 				if (seenUnlocks.indexOf(curCharID) == -1) {
- 					lockedCharMap.remove(curCharID);
+					lockedCharMap.remove(curCharID);
 					seenUnlocks.push(curCharID);
 					Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
 					Save.instance.flush();

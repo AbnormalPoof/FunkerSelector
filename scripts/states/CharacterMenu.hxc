@@ -15,8 +15,9 @@ import funkin.play.character.BaseCharacter;
 import funkin.play.character.CharacterDataParser;
 import funkin.play.components.HealthIcon;
 import funkin.save.Save;
-import funkin.ui.freeplay.charselect.PlayableCharacter;
 import funkin.ui.MusicBeatSubState;
+import funkin.ui.charSelect.Lock;
+import funkin.ui.freeplay.charselect.PlayableCharacter;
 import funkin.util.WindowUtil;
 import funkin.util.assets.DataAssets;
 import haxe.Json;
@@ -35,8 +36,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var leftDifficultyArrow:FunkinSprite;
 	var rightDifficultyArrow:FunkinSprite;
 	var keyBox:FunkinSprite;
-	var lockedChill:FunkinSprite;
 	var newGraphic:FunkinSprite;
+
+	// NOTE: This is either a `FunkinSprite`, or a `Lock`
+	// depending on if "Simplify UI" is enabled or not.
+	var lockedChill:Null;
 
 	var unlockSound:FunkinSound;
 
@@ -116,11 +120,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * This is used for the unlock animation
 	 */
 	var busy:Bool = false;
-
-	/**
-	 * DEBUG: Force the unlock animation.
-	 */
-	var debug_TestUnlock:Bool = false;
 
 	public function new() {
 		super();
@@ -219,12 +218,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
 					lockedCharMap.set(data.characterID, data);
 				} else {
-					if (!debug_TestUnlock) {
-						if (seenUnlocks.indexOf(data.characterID) == -1) {
-							trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
-							lockedCharMap.set(data.characterID, data);
-						}
-					} else {
+					if (seenUnlocks.indexOf(data.characterID) == -1) {
 						trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
 						lockedCharMap.set(data.characterID, data);
 					}
@@ -428,22 +422,21 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
 			lockedChill.animation.addByPrefix('denied', 'cannot select0', 24, false);
 			lockedChill.animation.addByPrefix('death', 'locked man explodes0', 24, false);
+			lockedChill.animation.play('idle');
+			lockedChill.animation.finishCallback = function(_) {
+				lockedChill.offset.set();
+				lockedChill.animation.play('idle');
+			};
+			lockedChill.scale.set(1.2, 1.2);
 		} else {
-			// TODO: Implement this.
-			// I ALMOST FORGOT ABOUT THIS WHAT THE FUCK.
-			lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locks/lock_' + FlxG.random.int(1, 6));
-			lockedChill.animation.addByPrefix('idle', 'lock idle', 24, false);
-			lockedChill.animation.addByPrefix('denied', 'lock cannot select0', 24, false);
-			lockedChill.animation.addByPrefix('death', 'LOCK UNLOCKING', 24, false);
+			lockedChill = new Lock(300, 270, FlxG.random.int(1, 9));
+			lockedChill.onAnimationComplete.add(function(_) {
+				lockedChill.playAnimation('idle');
+			});
+			lockedChill.playAnimation('idle');
+			lockedChill.scale.set(2, 2);
 		}
 		lockedChill.camera = spriteCam;
-
-		lockedChill.animation.play('idle');
-		lockedChill.animation.finishCallback = function(_) {
-			lockedChill.offset.set();
-			lockedChill.animation.play('idle');
-		};
-		lockedChill.scale.set(1.2, 1.2);
 		lockedChill.visible = false;
 
 		newGraphic = FunkinSprite.createSparrow(840, 250, 'freeplay/freeplayCapsule/new');
@@ -661,8 +654,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 						FunkinSound.playOnce(Paths.sound('cancelMenu'));
 					}
 					flashScreen(0xFFFF0000, 0.03, 0.1);
-					if (lockedChill != null)
-						lockedChill.animation.play('denied', true);
+					if (lockedChill != null) {
+						if (!simplifyUI)
+							lockedChill.animation.play('denied', true);
+						else
+							lockedChill.playAnimation("clicked", true);
+					}
 				}
 			}
 		}
@@ -782,34 +779,60 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	function doUnlockAnimation():Void {
 		busy = true;
 		FlxG.sound.music?.fadeOut();
-		lockedChill.offset.set();
-		lockedChill.animation.play('idle');
+		if (!simplifyUI) {
+			lockedChill.offset.set();
+			lockedChill.animation.play('idle', true);
+		} else {
+			lockedChill.playAnimation('idle', true);
+		}
 		FlxTween.tween(uiCam, {alpha: 0}, 1, {
 			ease: FlxEase.quartOut,
 			onComplete: function(twn:FlxTween) {
 				unlockSound.play(true);
 				new FlxTimer().start(1.45, function() {
-					lockedChill.offset.set(170, 220);
-					lockedChill.animation.play('death');
-					lockedChill.animation.callback = function(name, frame) {
-						if (name == 'death' && frame == 36) {
-							flashScreen(0xFFFFFFFF, 0.05, 1);
-							new FlxTimer().start(0.025, function() {
-								updateCharInfo();
-								if (selected.visible)
-									selected.visible = false;
-								newGraphic.visible = true;
-								uiCam.shake(0.01, 0.2);
-								spriteCam.shake(0.01, 0.2);
-								FlxG.state.subState.funnyCam.shake(0.01, 0.2);
-							});
-							if (characterSprite != null && !characterSprite.visible) {
-								characterSprite.visible = true;
+					if (!simplifyUI) {
+						lockedChill.offset.set(170, 220);
+						lockedChill.animation.play('death');
+						lockedChill.animation.callback = function(name, frame) {
+							if (name == 'death' && frame == 36) {
+								flashScreen(0xFFFFFFFF, 0.05, 1);
+								new FlxTimer().start(0.025, function() {
+									updateCharInfo();
+									if (selected.visible)
+										selected.visible = false;
+									newGraphic.visible = true;
+									uiCam.shake(0.01, 0.2);
+									spriteCam.shake(0.01, 0.2);
+									FlxG.state.subState.funnyCam.shake(0.01, 0.2);
+								});
+								if (characterSprite != null && !characterSprite.visible) {
+									characterSprite.visible = true;
+								}
+								busy = false;
+								uiCam.alpha = 1;
+								FlxG.sound.music?.fadeIn();
 							}
-							busy = false;
-							uiCam.alpha = 1;
-							FlxG.sound.music?.fadeIn();
 						}
+					} else {
+						lockedChill.playAnimation('unlock');
+						lockedChill.onAnimationFrame.add(function(name, frame) {
+							if (name == 'unlock' && frame == 36) {
+								flashScreen(0xFFFFFFFF, 0.05, 1);
+								new FlxTimer().start(0.025, function() {
+									updateCharInfo();
+									if (selected.visible)
+										selected.visible = false;
+									newGraphic.visible = true;
+									lockedChill.playAnimation('idle', true);
+									uiCam.shake(0.01, 0.2);
+									spriteCam.shake(0.01, 0.2);
+									FlxG.state.subState.funnyCam.shake(0.01, 0.2);
+								});
+								busy = false;
+								uiCam.alpha = 1;
+								FlxG.sound.music?.fadeIn();
+							}
+						});
 					}
 				});
 			}
@@ -923,17 +946,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		// Do the unlock animation if we haven't seen it yet.
 		if (lockedCharMap.exists(curCharID) && isCharacterUnlocked(curCharID, characterData.unlockMethod)) {
-			if (!debug_TestUnlock) {
-				if (seenUnlocks.indexOf(curCharID) == -1) {
-					lockedCharMap.remove(curCharID);
-					seenUnlocks.push(curCharID);
-					Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
-					Save.instance.flush();
-					doUnlockAnimation();
-				}
-			} else {
+			if (seenUnlocks.indexOf(curCharID) == -1) {
 				lockedCharMap.remove(curCharID);
 				seenUnlocks.push(curCharID);
+				Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
+				Save.instance.flush();
 				doUnlockAnimation();
 			}
 		}

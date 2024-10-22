@@ -430,6 +430,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			lockedChill.animation.addByPrefix('death', 'locked man explodes0', 24, false);
 		} else {
 			// TODO: Implement this.
+			// I ALMOST FORGOT ABOUT THIS WHAT THE FUCK.
 			lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locks/lock_' + FlxG.random.int(1, 6));
 			lockedChill.animation.addByPrefix('idle', 'lock idle', 24, false);
 			lockedChill.animation.addByPrefix('denied', 'lock cannot select0', 24, false);

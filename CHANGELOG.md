@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - There's also a new `unlockCondition` variable for description data in turn.
 - The window title will change if you're in the Character Menu.
 - Added better visual feedback for selecting a character.
+- New option which allows you to change the SFX used in the menu. Currently, you can only switch between `Funkin' Main Menu` and `Funkin' Character Select`
 ### Changed
 - Refactored a lot of the code for readability and efficiency.
   - In turn, Funker Selector now requires FNF v0.5.2 and above due to breaking changes.

@@ -70,7 +70,6 @@ class CharacterHandler extends Module {
 	 */
 	var cachedJSONSparrows:StringMap<String> = new StringMap();
 
-
 	/**
 	 * Cache for JSON character data.
 	 */
@@ -81,6 +80,9 @@ class CharacterHandler extends Module {
 	 */
 	var freeplayBPM:Float = null;
 
+	/**
+	 * The original character ID from the chart.
+	 */
 	var ogCharID:String = null;
 
 	var charText:AtlasText;

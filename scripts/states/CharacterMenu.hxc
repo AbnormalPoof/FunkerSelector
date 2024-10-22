@@ -44,40 +44,75 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var uiCam:FunkinCamera;
 	var spriteCam:FunkinCamera;
 
-	// Arrays for each character.
+	/**
+	 * Arrays for each character.
+	 */
 	var charArrayBF:Array<String> = ['default'];
 	var charArrayDad:Array<String> = ['default'];
 	var charArrayGF:Array<String> = ['default'];
 
-	// Arrays that are used in combination with pageIndex.
+	/**
+	 * These two should not be confused with eachother, since they serve different purposes.
+	 */
 	var charArrays:Array<String> = [charArrayBF, charArrayDad, charArrayGF];
 
 	// NOTE: For writing, access characterIDs directly. This is only for reading.
 	var characterIDsArray:Array<String> = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 
+	/**
+	 * An array of unlock animations we've seen already.
+	 * This ensures the unlock animation only plays once per save file.
+	 */
 	var seenUnlocks:Array<String> = [];
 
+	/**
+	 * A map of all the locked characters.
+	 */
 	var lockedCharMap:StringMap<String, Dynamic> = new StringMap();
+
+	/**
+	 * The JSON character cache, which is retrieved from `charHandler`.
+	 */
 	var jsonCharacterCache:StringMap<String, Dynamic> = ModuleHandler.getModule("CharacterHandler").scriptGet('jsonCharacterCache');
 
 	// For the top text in the menu.
 	var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "GIRLFRIEND CHARACTERS"];
 	var topTextColor = [0xFF2DB2D2, 0xFFAF66CE, 0xFFA7004C];
 
+	/**
+	 * Pages.
+	 * 
+	 * This is just an array, their index is used to control a lot of things in the menu.
+	 */
 	var pages:Array<String> = ['bf', 'dad', 'gf'];
 	var charIcon:HealthIcon;
 	var iconGrid:Array<HealthIcon> = [];
 
 	var charIndex:Int = 0;
 	var pageIndex:Int = 0;
+
+	/**
+	 * The current song BPM in Freeplay.
+	 */
 	var songBPM:Float = ModuleHandler.getModule("CharacterHandler").scriptGet('freeplayBPM');
 
+	/**
+	 * The current character ID.
+	 */
 	var curCharID:String = 'default';
 	var characterSprite:BaseCharacter;
+
+	/**
+	 * These are retrieved from the save file.
+	 */
 	var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
 	var simplifyUI:Bool = Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode;
 	var preferredSFX:String = Save.instance.modOptions.get("FunkerSelectorSettings").preferredSFX;
 
+	/**
+	 * If enabled, the menu will stop responding to inputs.
+	 * This is used for the unlock animation
+	 */
 	var busy:Bool = false;
 
 	/**

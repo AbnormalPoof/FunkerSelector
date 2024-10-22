@@ -36,8 +36,8 @@ The resulting file hierarchy should look like this:
 
 #### Method 2: charSelectList (v1.4.1 and under)
 
-> [!WARNING]  
-> Legacy character support was removed in v1.5.0. This will only work on Funker Selector v1.4.1 and under.
+> [!CAUTION]  
+> **Legacy character support was removed in v1.5.0. This will only work on Funker Selector v1.4.1 and under.**
 
 1. In your Mod, create a new folder called `_append`.
 2. Inside `_append`, create a new folder called `data`.

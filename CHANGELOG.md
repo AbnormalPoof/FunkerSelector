@@ -3,11 +3,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.5.0] - 2024-??-??
+## [1.5.0] - 2024-10-22
 ### Added
 - The characters now bop to the BPM of the currently selected song in Freeplay.
-- The Freeplay DJ will now change if your character is associated with a Playable Character (and has valid Freeplay DJ data).
-  - You can disable this in the Options Menu.
 - New `mustUnlock` variable for JSON characters. If enabled, your character will become locked until you meet a requirement specified in the JSON file.
   - Please see the documentation on how to do this. 
   - In addition: Pico (Playable), Pico (Christmas), Daddy Dearest and all the Boyfriend variants are now locked, requiring you to complete their specified requirements to unlock them.
@@ -16,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The window title will change if you're in the Character Menu.
 - Added better visual feedback for selecting a character.
 ### Changed
-- Refactored most of the code, mainly `CharacterMenu`.
+- Refactored a lot of the code for readability and efficiency.
   - In turn, Funker Selector now requires FNF v0.5.2 and above due to breaking changes.
 - Better version checking, now using a proper version rule instead of an array of unsupported versions.
 - Pico (Playable) will now change to Pico (Dark) if Spookeez Erect or South Erect is selected.

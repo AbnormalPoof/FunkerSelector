@@ -354,7 +354,8 @@ class CharacterHandler extends Module {
 			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
 			var data:Dynamic = jsonCharacterCache.get(funker);
-			if (data == null) continue;
+			if (data == null)
+				continue;
 
 			if (data.characterID == null) {
 				trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker))
@@ -411,7 +412,8 @@ class CharacterHandler extends Module {
 		// If a character ID doesn't exist in the array, then something definitely went wrong
 		for (funker in funkerJSONs) {
 			if (tempArray.indexOf(funker) == -1) {
-				trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(Paths.json('funkerSelector/' + funker))) + "!\nIs the syntax correct?";
+				trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(Paths.json('funkerSelector/' + funker))) +
+				"!\nIs the syntax correct?";
 				continue;
 			}
 		}

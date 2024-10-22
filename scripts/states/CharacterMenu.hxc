@@ -45,18 +45,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var spriteCam:FunkinCamera;
 
 	/**
-	 * Arrays for each character.
-	 * 
-	 * TODO: Rework this to use one StringMap instead.
+	 * A map containing every character.
 	 */
-	var charArrayBF:Array<String> = ['default'];
-	var charArrayDad:Array<String> = ['default'];
-	var charArrayGF:Array<String> = ['default'];
+	var characterMap:StringMap<String, Array<String, String>> = new StringMap();
 
 	/**
-	 * These two should not be confused with eachother, since they serve different purposes.
+	 * A filtered character array for the current page.
+	 * We still use this array since `CharacterMenu` is built around Arrays.
 	 */
-	var charArrays:Array<String> = [charArrayBF, charArrayDad, charArrayGF];
+	var filteredKeys:Array<String> = [];
 
 	// NOTE: For writing, access characterIDs directly. This is only for reading.
 	var characterIDsArray:Array<String> = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
@@ -77,13 +74,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 */
 	var jsonCharacterCache:StringMap<String, Dynamic> = ModuleHandler.getModule("CharacterHandler").scriptGet('jsonCharacterCache');
 
-	/**
-	 * A map of the character ID and it's JSON file name.
-	 * 
-	 * TODO: This is a bandaid fix!!
-	 */
-	var jsonNameMap:StringMap<String, String> = new StringMap();
-
 	// For the top text in the menu.
 	var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "GIRLFRIEND CHARACTERS"];
 	var topTextColor = [0xFF2DB2D2, 0xFFAF66CE, 0xFFA7004C];
@@ -94,6 +84,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * This is just an array, their index is used to control a lot of things in the menu.
 	 */
 	var pages:Array<String> = ['bf', 'dad', 'gf'];
+
 	var charIcon:HealthIcon;
 	var iconGrid:Array<HealthIcon> = [];
 
@@ -109,12 +100,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * The current character ID.
 	 */
 	var curCharID:String = 'default';
+
 	var characterSprite:BaseCharacter;
 
 	/**
 	 * These are retrieved from the save file.
 	 */
 	var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
+
 	var simplifyUI:Bool = Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode;
 	var preferredSFX:String = Save.instance.modOptions.get("FunkerSelectorSettings").preferredSFX;
 
@@ -147,6 +140,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		setupUIStuff();
 		initChars();
+		updateFilteredKeys();
 		jumpToCurSelected();
 	}
 
@@ -155,10 +149,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		conductorInUse.update();
 
-		// Updating the array with the latest changes
-		characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
-
-		numberThing.text = "< " + (charIndex + 1) + " / " + charArrays[pageIndex].length + " >";
+		numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
 		numberThing.screenCenter(0x01);
 
 		if (!busy)
@@ -189,7 +180,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
 			var data:Dynamic = jsonCharacterCache.get(funker);
-			if (data == null) continue;
+			if (data == null)
+				continue;
 
 			// If the "characterID" field was not found.
 			if (data.characterID == null) {
@@ -239,38 +231,38 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				}
 			}
 
-			jsonNameMap.set(data.characterID, funker);
-
-			if (data.characterType != null) {
-				switch (data.characterType) {
-					case 'bf', 'player':
-						trace('[Funker Selector] Pushing ID ' + data.characterID + ' to "PLAYABLE CHARACTERS"');
-						if (charArrayBF.indexOf(data.characterID) == -1)
-							charArrayBF.push(data.characterID);
-					case 'gf':
-						trace('[Funker Selector] Pushing ID ' + data.characterID + ' to "GIRLFRIEND CHARACTERS"');
-						if (charArrayGF.indexOf(data.characterID) == -1)
-							charArrayGF.push(data.characterID);
-					case 'dad', 'opponent':
-						trace('[Funker Selector] Pushing ID ' + data.characterID + ' to "OPPONENT CHARACTERS"');
-						if (charArrayDad.indexOf(data.characterID) == -1)
-							charArrayDad.push(data.characterID);
-					default:
-						PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-							'In "'
-							+ Assets.getPath(Paths.json('funkerSelector/' + funker))
-							+ '":\n\nThe specified Character Type ('
-							+ data.characterType
-							+ ') is invalid. To prevent any issues, you will find this character under "PLAYABLE CHARACTERS".');
-						if (charArrayBF.indexOf(data.characterID) == -1)
-							charArrayBF.push(data.characterID);
-				}
-			} else {
-				trace('[Funker Selector] Pushing ID ' + data.characterID + ' to "PLAYABLE CHARACTERS"');
-				if (charArrayBF.indexOf(data.characterID) == -1)
-					charArrayBF.push(data.characterID);
-			}
+			if (data.characterType == null)
+				data.characterType = 'bf';
+			characterMap.set(data.characterID, [funker, data.characterType]);
 		}
+	}
+
+	/**
+	 * Updates the `filteredKeys` array based on the current `pageIndex`.
+	 */
+	function updateFilteredKeys():Void {
+		trace('[Funker Selector] Updating filteredKeys');
+		filteredKeys = ['default']; // Ensures 'default' is always the first thing.
+
+		tempArray = [];
+
+		for (key in characterMap.keys()) {
+			tempArray.push(key);
+		}
+
+		iHateMyLife = tempArray.filter(function(shit) {
+			var characterType = characterMap.get(shit)[1];
+			switch (pageIndex) {
+				case 0:
+					return characterType == 'bf' || characterType == 'player';
+				case 1:
+					return characterType == 'dad' || characterType == 'opponent';
+				case 2:
+					return characterType == 'gf';
+			}
+		});
+
+		filteredKeys = filteredKeys.concat(iHateMyLife);
 	}
 
 	/**
@@ -570,8 +562,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				} else {
 					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
 				}
-				charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + charArrays[pageIndex].length) % charArrays[pageIndex].length;
-				curCharID = charArrays[pageIndex][charIndex];
+				charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + filteredKeys.length) % filteredKeys.length;
+				curCharID = filteredKeys[charIndex];
 				updateCharInfo();
 			}
 
@@ -585,8 +577,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
 				}
 				pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
+				updateFilteredKeys();
 				charIndex = 0;
-				curCharID = charArrays[pageIndex][charIndex];
+				curCharID = filteredKeys[charIndex];
 				updateCharInfo();
 			}
 
@@ -618,6 +611,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					selected.visible = selectedTextVisibility();
 					Save.instance.modOptions.set("FunkerSelector", characterIDs);
 					Save.instance.flush();
+
+					// Updating the array with the latest changes
+					characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 				}
 			}
 
@@ -654,6 +650,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					newGraphic.visible = false;
 					Save.instance.modOptions.set("FunkerSelector", characterIDs);
 					Save.instance.flush();
+
+					// Updating the array with the latest changes
+					characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 				} else {
 					if (preferredSFX == "charSelect") {
 						FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
@@ -672,8 +671,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * Jumps to the currently selected character.
 	 */
 	function jumpToCurSelected():Void {
-		// In the event that the saved character ID no longer exists, we fallback to default.
-		if (!jsonNameMap.exists(characterIDsArray[pageIndex]) && characterIDsArray[pageIndex] != 'default') {
+    // In the event that the saved character ID no longer exists, we fallback to default.
+		if (!characterMap.exists(characterIDsArray[pageIndex]) && characterIDsArray[pageIndex] != 'default') {
 			trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
 			switch (pageIndex) {
 				case 0:
@@ -686,8 +685,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			// Save everything
 			Save.instance.modOptions.set("FunkerSelector", characterIDs);
 			Save.instance.flush();
+
+			// Updating the array with the latest changes
+			characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 		}
-		charIndex = charArrays[pageIndex].indexOf(characterIDsArray[pageIndex]);
+		charIndex = filteredKeys.indexOf(characterIDsArray[pageIndex]);
 		curCharID = characterIDsArray[pageIndex];
 		updateCharInfo();
 	}
@@ -835,9 +837,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		charDesc.fieldWidth = 550;
 		charDesc.camera = uiCam;
 
-		ownerJSONname = jsonNameMap.get(curCharID);
-		characterData = jsonCharacterCache.get(ownerJSONname);
-		charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
+		if (curCharID != 'default') {
+			characterInfo = characterMap.get(curCharID);
+			ownerJSONname = characterInfo[0];
+			characterData = jsonCharacterCache.get(ownerJSONname);
+			charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
+		}
 
 		// If "Simplify UI" is enabled in the Options Menu, the sprites will not load.
 		if (!simplifyUI) {

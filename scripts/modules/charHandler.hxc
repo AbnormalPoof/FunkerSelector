@@ -299,20 +299,18 @@ class CharacterHandler extends Module {
 							MemoryUtil.collect(true);
 						}
 					}, funkerSettings.preloadSprites);
-				
-				prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.', [
-					"funkin" => "Funkin' Main Menu",
-					"charSelect" => "Funkin' Character Select"
-				], (value) -> {
-					funkerSettings.preferredSFX = value;
-					Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
-					Save.instance.flush();
-					if (value == "charSelect") {
-						FunkinSound.playOnce(Paths.sound('CS_confirm'));
-					} else {
-						FunkinSound.playOnce(Paths.sound('confirmMenu'));
-					}
-				}, funkerSettings.preferredSFX);
+
+				prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
+					["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
+						funkerSettings.preferredSFX = value;
+						Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
+						Save.instance.flush();
+						if (value == "charSelect") {
+							FunkinSound.playOnce(Paths.sound('CS_confirm'));
+						} else {
+							FunkinSound.playOnce(Paths.sound('confirmMenu'));
+						}
+					}, funkerSettings.preferredSFX);
 
 				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold", () -> {})).fireInstantly = true;
 			}

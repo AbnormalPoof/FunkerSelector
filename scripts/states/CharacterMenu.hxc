@@ -742,7 +742,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 							flashScreen(0xFFFFFFFF, 0.05, 1);
 							new FlxTimer().start(0.025, function() {
 								updateCharInfo();
-								if (selected.visible) selected.visible = false;
+								if (selected.visible)
+									selected.visible = false;
 								newGraphic.visible = true;
 								uiCam.shake(0.01, 0.2);
 								spriteCam.shake(0.01, 0.2);
@@ -836,7 +837,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			charIcon?.setPosition(250, 270);
 			charIcon?.size.set(2, 2);
 		}
-		
+
 		if (!simplifyUI) {
 			for (icon in iconGrid) {
 				if (curCharID != 'default' && !lockedCharMap.exists(curCharID)) {
@@ -867,7 +868,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			if (seenUnlocks.indexOf(curCharID) == -1) {
 				lockedCharMap.remove(curCharID);
 				seenUnlocks.push(curCharID);
-			 	Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
+				Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
 				Save.instance.flush();
 				doUnlockAnimation();
 			}

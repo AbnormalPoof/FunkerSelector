@@ -10,8 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - You can disable this in the Options Menu.
 - New `mustUnlock` variable for JSON characters. If enabled, your character will become locked until you meet a requirement specified in the JSON file.
   - Please see the documentation on how to do this. 
-  - In addition: Pico (Playable) and Pico (Christmas) are now locked, requiring you to beat WeekEnd 1 to unlock them.
-  - There's also a new `unlockCondition` variable for description data.
+  - In addition: Pico (Playable), Pico (Christmas), Daddy Dearest and all the Boyfriend variants are now locked, requiring you to complete their specified requirements to unlock them.
+    - You'll probably be seeing the unlock animation a LOT if you already completed them. This is only done once!
+  - There's also a new `unlockCondition` variable for description data in turn.
 - The window title will change if you're in the Character Menu.
 - Added better visual feedback for selecting a character.
 ### Changed

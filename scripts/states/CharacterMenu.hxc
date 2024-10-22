@@ -38,7 +38,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var lockedChill:FunkinSprite;
 
 	var unlockSound:FunkinSound;
-	var perfectRank:FunkinSound;
 
 	var hotkeyCam:FunkinCamera;
 	var uiCam:FunkinCamera;
@@ -426,12 +425,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		charIcon.camera = uiCam;
 
 		unlockSound = new FunkinSound();
-		unlockSound.loadEmbedded(Paths.sound('CS_unlock'));
+		unlockSound.loadEmbedded(Paths.sound('funkerSelector/charUnlock'));
 		unlockSound.volume = 1;
-
-		perfectRank = new FunkinSound();
-		perfectRank.loadEmbedded(Paths.sound('ranks/perfect'));
-		perfectRank.volume = 1;
 
 		add(bg);
 		if (!simplifyUI)
@@ -711,7 +706,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					lockedChill.animation.play('death');
 					lockedChill.animation.callback = function(name, frame) {
 						if (name == 'death' && frame == 36) {
-							perfectRank.play(false, 0.5);
 							flashScreen(0xFFFFFFFF, 0.05, 1);
 							new FlxTimer().start(0.025, function() {
 								updateCharInfo();

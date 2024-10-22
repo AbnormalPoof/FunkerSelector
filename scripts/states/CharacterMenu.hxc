@@ -17,8 +17,8 @@ import funkin.play.components.HealthIcon;
 import funkin.save.Save;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
 import funkin.ui.MusicBeatSubState;
-import funkin.util.assets.DataAssets;
 import funkin.util.WindowUtil;
+import funkin.util.assets.DataAssets;
 import haxe.Json;
 import haxe.ds.StringMap;
 import Std;
@@ -36,6 +36,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var rightDifficultyArrow:FunkinSprite;
 	var keyBox:FunkinSprite;
 	var lockedChill:FunkinSprite;
+	var newGraphic:FunkinSprite;
 
 	var unlockSound:FunkinSound;
 
@@ -74,6 +75,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var characterSprite:BaseCharacter;
 	var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
 	var simplifyUI:Bool = Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode;
+	var preferredSFX:String = Save.instance.modOptions.get("FunkerSelectorSettings").preferredSFX;
 	var busy:Bool = false;
 
 	public function new() {
@@ -415,6 +417,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		lockedChill.scale.set(1.2, 1.2);
 		lockedChill.visible = false;
 
+		newGraphic = FunkinSprite.createSparrow(840, 250, 'freeplay/freeplayCapsule/new');
+		newGraphic.animation.addByPrefix('new', 'NEW notif', 24);
+		newGraphic.animation.play('new');
+		newGraphic.camera = uiCam;
+		newGraphic.scale.set(1.8, 1.8);
+		newGraphic.visible = false;
+
 		keyBox = new FunkinSprite(0, 0);
 		keyBox.makeSolidColor(600, 600, 0xFF000000);
 		keyBox.camera = hotkeyCam;
@@ -442,6 +451,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		add(lockedChill);
 		add(keyBox);
 		add(hotkeys);
+		add(newGraphic);
 
 		WindowUtil.setWindowTitle('Friday Night Funkin\' - Funker Selector Menu');
 
@@ -519,7 +529,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		if (!hotkeyCam.visible) {
 			if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT) {
-				FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+				if (preferredSFX == "charSelect") {
+					FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
+				} else {
+					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+				}
 				charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + charArrays[pageIndex].length) % charArrays[pageIndex].length;
 				curCharID = charArrays[pageIndex][charIndex];
 				updateCharInfo();
@@ -529,7 +543,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			rightDifficultyArrow.animation.play(FlxG.keys.pressed.RIGHT ? 'press' : 'idle');
 
 			if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E) {
-				FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+				if (preferredSFX == "charSelect") {
+					FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
+				} else {
+					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+				}
 				pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
 				charIndex = 0;
 				curCharID = charArrays[pageIndex][charIndex];
@@ -537,7 +555,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 
 			if (FlxG.keys.justPressed.J) {
-				FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+				if (preferredSFX == "charSelect") {
+					FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
+				} else {
+					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+				}
 				jumpToCurSelected();
 			}
 
@@ -593,10 +615,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				if (shouldConfirm) {
 					confirmThing();
 					selected.visible = selectedTextVisibility();
+					newGraphic.visible = false;
 					Save.instance.modOptions.set("FunkerSelector", characterIDs);
 					Save.instance.flush();
 				} else {
-					FunkinSound.playOnce(Paths.sound('cancelMenu'));
+					if (preferredSFX == "charSelect") {
+						FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
+					} else {
+						FunkinSound.playOnce(Paths.sound('cancelMenu'));
+					}
 					flashScreen(0xFFFF0000, 0.03, 0.1);
 					if (lockedChill != null)
 						lockedChill.animation.play('denied', true);
@@ -615,7 +642,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	}
 
 	function confirmThing():Void {
-		FunkinSound.playOnce(Paths.sound('confirmMenu'));
+		if (preferredSFX == "charSelect") {
+			FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
+		} else {
+			FunkinSound.playOnce(Paths.sound('confirmMenu'));
+		}
 		if (!simplifyUI) {
 			characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
 			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
@@ -697,10 +728,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	function doUnlockAnimation():Void {
 		busy = true;
 		FlxG.sound.music?.fadeOut();
+		lockedChill.offset.set();
+		lockedChill.animation.play('idle');
 		FlxTween.tween(uiCam, {alpha: 0}, 1, {
 			ease: FlxEase.quartOut,
 			onComplete: function(twn:FlxTween) {
-				unlockSound.play(false);
+				unlockSound.play(true);
 				new FlxTimer().start(1.45, function() {
 					lockedChill.offset.set(170, 220);
 					lockedChill.animation.play('death');
@@ -709,6 +742,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 							flashScreen(0xFFFFFFFF, 0.05, 1);
 							new FlxTimer().start(0.025, function() {
 								updateCharInfo();
+								if (selected.visible) selected.visible = false;
+								newGraphic.visible = true;
 								uiCam.shake(0.01, 0.2);
 								spriteCam.shake(0.01, 0.2);
 								FlxG.state.subState.funnyCam.shake(0.01, 0.2);
@@ -740,6 +775,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		selectText.color = topTextColor[pageIndex];
 		selectText.screenCenter(0x01);
 		selected.visible = selectedTextVisibility();
+
+		newGraphic.visible = false;
 
 		charDesc = new FlxText(600, 300, 0, "PLACEHOLDER");
 		charDesc.wordWrap = true;
@@ -799,7 +836,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			charIcon?.setPosition(250, 270);
 			charIcon?.size.set(2, 2);
 		}
-
+		
 		if (!simplifyUI) {
 			for (icon in iconGrid) {
 				if (curCharID != 'default' && !lockedCharMap.exists(curCharID)) {
@@ -826,15 +863,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		add(charDesc);
 
 		// Do the unlock animation if we haven't seen it yet.
-		if (lockedCharMap.exists(curCharID)) {
-			if (isCharacterUnlocked(curCharID, characterData.unlockMethod)) {
-				if (seenUnlocks.indexOf(curCharID) == -1) {
-					lockedCharMap.remove(curCharID);
-					seenUnlocks.push(curCharID);
-					Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
-					Save.instance.flush();
-					doUnlockAnimation();
-				}
+		if (lockedCharMap.exists(curCharID) && isCharacterUnlocked(curCharID, characterData.unlockMethod)) {
+			if (seenUnlocks.indexOf(curCharID) == -1) {
+				lockedCharMap.remove(curCharID);
+				seenUnlocks.push(curCharID);
+			 	Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
+				Save.instance.flush();
+				doUnlockAnimation();
 			}
 		}
 

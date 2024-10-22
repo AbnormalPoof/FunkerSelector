@@ -149,9 +149,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		conductorInUse.update();
 
-		// Updating the array with the latest changes
-		characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
-
 		numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
 		numberThing.screenCenter(0x01);
 
@@ -614,6 +611,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					selected.visible = selectedTextVisibility();
 					Save.instance.modOptions.set("FunkerSelector", characterIDs);
 					Save.instance.flush();
+
+					// Updating the array with the latest changes
+					characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 				}
 			}
 
@@ -650,6 +650,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					newGraphic.visible = false;
 					Save.instance.modOptions.set("FunkerSelector", characterIDs);
 					Save.instance.flush();
+
+					// Updating the array with the latest changes
+					characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 				} else {
 					if (preferredSFX == "charSelect") {
 						FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
@@ -669,7 +672,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 */
 	function jumpToCurSelected():Void {
     // In the event that the saved character ID no longer exists, we fallback to default.
-		if (!jsonNameMap.exists(characterIDsArray[pageIndex]) && characterIDsArray[pageIndex] != 'default') {
+		if (!characterMap.exists(characterIDsArray[pageIndex]) && characterIDsArray[pageIndex] != 'default') {
 			trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
 			switch (pageIndex) {
 				case 0:
@@ -682,6 +685,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			// Save everything
 			Save.instance.modOptions.set("FunkerSelector", characterIDs);
 			Save.instance.flush();
+
+			// Updating the array with the latest changes
+			characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 		}
 		charIndex = filteredKeys.indexOf(characterIDsArray[pageIndex]);
 		curCharID = characterIDsArray[pageIndex];
@@ -833,7 +839,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		if (curCharID != 'default') {
 			characterInfo = characterMap.get(curCharID);
-
 			ownerJSONname = characterInfo[0];
 			characterData = jsonCharacterCache.get(ownerJSONname);
 			charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;

@@ -35,8 +35,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var leftDifficultyArrow:FunkinSprite;
 	var rightDifficultyArrow:FunkinSprite;
 	var keyBox:FunkinSprite;
+	var lockedChill:FunkinSprite;
+
+	var unlockSound:FunkinSound;
+	var perfectRank:FunkinSound;
 
 	var hotkeyCam:FunkinCamera;
+	var uiCam:FunkinCamera;
+	var spriteCam:FunkinCamera;
 
 	// Arrays for each character.
 	var charArrayBF:Array<String> = ['default'];
@@ -48,6 +54,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 	// NOTE: For writing, access characterIDs directly. This is only for reading.
 	var characterIDsArray:Array<String> = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
+
+	var seenUnlocks:Array<String> = [];
 
 	var lockedCharMap:StringMap<Dynamic> = new StringMap();
 
@@ -67,6 +75,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var characterSprite:BaseCharacter;
 	var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
 	var simplifyUI:Bool = Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode;
+	var busy:Bool = false;
 
 	public function new() {
 		super();
@@ -74,6 +83,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 	public override function create():Void {
 		super.create();
+
+ 		if (Save.instance.modOptions.get("FunkerSelector-SeenChars") == null) {
+			Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
+			Save.instance.flush();
+		} else {
+			seenUnlocks = Save.instance.modOptions.get("FunkerSelector-SeenChars");
+		}
 
 		setupUIStuff();
 		initChars();
@@ -91,7 +107,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		numberThing.text = "< " + (charIndex + 1) + " / " + charArrays[pageIndex].length + " >";
 		numberThing.screenCenter(0x01);
 
-		handleKeyShit();
+		if (!busy)
+			handleKeyShit();
 	}
 
 	function beatHit():Void {
@@ -173,9 +190,16 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				continue;
 			}
 
-			if (data.mustUnlock && data.unlockMethod != null && !shouldShowCharacter(data.characterID, data.unlockMethod)) {
-				trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
-				lockedCharMap.set(data.characterID, data);
+			if (data.mustUnlock && data.unlockMethod != null) {
+				if (!isCharacterUnlocked(data.characterID, data.unlockMethod)) {
+					trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
+					lockedCharMap.set(data.characterID, data);
+				} else {
+					if (seenUnlocks.indexOf(data.characterID) == -1) {
+						trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
+						lockedCharMap.set(data.characterID, data);
+					}
+				}
 			}
 
 			if (data.characterType != null) {
@@ -245,6 +269,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 				add(icon);
 				iconGrid.push(icon);
+				icon.camera = spriteCam;
 			}
 		}
 	}
@@ -284,7 +309,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * - song: Checks if the song has been beaten on the specified difficulty list.
 	 * - storyWeek: Checks if the week has been beaten on the specified difficulty list.
 	 */
-	function shouldShowCharacter(characterID:String, unlockMethod:Dynamic):Bool {
+	function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool {
 		switch (unlockMethod.type) {
 			case 'playableCharacter':
 				if (PlayerRegistry.instance.isCharacterOwned(characterID)) {
@@ -297,7 +322,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			case 'storyWeek':
 				return Save.instance.hasBeatenLevel(unlockMethod.levelID, unlockMethod.difficultyList);
 			default:
-				return true;
+				return false;
 		}
 	}
 
@@ -318,7 +343,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * Set up UI stuff like the BG and text.
 	 */
 	function setupUIStuff():Void {
-		hotkeyCam = new FunkinCamera('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+		spriteCam = new FunkinCamera('SpriteCam');
+		FlxG.cameras.add(spriteCam, false);
+		spriteCam.bgColor = 0x0;
+
+		uiCam = new FunkinCamera('UIElements');
+		FlxG.cameras.add(uiCam, false);
+		uiCam.bgColor = 0x0;
+
+		hotkeyCam = new FunkinCamera('HotkeyMenu');
 		FlxG.cameras.add(hotkeyCam, false);
 		hotkeyCam.bgColor = 0x0;
 		hotkeyCam.visible = false;
@@ -326,19 +359,24 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		bg = new FunkinSprite(0, 0);
 		bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
 		bg.alpha = 0;
+		bg.camera = spriteCam;
 
 		selectText = configureText(null, null, [170, 10], 50, Paths.font("PhantomMuff.ttf"));
 		selectText.screenCenter(0x01);
+		selectText.camera = uiCam;
 
 		numberThing = configureText(null, null, [170, 60], 45, Paths.font("PhantomMuff.ttf"));
 		numberThing.color = 0xFFE3E1E1;
+		numberThing.camera = uiCam;
 
 		selected = configureText(null, '(SELECTED)', [720, 220], 50, Paths.font("PhantomMuff.ttf"));
 		selected.color = 0xFF53FF38;
 		selected.visible = false;
+		selected.camera = uiCam;
 
 		hotkeyText = configureText(null, 'D - Hotkeys', [990, 15], 45, Paths.font("PhantomMuff.ttf"));
 		hotkeyText.color = 0xFFE3E1E1;
+		hotkeyText.camera = uiCam;
 
 		hotkeys = configureText(null,
 			'F - Reset everything to default.\n\nJ - Jump to the currently selected character.\n\nQ - Switch to the previous page.\n\nE - Switch to the next page.\n\nESC - Close this.',
@@ -348,18 +386,35 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		hotkeys.fieldWidth = 600;
 
 		charName = configureText(null, null, [170, 110], 70, Paths.font("PhantomMuff.ttf"));
+		charName.camera = uiCam;
 
 		leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
 		leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
 		leftDifficultyArrow.animation.addByPrefix('press', 'leftConfirm0');
 		leftDifficultyArrow.animation.play('idle');
 		leftDifficultyArrow.scale.set(1.5, 1.5);
+		leftDifficultyArrow.camera = uiCam;
 
 		rightDifficultyArrow = FunkinSprite.createSparrow(1200, leftDifficultyArrow.y, 'storymenu/ui/arrows');
 		rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
 		rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
 		rightDifficultyArrow.animation.play('idle');
 		rightDifficultyArrow.scale.set(1.5, 1.5);
+		rightDifficultyArrow.camera = uiCam;
+
+		lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
+		lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
+		lockedChill.animation.addByPrefix('denied', 'cannot select0', 24, false);
+		lockedChill.animation.addByPrefix('death', 'locked man explodes0', 24, false);
+		lockedChill.camera = spriteCam;
+
+		lockedChill.animation.play('idle');
+		lockedChill.animation.finishCallback = function(_) {
+			lockedChill.offset.set();
+			lockedChill.animation.play('idle');
+		};
+		lockedChill.scale.set(1.2, 1.2);
+		lockedChill.visible = false;
 
 		keyBox = new FunkinSprite(0, 0);
 		keyBox.makeSolidColor(600, 600, 0xFF000000);
@@ -368,6 +423,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		keyBox.screenCenter();
 
 		charIcon = new HealthIcon('dad', 0);
+		charIcon.camera = uiCam;
+
+		unlockSound = new FunkinSound();
+    unlockSound.loadEmbedded(Paths.sound('CS_unlock'));
+		unlockSound.volume = 1;
+
+		perfectRank = new FunkinSound();
+    perfectRank.loadEmbedded(Paths.sound('ranks/perfect'));
+		perfectRank.volume = 1;
 
 		add(bg);
 		if (!simplifyUI)
@@ -380,6 +444,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		add(hotkeyText);
 		add(charIcon);
 		add(charName);
+		add(lockedChill);
 		add(keyBox);
 		add(hotkeys);
 
@@ -420,6 +485,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		var white = new FunkinSprite(0, 0);
 		white.makeSolidColor(FlxG.width, FlxG.height, color);
 		white.alpha = 0;
+		white.camera = uiCam;
 		this.add(white);
 
 		FlxTween.tween(white, {alpha: alpha}, duration, {
@@ -537,6 +603,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				} else {
 					FunkinSound.playOnce(Paths.sound('cancelMenu'));
 					flashScreen(0xFFFF0000, 0.03, 0.1);
+					if (lockedChill != null)
+						lockedChill.animation.play('denied', true);
 				}
 			}
 		}
@@ -629,6 +697,39 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	}
 
 	/**
+	 * Does a really fucking cool unlock animation.
+	 */
+	function doUnlockAnimation():Void {
+		busy = true;
+		FlxG.sound.music?.fadeOut();
+		FlxTween.tween(uiCam, {alpha: 0}, 1, {ease: FlxEase.quartOut, onComplete: function(twn:FlxTween) {
+			unlockSound.play(false);
+			new FlxTimer().start(1.45, function() {
+				lockedChill.offset.set(170, 220);
+				lockedChill.animation.play('death');
+				lockedChill.animation.callback = function(name, frame) {
+				if (name == 'death' && frame == 36) {
+						perfectRank.play(false, 0.5);
+						flashScreen(0xFFFFFFFF, 0.05, 1);
+						new FlxTimer().start(0.025, function() {
+							updateCharInfo();
+							uiCam.shake(0.01, 0.2);
+							spriteCam.shake(0.01, 0.2);
+							FlxG.state.subState.funnyCam.shake(0.01, 0.2);
+						});
+						if (characterSprite != null && !characterSprite.visible) {
+							characterSprite.visible = true;
+						}
+						busy = false;
+						uiCam.alpha = 1;
+						FlxG.sound.music?.fadeIn();
+					}
+				}
+			});
+		}});
+	}
+
+	/**
 	 * Update character information.
 	 */
 	function updateCharInfo():Void {
@@ -646,6 +747,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		charDesc = new FlxText(600, 300, 0, "PLACEHOLDER");
 		charDesc.wordWrap = true;
 		charDesc.fieldWidth = 550;
+		charDesc.camera = uiCam;
 
 		characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('parseJSONData', [curCharID]);
 		charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
@@ -659,6 +761,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					configureChar(characterData.characterMenu);
 				}
 				add(characterSprite);
+				characterSprite.camera = spriteCam;
 			}
 		}
 
@@ -672,7 +775,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					charName.text = "LOCKED";
 
 					if (characterSprite != null)
-						characterSprite.color = 0xFF000000;
+						characterSprite.visible = false;
 
 					var unlockHint = characterData.description != null
 						&& characterData.description.unlockCondition != null ? "\n\nUnlock Condition: " + characterData.description.unlockCondition : "";
@@ -702,7 +805,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		if (!simplifyUI) {
 			for (icon in iconGrid) {
-				if (curCharID != 'default') {
+				if (curCharID != 'default' && !lockedCharMap.exists(curCharID)) {
 					icon?.configure(charIconData?.healthIcon);
 				} else {
 					icon?.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
@@ -710,18 +813,33 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 		}
 
-		if (charIcon != null) {
-			if (lockedCharMap.exists(curCharID)) {
+		if (lockedCharMap.exists(curCharID)) {
+			if (charIcon != null)
 				charIcon.visible = false;
-			} else {
+			lockedChill.visible = true;
+		} else {
+			if (charIcon != null)
 				charIcon.visible = true;
-			}
+			lockedChill.visible = false;
 		}
 
 		charName.screenCenter(0x01);
 		selected.y = charDesc.y - 60;
 
 		add(charDesc);
+
+		// Do the unlock animation if we haven't seen it yet.
+		if (lockedCharMap.exists(curCharID)) {
+			if (isCharacterUnlocked(curCharID, characterData.unlockMethod)) {
+				if (seenUnlocks.indexOf(curCharID) == -1) {
+ 					lockedCharMap.remove(curCharID);
+					seenUnlocks.push(curCharID);
+					Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
+					Save.instance.flush();
+					doUnlockAnimation();
+				}
+			}
+		}
 
 		trace('[Funker Selector] Updated character information.');
 	}

@@ -2,8 +2,15 @@
   "version": "1.0.0",
   "characterID": "bf-christmas",
   "characterType": "bf",
+  "mustUnlock": true,
+  "unlockMethod": {
+    "type": "storyWeek",
+    "levelID": "week5",
+    "difficultyList": ["hard"]
+  },
   "description": {
-    "text": "Boyfriend wearing a special attire just for the Holidays! Featured in Week 5."
+    "text": "Boyfriend wearing a special attire just for the Holidays! Featured in Week 5.",
+    "unlockCondition": "Beat Week 5 on Hard."
   },
   "characterMenu":
   {

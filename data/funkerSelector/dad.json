@@ -2,8 +2,15 @@
   "version": "1.0.0",
   "characterID": "dad",
   "characterType": "dad",
+  "mustUnlock": true,
+  "unlockMethod": {
+    "type": "storyWeek",
+    "levelID": "week1",
+    "difficultyList": ["hard"]
+  },
   "description": {
-    "text": "The father of Girlfriend and an ex-rockstar, he is very disapproving of Girlfriend's relationship with Boyfriend."
+    "text": "The father of Girlfriend and an ex-rockstar, he is very disapproving of Girlfriend's relationship with Boyfriend.",
+    "unlockCondition": "Beat Week 1 on Hard."
   },
   "characterMenu":
   {

@@ -4,11 +4,13 @@
   "characterType": "bf",
   "mustUnlock": true,
   "unlockMethod": {
-    "type": "playableCharacter"
+    "type": "song",
+    "songID": "eggnog",
+    "difficultyList": ["hard-pico"]
   },
   "description": {
     "text": "Pico, all dressed up for the holidays! Featured in Eggnog (Pico Mix), and added in an update dedicated to him.",
-    "unlockCondition": "Beat WeekEnd 1."
+    "unlockCondition": "Beat Eggnog (Pico Mix) on Hard."
   },
   "characterMenu":
   {

@@ -68,7 +68,15 @@ class CharacterHandler extends Module {
 	 * It'd be annoying to have to re-cache everything everytime we exit, so we
 	 * keep track of JSON characters in a separate map instead.
 	 */
-	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
+	var cachedJSONSparrows:StringMap<String> = new StringMap();
+
+
+	/**
+	 * Cache for JSON character data.
+	 * 
+	 * TODO: Implement this.
+	 */
+	var jsonCharacterCache:StringMap<String> = new StringMap();
 
 	/**
 	 * Some janky shit for passing the BPM through CharacterMenu don't worry about it.
@@ -95,6 +103,9 @@ class CharacterHandler extends Module {
 
 		// Initialize the save data.
 		initializeSave();
+
+		// Parses and loads JSON characters.
+		loadJSONCharData();
 	}
 
 	/**

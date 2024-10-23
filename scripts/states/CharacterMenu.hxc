@@ -245,7 +245,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		iHateMyLife = tempArray.filter(function(shit) {
-			var characterType = characterMap.get(shit)[1];
+			characterType = characterMap.get(shit)[1];
 			switch (pageIndex) {
 				case 0:
 					return characterType == 'bf' || characterType == 'player';
@@ -253,6 +253,19 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					return characterType == 'dad' || characterType == 'opponent';
 				case 2:
 					return characterType == 'gf';
+			}
+		});
+
+		iHateMyLife.sort(function(a:String, b:String):Int {
+			nameA = CharacterDataParser.parseCharacterData(a).name.toUpperCase();
+			nameB = CharacterDataParser.parseCharacterData(b).name.toUpperCase();
+
+			if (nameA < nameB) {
+				return -1;
+			} else if (nameA > nameB) {
+				return 1;
+			} else {
+				return 0;
 			}
 		});
 
@@ -669,7 +682,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * Jumps to the currently selected character.
 	 */
 	function jumpToCurSelected():Void {
-    // In the event that the saved character ID no longer exists, we fallback to default.
+		// In the event that the saved character ID no longer exists, we fallback to default.
 		if (!characterMap.exists(characterIDsArray[pageIndex]) && characterIDsArray[pageIndex] != 'default') {
 			trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
 			switch (pageIndex) {

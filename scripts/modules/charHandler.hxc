@@ -61,7 +61,7 @@ class CharacterHandler extends Module {
 	 * NOTE: Only change this if there's breaking changes that
 	 * make it not function on older versions!!
 	 */
-	var supportedVersionRule:String = ">=0.5.2 <0.5.3";
+	var supportedVersionRule:String = ">=0.5.2 <=0.5.3";
 
 	/**
 	 * currentCachedTextures gets cleared everytime we load into a song.

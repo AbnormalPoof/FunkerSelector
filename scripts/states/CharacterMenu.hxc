@@ -1,3 +1,4 @@
+import Array;
 import flixel.FlxG;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
@@ -247,11 +248,20 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			characterType = characterMap.get(shit)[1];
 			switch (pageIndex) {
 				case 0:
-					return characterType == 'bf' || characterType == 'player';
+					if (characterType is Array)
+						return characterType.indexOf('bf') != -1 || characterType.indexOf('player') != -1;
+					else
+						return characterType == 'bf' || characterType == 'player';
 				case 1:
-					return characterType == 'dad' || characterType == 'opponent';
+					if (characterType is Array)
+						return characterType.indexOf('dad') != -1 || characterType.indexOf('opponent') != -1;
+					else
+						return characterType == 'dad' || characterType == 'opponent';
 				case 2:
-					return characterType == 'gf';
+					if (characterType is Array)
+						return characterType.indexOf('gf') != -1;
+					else
+						return characterType == 'gf';
 			}
 		});
 

@@ -507,7 +507,7 @@ class CharacterHandler extends Module {
 	 * 
 	 */
 	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
-		var characterData = parseJSONData(id);
+		var characterData = jsonCharacterCache.get(id)[0];
 		var oldChar = null;
 		var charType = null;
 
@@ -562,7 +562,7 @@ class CharacterHandler extends Module {
 				}
 
 				if (songMatch && variationMatch) {
-					characterData = parseJSONData(variation.characterID) != null ? parseJSONData(variation.characterID) : characterData;
+					characterData = jsonCharacterCache.get(variation.characterID) != null ? jsonCharacterCache.get(variation.characterID)[0] : characterData;
 
 					if (charJSONCheck(variation.characterID)) {
 						trace('[Funker Selector] Variation found: ' + variation.characterID);

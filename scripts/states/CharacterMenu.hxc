@@ -148,9 +148,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		conductorInUse.update();
 
-		numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
-		numberThing.screenCenter(0x01);
-
 		if (!busy)
 			handleKeyShit();
 	}
@@ -278,6 +275,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		});
 
 		filteredKeys = filteredKeys.concat(iHateMyLife);
+
+		numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
+		numberThing.screenCenter(0x01);
 	}
 
 	/**
@@ -578,6 +578,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
 				}
 				charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + filteredKeys.length) % filteredKeys.length;
+				numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
+				numberThing.screenCenter(0x01);
 				curCharID = filteredKeys[charIndex];
 				updateCharInfo();
 			}

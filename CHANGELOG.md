@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [1.5.1] - 2024-10-23
 ### Added
 - v0.5.3 support
-- You can now have assign multiple character types to your character as an Array
+- You can now assign multiple character types to your character as an Array
 ### Changed
 - Characters are now sorted in Alphabetical order
 - Small optimizations

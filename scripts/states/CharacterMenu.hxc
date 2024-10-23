@@ -594,8 +594,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
 				}
 				pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
-				updateFilteredKeys();
 				charIndex = 0;
+				updateFilteredKeys();
 				curCharID = filteredKeys[charIndex];
 				updateCharInfo();
 			}
@@ -712,6 +712,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 		charIndex = filteredKeys.indexOf(characterIDsArray[pageIndex]);
 		curCharID = characterIDsArray[pageIndex];
+		numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
+		numberThing.screenCenter(0x01);
 		updateCharInfo();
 	}
 

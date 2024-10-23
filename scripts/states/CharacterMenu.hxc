@@ -180,7 +180,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 			var funkerData:Dynamic = jsonCharacterCache.get(funker);
 			var data:Dynamic = funkerData[0];
-			
+
 			if (data == null)
 				continue;
 
@@ -721,7 +721,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 		if (!simplifyUI) {
 			characterData = jsonCharacterCache.get(curCharID);
-			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
+			animation = characterData[0]?.characterMenu?.selectedAnim != null ? characterData[0].characterMenu.selectedAnim : 'hey';
 			if (characterSprite != null)
 				characterSprite.playAnimation(animation, true, true);
 		}

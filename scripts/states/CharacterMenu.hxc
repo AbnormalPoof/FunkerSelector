@@ -178,7 +178,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		for (funker in funkerJSONs) {
 			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
-			var data:Dynamic = jsonCharacterCache.get(funker);
+			var funkerData:Dynamic = jsonCharacterCache.get(funker);
+			var data:Dynamic = funkerData[0];
+			
 			if (data == null)
 				continue;
 
@@ -257,8 +259,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		});
 
 		iHateMyLife.sort(function(a:String, b:String):Int {
-			nameA = CharacterDataParser.parseCharacterData(a).name.toUpperCase();
-			nameB = CharacterDataParser.parseCharacterData(b).name.toUpperCase();
+			characterA = jsonCharacterCache.get(a);
+			characterB = jsonCharacterCache.get(b);
+
+			characterDataA = characterA[1];
+			characterDataB = characterB[1];
+
+			nameA = characterDataA.name.toUpperCase();
+			nameB = characterDataB.name.toUpperCase();
 
 			if (nameA < nameB) {
 				return -1;
@@ -279,7 +287,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * This is disabled if "Simplify UI" is turned on in the Options Menu.
 	 */
 	function createIconGrid(spacing:Int, ?alpha:Float = null):Void {
-		var charIconData = curCharID != 'default' ? CharacterDataParser.parseCharacterData(curCharID) : null;
+		var charIconData = curCharID != 'default' ? jsonCharacterCache.get(curCharID)[1] : null;
 		var x = (FlxG.width - Math.ceil(FlxG.width / spacing) * spacing) / 2;
 		var y = (FlxG.height - Math.ceil(FlxG.height / spacing) * spacing) / 2;
 		for (i in 0...Math.ceil(FlxG.height / spacing)) {
@@ -877,8 +885,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (curCharID != 'default') {
 			characterInfo = characterMap.get(curCharID);
 			ownerJSONname = characterInfo[0];
-			characterData = jsonCharacterCache.get(ownerJSONname);
-			charIconData = (curCharID != 'default') ? CharacterDataParser.parseCharacterData(curCharID) : null;
+			characterData = jsonCharacterCache.get(ownerJSONname)[0];
+			charIconData = (curCharID != 'default') ? jsonCharacterCache.get(ownerJSONname)[1] : null;
 		}
 
 		// If "Simplify UI" is enabled in the Options Menu, the sprites will not load.

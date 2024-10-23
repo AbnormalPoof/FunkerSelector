@@ -73,7 +73,7 @@ class CharacterHandler extends Module {
 	/**
 	 * Cache for JSON character data.
 	 */
-	var jsonCharacterCache:StringMap<String, Dynamic> = new StringMap();
+	var jsonCharacterCache:StringMap<String, Array<Dynamic, Dynamic>> = new StringMap();
 
 	/**
 	 * Some janky shit for passing the BPM through CharacterMenu don't worry about it.
@@ -353,7 +353,10 @@ class CharacterHandler extends Module {
 		for (funker in funkerJSONs) {
 			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
-			var data:Dynamic = jsonCharacterCache.get(funker);
+			var funkerData:Dynamic = jsonCharacterCache.get(funker);
+			var data:Dynamic = funkerData[0];
+			var charData:Dynamic = funkerData[1];
+
 			if (data == null)
 				continue;
 
@@ -367,8 +370,6 @@ class CharacterHandler extends Module {
 				trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
 				continue;
 			}
-
-			var charData = CharacterDataParser.parseCharacterData(data.characterID);
 
 			switch (charData.renderType) {
 				case 'multisparrow':
@@ -406,7 +407,10 @@ class CharacterHandler extends Module {
 			// If the parsing succeeds, then they get pushed to a temporary array.
 			tempArray.push(funker);
 
-			jsonCharacterCache.set(funker, data);
+			// Caching the character data.
+			charData = CharacterDataParser.parseCharacterData(data.characterID);
+
+			jsonCharacterCache.set(funker, [data, charData]);
 		}
 
 		// If a character ID doesn't exist in the array, then something definitely went wrong

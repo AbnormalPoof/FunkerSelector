@@ -22,6 +22,7 @@ import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
 import funkin.util.MemoryUtil;
+import funkin.util.ReflectUtil;
 import funkin.util.assets.DataAssets;
 import funkin.util.VersionUtil;
 import haxe.Json;
@@ -177,8 +178,7 @@ class CharacterHandler extends Module {
 		var defaultSettings:Dynamic = {
 			potatoMode: false,
 			preloadSprites: true,
-			preferredSFX: "funkin",
-			djSwapping: false
+			preferredSFX: "funkin"
 		};
 
 		if (Save.instance.modOptions.get("FunkerSelectorSettings") == null) {
@@ -190,8 +190,8 @@ class CharacterHandler extends Module {
 				+ funkerSettings.potatoMode
 				+ '\nPreload Sprites: '
 				+ funkerSettings.preloadSprites
-				+ '\nDJ Replacement: '
-				+ funkerSettings.djSwapping);
+				+ '\nPreferred SFX: '
+				+ funkerSettings.preferredSFX);
 		} else {
 			funkerSettings = Save.instance.modOptions.get("FunkerSelectorSettings");
 
@@ -211,8 +211,8 @@ class CharacterHandler extends Module {
 				+ funkerSettings.potatoMode
 				+ '\nPreload Sprites: '
 				+ funkerSettings.preloadSprites
-				+ '\nDJ Replacement: '
-				+ funkerSettings.djSwapping);
+				+ '\nPreferred SFX: '
+				+ funkerSettings.preferredSFX);
 		}
 
 		if (Save.instance.modOptions.get("FunkerSelector-SeenChars") == null) {

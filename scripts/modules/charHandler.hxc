@@ -25,6 +25,7 @@ import funkin.util.Constants;
 import funkin.util.assets.DataAssets;
 import funkin.util.MemoryUtil;
 import funkin.util.ReflectUtil;
+import funkin.util.VersionUtil;
 import haxe.Exception;
 import haxe.Json;
 import haxe.ds.StringMap;

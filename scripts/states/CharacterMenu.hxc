@@ -184,8 +184,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		});
 
 		iHateMyLife.sort(function(a:String, b:String):Int {
-			characterA = jsonCharacterCache.get(a);
-			characterB = jsonCharacterCache.get(b);
+			characterOwnerA = characterMap.get(a)[0];
+			characterOwnerB = characterMap.get(b)[0];
+			characterA = jsonCharacterCache.get(characterOwnerA);
+			characterB = jsonCharacterCache.get(characterOwnerB);
 
 			characterDataA = characterA[1];
 			characterDataB = characterB[1];

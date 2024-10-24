@@ -398,6 +398,7 @@ class CharacterHandler extends Module {
 	 */
 	function parseJSONData(characterID:String = 'default'):Dynamic {
 		if (Assets.exists(Paths.json('funkerSelector/' + characterID))) {
+			// TODO: Should we use json2object instead?
 			return Json.parse(Assets.getText(Paths.json('funkerSelector/' + characterID)));
 		}
 		return null;

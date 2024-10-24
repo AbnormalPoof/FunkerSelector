@@ -9,6 +9,7 @@ import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.graphics.FunkinCamera;
 import funkin.graphics.FunkinSprite;
 import funkin.modding.PolymodErrorHandler;
+import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.GameOverSubState;
 import funkin.play.PauseSubState;
@@ -121,6 +122,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * This is used for the unlock animation
 	 */
 	var busy:Bool = false;
+
+	/**
+	 * Script Event called when this SubState is closed.
+	 */
+	var FS_EXITED_SUBSTATE:String = "FS_EXITED_SUBSTATE";
 
 	public function new() {
 		super();
@@ -468,6 +474,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				GameOverSubState.blueBallSuffix = '';
 
 				WindowUtil.setWindowTitle('Friday Night Funkin\'');
+				ModuleHandler.callEvent(new ScriptEvent(FS_EXITED_SUBSTATE));
 				close();
 			}
 		}

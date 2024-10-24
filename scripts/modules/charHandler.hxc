@@ -9,6 +9,7 @@ import funkin.graphics.FunkinSprite;
 import funkin.modding.PolymodErrorHandler;
 import funkin.modding.base.ScriptedMusicBeatSubState;
 import funkin.modding.module.Module;
+import funkin.modding.module.ModuleHandler;
 import funkin.play.GameOverSubState;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
@@ -21,11 +22,11 @@ import funkin.ui.AtlasText;
 import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
-import funkin.util.MemoryUtil;
 import funkin.util.assets.DataAssets;
-import funkin.util.VersionUtil;
-import haxe.Json;
+import funkin.util.MemoryUtil;
+import funkin.util.ReflectUtil;
 import haxe.Exception;
+import haxe.Json;
 import haxe.ds.StringMap;
 import lime.app.Application;
 import openfl.display.BitmapData;
@@ -118,7 +119,8 @@ class CharacterHandler extends Module {
 		}
 
 		// Initialize the save data.
-		initializeSave();
+		initializeCharIDs();
+		initializeFunkerSettings();
 
 		// Parses and caches JSON character data.
 		loadJSONDataCache();
@@ -128,19 +130,14 @@ class CharacterHandler extends Module {
 	}
 
 	/**
-	 * Retrieves Character IDs and Preferences from the save data.
+	 * Retrieves Character IDs from the save data.
+	 * @return The saved character IDs as a dynamic object.
 	 */
-	function initializeSave():Void {
+	function initializeCharIDs():Dynamic {
 		var defaultCharacterIDs:Dynamic = {
 			bf: 'default',
 			gf: 'default',
 			dad: 'default'
-		};
-
-		var defaultSettings:Dynamic = {
-			potatoMode: false,
-			preloadSprites: true,
-			preferredSFX: "funkin"
 		};
 
 		if (Save.instance.modOptions.get("FunkerSelector") == null) {
@@ -148,6 +145,12 @@ class CharacterHandler extends Module {
 			Save.instance.flush();
 			characterIDs = defaultCharacterIDs;
 
+			trace('[Funker Selector] Successfully created save data:\n\nBoyfriend: '
+				+ characterIDs.bf
+				+ '\nGirlfriend: '
+				+ characterIDs.gf
+				+ '\nOpponent: '
+				+ characterIDs.dad);
 			trace('[Funker Selector] Successfully created save data:\n\nBoyfriend: '
 				+ characterIDs.bf
 				+ '\nGirlfriend: '
@@ -164,6 +167,21 @@ class CharacterHandler extends Module {
 				+ characterIDs.dad);
 		}
 
+		return characterIDs;
+	}
+
+	/**
+	 * Retrieves the preferences from the save data.
+	 * @return The saved preferences as a dynamic object.
+	 */
+	function initializeFunkerSettings():Dynamic {
+		var defaultSettings:Dynamic = {
+			potatoMode: false,
+			preloadSprites: true,
+			preferredSFX: "funkin",
+			djSwapping: false
+		};
+
 		if (Save.instance.modOptions.get("FunkerSelectorSettings") == null) {
 			Save.instance.modOptions.set("FunkerSelectorSettings", defaultSettings);
 			Save.instance.flush();
@@ -172,14 +190,30 @@ class CharacterHandler extends Module {
 			trace('[Funker Selector] Successfully created save data:\n\nSimplify UI: '
 				+ funkerSettings.potatoMode
 				+ '\nPreload Sprites: '
-				+ funkerSettings.preloadSprites);
+				+ funkerSettings.preloadSprites
+				+ '\nDJ Replacement: '
+				+ funkerSettings.djSwapping);
 		} else {
 			funkerSettings = Save.instance.modOptions.get("FunkerSelectorSettings");
+
+			// We check if there's any missing settings in the save file
+			// and add them if needed.
+			for (key in ReflectUtil.getAnonymousFieldsOf(defaultSettings)) {
+				if (!ReflectUtil.hasAnonymousField(funkerSettings, key)) {
+					trace('[Funker Selector] Missing setting ' + key + '! Applying the default value.');
+					funkerSettings[key] = defaultSettings[key];
+				}
+			}
+
+			Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
+			Save.instance.flush();
 
 			trace('[Funker Selector] Successfully created save data:\n\nSimplify UI: '
 				+ funkerSettings.potatoMode
 				+ '\nPreload Sprites: '
-				+ funkerSettings.preloadSprites);
+				+ funkerSettings.preloadSprites
+				+ '\nDJ Replacement: '
+				+ funkerSettings.djSwapping);
 		}
 
 		if (Save.instance.modOptions.get("FunkerSelector-SeenChars") == null) {
@@ -190,6 +224,8 @@ class CharacterHandler extends Module {
 		}
 
 		trace("SEEN UNLOCK ANIMATIONS: " + seenUnlocks);
+
+		return funkerSettings;
 	}
 
 	function onCreate(event) {
@@ -338,18 +374,27 @@ class CharacterHandler extends Module {
 							MemoryUtil.collect(true);
 						}
 					}, funkerSettings.preloadSprites);
+				
+				prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.', [
+					"funkin" => "Funkin' Main Menu",
+					"charSelect" => "Funkin' Character Select"
+				], (value) -> {
+					funkerSettings.preferredSFX = value;
+					Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
+					Save.instance.flush();
+					if (value == "charSelect") {
+						FunkinSound.playOnce(Paths.sound('CS_confirm'));
+					} else {
+						FunkinSound.playOnce(Paths.sound('confirmMenu'));
+					}
+				}, funkerSettings.preferredSFX);
 
-				prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
-					["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
-						funkerSettings.preferredSFX = value;
+				prefs.createPrefItemCheckbox("DJ Replacement",
+					"When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.", (value) -> {
+						funkerSettings.djSwapping = value;
 						Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
 						Save.instance.flush();
-						if (value == "charSelect") {
-							FunkinSound.playOnce(Paths.sound('CS_confirm'));
-						} else {
-							FunkinSound.playOnce(Paths.sound('confirmMenu'));
-						}
-					}, funkerSettings.preferredSFX);
+					}, funkerSettings.djSwapping);
 
 				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold", () -> {})).fireInstantly = true;
 			}
@@ -366,6 +411,20 @@ class CharacterHandler extends Module {
 			return Json.parse(Assets.getText(Paths.json('funkerSelector/' + characterID)));
 		}
 		return null;
+	}
+
+	function onScriptEvent(event) {
+		if (funkerSettings.djSwapping) {
+			if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
+				var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+				var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
+				if (playableChar != null && ownedCharID != FlxG.state.subState.dj.characterId) {
+					if (playableChar.getFreeplayDJData() != null) {
+						ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState]);
+					}
+				}
+			}
+		}
 	}
 
 	/**

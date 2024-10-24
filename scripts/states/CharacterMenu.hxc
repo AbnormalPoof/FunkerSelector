@@ -52,7 +52,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	/**
 	 * A map containing every character.
 	 */
-	var characterMap:StringMap<String, Array<String, String>> = new StringMap();
+	var characterMap:StringMap<String, Array<String, String>> = ModuleHandler.getModule("CharacterHandler").scriptGet('characterMap');
 
 	/**
 	 * A filtered character array for the current page.
@@ -60,19 +60,19 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 */
 	var filteredKeys:Array<String> = [];
 
-	// NOTE: For writing, access characterIDs directly. This is only for reading.
-	var characterIDsArray:Array<String> = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
-
 	/**
 	 * An array of unlock animations we've seen already.
 	 * This ensures the unlock animation only plays once per save file.
 	 */
-	var seenUnlocks:Array<String> = [];
+	var seenUnlocks:Array<String> = ModuleHandler.getModule("CharacterHandler").scriptGet('seenUnlocks');
+
+	// NOTE: For writing, access characterIDs directly. This is only for reading.
+	var characterIDsArray:Array<String> = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
 
 	/**
 	 * A map of all the locked characters.
 	 */
-	var lockedCharMap:StringMap<String> = new StringMap();
+	var lockedCharMap:StringMap<String> = ModuleHandler.getModule("CharacterHandler").scriptGet('lockedCharMap');
 
 	/**
 	 * The JSON character cache, which is retrieved from `charHandler`.
@@ -129,17 +129,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	public override function create():Void {
 		super.create();
 
-		if (Save.instance.modOptions.get("FunkerSelector-SeenChars") == null) {
-			Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
-			Save.instance.flush();
-		} else {
-			seenUnlocks = Save.instance.modOptions.get("FunkerSelector-SeenChars");
-		}
-
-		trace("SEEN UNLOCK ANIMATIONS: " + seenUnlocks);
-
 		setupUIStuff();
-		initChars();
 		updateFilteredKeys();
 		jumpToCurSelected();
 	}
@@ -157,78 +147,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		bopDaThing();
 		if (characterSprite != null)
 			characterSprite.dance();
-	}
-
-	/**
-	 * Initializing character data for use in the substate itself.
-	 * 
-	 * Characters use a JSON file and are loaded from `data/funkerSelector/` and
-	 * then parsed, they can specify Game Over music, Blue Ball, 
-	 * and Pause Menu music suffixes.
-	 * If no character type is specified in the JSON, it is pushed
-	 * to the Boyfriend character list. 
-	 * If no character ID exists in the file (or the character ID is invalid), the character will be skipped. 
-	 */
-	function initChars():Void {
-		var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
-		var data:Dynamic = null;
-
-		for (funker in funkerJSONs) {
-			trace('[Funker Selector] Fetching JSON data for ' + funker);
-
-			var funkerData:Dynamic = jsonCharacterCache.get(funker);
-			var data:Dynamic = funkerData[0];
-
-			if (data == null)
-				continue;
-
-			// If the "characterID" field was not found.
-			if (data.characterID == null) {
-				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-					'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
-					'":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
-				continue;
-			}
-
-			// If the Character ID is "default"
-			if (data.characterID == 'default') {
-				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-					'In "'
-					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
-					+ '":\n\nThe specified Character ID ('
-					+ data.characterID
-					+
-					') is set to "default"! Please change it, since it will conflict with the "default" character object in the menu.\nThis character will be skipped to prevent any issues.');
-				continue;
-			}
-
-			// If the specified Character ID does not exist in data/characters/
-			if (!charJSONCheck(data.characterID)) {
-				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-					'In "'
-					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
-					+ '":\n\nThe specified Character ID ('
-					+ data.characterID
-					+ ') is invalid. This character will be skipped to prevent any issues.');
-				continue;
-			}
-
-			if (data.mustUnlock && data.unlockMethod != null) {
-				if (!isCharacterUnlocked(data.characterID, data.unlockMethod)) {
-					trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
-					lockedCharMap.set(data.characterID, data);
-				} else {
-					if (seenUnlocks.indexOf(data.characterID) == -1) {
-						trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
-						lockedCharMap.set(data.characterID, data);
-					}
-				}
-			}
-
-			if (data.characterType == null)
-				data.characterType = 'bf';
-			characterMap.set(data.characterID, [funker, data.characterType]);
-		}
 	}
 
 	/**
@@ -342,34 +260,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			return characterFiles.indexOf(string) != -1;
 		}
 		return false;
-	}
-
-	/**
-	 * Wether or not the character should be shown.
-	 * @param characterID The character ID we're using.
-	 * @param unlockType The method we're using to determine if this character is unlocked.
-	 * @return Bool
-	 * 
-	 * Unlock Methods:
-	 * - playableCharacter: Checks if the associated playable character is unlocked.
-	 * - song: Checks if the song has been beaten on the specified difficulty list.
-	 * - storyWeek: Checks if the week has been beaten on the specified difficulty list.
-	 */
-	function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool {
-		switch (unlockMethod.type) {
-			case 'playableCharacter':
-				if (PlayerRegistry.instance.isCharacterOwned(characterID)) {
-					var ownerID:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
-					var playableCharacter:PlayableCharacter = PlayerRegistry.instance.fetchEntry(ownerID);
-					return playableCharacter != null && playableCharacter.isUnlocked();
-				}
-			case "song":
-				return Save.instance.hasBeatenSong(unlockMethod.songID, unlockMethod.difficultyList);
-			case 'storyWeek':
-				return Save.instance.hasBeatenLevel(unlockMethod.levelID, unlockMethod.difficultyList);
-			default:
-				return false;
-		}
 	}
 
 	/**
@@ -980,12 +870,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		add(charDesc);
 
 		// Do the unlock animation if we haven't seen it yet.
-		if (lockedCharMap.exists(curCharID) && isCharacterUnlocked(curCharID, characterData.unlockMethod)) {
+		if (lockedCharMap.exists(curCharID)
+			&& ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [curCharID, characterData.unlockMethod])) {
 			if (seenUnlocks.indexOf(curCharID) == -1) {
 				lockedCharMap.remove(curCharID);
 				seenUnlocks.push(curCharID);
 				Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
 				Save.instance.flush();
+				ModuleHandler.getModule("CharacterHandler").scriptSet('lockedCharMap', lockedCharMap);
+				ModuleHandler.getModule("CharacterHandler").scriptSet('seenUnlocks', seenUnlocks);
 				doUnlockAnimation();
 			}
 		}

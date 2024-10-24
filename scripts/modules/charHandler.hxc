@@ -71,9 +71,25 @@ class CharacterHandler extends Module {
 	var cachedJSONSparrows:StringMap<String> = new StringMap();
 
 	/**
+	 * A map containing every character.
+	 */
+	var characterMap:StringMap<String, Array<String, String>> = new StringMap();
+
+	/**
 	 * Cache for JSON character data.
 	 */
 	var jsonCharacterCache:StringMap<String, Array<Dynamic, Dynamic>> = new StringMap();
+
+	/**
+	 * A map of all the locked characters.
+	 */
+	var lockedCharMap:StringMap<String> = new StringMap();
+
+	/**
+	 * An array of unlock animations we've seen already.
+	 * This ensures the unlock animation only plays once per save file.
+	 */
+	var seenUnlocks:Array<String> = [];
 
 	/**
 	 * Some janky shit for passing the BPM through CharacterMenu don't worry about it.
@@ -106,6 +122,9 @@ class CharacterHandler extends Module {
 
 		// Parses and caches JSON character data.
 		loadJSONDataCache();
+
+		// Initialize the Character Map.
+		initChars();
 	}
 
 	/**
@@ -162,6 +181,15 @@ class CharacterHandler extends Module {
 				+ '\nPreload Sprites: '
 				+ funkerSettings.preloadSprites);
 		}
+
+		if (Save.instance.modOptions.get("FunkerSelector-SeenChars") == null) {
+			Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
+			Save.instance.flush();
+		} else {
+			seenUnlocks = Save.instance.modOptions.get("FunkerSelector-SeenChars");
+		}
+
+		trace("SEEN UNLOCK ANIMATIONS: " + seenUnlocks);
 	}
 
 	function onCreate(event) {
@@ -341,6 +369,106 @@ class CharacterHandler extends Module {
 	}
 
 	/**
+	 * Initializing character data for use in the `CharacterMenu` SubState itself.
+	 * 
+	 * Characters use a JSON file and are loaded from `data/funkerSelector/` and
+	 * then parsed, they can specify Game Over music, Blue Ball, 
+	 * and Pause Menu music suffixes.
+	 * If no character type is specified in the JSON, it is pushed
+	 * to the Boyfriend character list. 
+	 * If no character ID exists in the file (or the character ID is invalid), the character will be skipped. 
+	 */
+	function initChars():Void {
+		var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
+		var data:Dynamic = null;
+
+		for (funker in funkerJSONs) {
+			trace('[Funker Selector] Fetching JSON data for ' + funker);
+
+			var funkerData:Dynamic = jsonCharacterCache.get(funker);
+			var data:Dynamic = funkerData[0];
+
+			if (data == null)
+				continue;
+
+			// If the "characterID" field was not found.
+			if (data.characterID == null) {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+					'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
+					'":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
+				continue;
+			}
+
+			// If the Character ID is "default"
+			if (data.characterID == 'default') {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+					'In "'
+					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
+					+ '":\n\nThe specified Character ID ('
+					+ data.characterID
+					+
+					') is set to "default"! Please change it, since it will conflict with the "default" character object in the menu.\nThis character will be skipped to prevent any issues.');
+				continue;
+			}
+
+			// If the specified Character ID does not exist in data/characters/
+			if (!charJSONCheck(data.characterID)) {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+					'In "'
+					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
+					+ '":\n\nThe specified Character ID ('
+					+ data.characterID
+					+ ') is invalid. This character will be skipped to prevent any issues.');
+				continue;
+			}
+
+			if (data.mustUnlock && data.unlockMethod != null) {
+				if (!isCharacterUnlocked(data.characterID, data.unlockMethod)) {
+					trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
+					lockedCharMap.set(data.characterID, data);
+				} else {
+					if (seenUnlocks.indexOf(data.characterID) == -1) {
+						trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
+						lockedCharMap.set(data.characterID, data);
+					}
+				}
+			}
+
+			if (data.characterType == null)
+				data.characterType = 'bf';
+			characterMap.set(data.characterID, [funker, data.characterType]);
+		}
+	}
+
+	/**
+	 * Wether or not the character should be shown.
+	 * @param characterID The character ID we're using.
+	 * @param unlockType The method we're using to determine if this character is unlocked.
+	 * @return Bool
+	 * 
+	 * Unlock Methods:
+	 * - playableCharacter: Checks if the associated playable character is unlocked.
+	 * - song: Checks if the song has been beaten on the specified difficulty list.
+	 * - storyWeek: Checks if the week has been beaten on the specified difficulty list.
+	 */
+	function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool {
+		switch (unlockMethod.type) {
+			case 'playableCharacter':
+				if (PlayerRegistry.instance.isCharacterOwned(characterID)) {
+					var ownerID:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+					var playableCharacter:PlayableCharacter = PlayerRegistry.instance.fetchEntry(ownerID);
+					return playableCharacter != null && playableCharacter.isUnlocked();
+				}
+			case "song":
+				return Save.instance.hasBeatenSong(unlockMethod.songID, unlockMethod.difficultyList);
+			case 'storyWeek':
+				return Save.instance.hasBeatenLevel(unlockMethod.levelID, unlockMethod.difficultyList);
+			default:
+				return false;
+		}
+	}
+
+	/**
 	 * We preload the sprites for the JSON characters
 	 * when the Module is created in order to reduce lag when
 	 * they're shown in the Character Selection screen.
@@ -507,9 +635,11 @@ class CharacterHandler extends Module {
 	 * 
 	 */
 	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
-		var characterData = jsonCharacterCache.get(id)[0];
-		var oldChar = null;
-		var charType = null;
+		var characterInfo:Dynamic = characterMap.get(id);
+		var ownerJSONname:String = characterInfo != null ? characterInfo[0] : null;
+		var characterData:Dynamic = ownerJSONname != null ? jsonCharacterCache.get(ownerJSONname)[0] : null;
+		var oldChar:BaseCharacter = null;
+		var charType:CharacterType = null;
 
 		if (id == 'default')
 			return;
@@ -562,7 +692,7 @@ class CharacterHandler extends Module {
 				}
 
 				if (songMatch && variationMatch) {
-					characterData = jsonCharacterCache.get(variation.characterID) != null ? jsonCharacterCache.get(variation.characterID)[0] : characterData;
+					characterData = characterMap.get(variation.characterID) != null ? jsonCharacterCache.get(characterMap.get(variation.characterID)[0])[0] : characterData;
 
 					if (charJSONCheck(variation.characterID)) {
 						trace('[Funker Selector] Variation found: ' + variation.characterID);

@@ -4,9 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.5.2] - 2024-10-23
-### Changed
-- Small refactors in the code.
 ### Fixed
+- Fixed an issue where Character Data wasn't parsed properly if the Character ID is different from the JSON filename.
 - Fixed a "Null Object Reference' error when selecting "DEFAULT".
 
 ## [1.5.1] - 2024-10-23

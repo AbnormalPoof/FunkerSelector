@@ -624,8 +624,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			FunkinSound.playOnce(Paths.sound('confirmMenu'));
 		}
 		if (!simplifyUI) {
-			characterData = jsonCharacterCache.get(curCharID);
-			animation = characterData[0]?.characterMenu?.selectedAnim != null ? characterData[0].characterMenu.selectedAnim : 'hey';
+			characterData = jsonCharacterCache.get(curCharID) != null ? jsonCharacterCache.get(curCharID)[0] : null;
+			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
 			if (characterSprite != null)
 				characterSprite.playAnimation(animation, true, true);
 		}

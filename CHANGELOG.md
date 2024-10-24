@@ -11,7 +11,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Characters are now sorted in Alphabetical order
 - Small optimizations
 
-
 ## [1.5.0] - 2024-10-22
 ### Added
 - The characters now bop to the BPM of the currently selected song in Freeplay.

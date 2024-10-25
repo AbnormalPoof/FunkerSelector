@@ -734,7 +734,7 @@ class CharacterHandler extends Module {
 				PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + characterType + ' character. How the fuck???');
 			}
 		} else {
-			trace('[Funker Selector] ID ' + characterType + ' and ID ' + oldChar.characterID + ' match. Not replacing...');
+			trace('[Funker Selector] ID ' + characterID + ' and ID ' + oldChar.characterId + ' match. Not replacing...');
 		}
 
 		if (characterData != null && characterType == CharacterType.BF) {

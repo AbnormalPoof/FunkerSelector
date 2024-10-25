@@ -25,9 +25,10 @@ import funkin.util.MemoryUtil;
 import funkin.util.ReflectUtil;
 import funkin.util.assets.DataAssets;
 import funkin.util.VersionUtil;
-import haxe.Json;
 import haxe.Exception;
 import haxe.ds.StringMap;
+import hxjsonast.Parser;
+import hxjsonast.Tools;
 import lime.app.Application;
 import openfl.display.BitmapData;
 import openfl.display3D.textures.RectangleTexture;
@@ -394,13 +395,16 @@ class CharacterHandler extends Module {
 	/**
 	 * Parse a Funker Selector JSON file and return the data.
 	 * @param characterID The character ID to use.
-	 * @return The JSON data.
+	 * @return The JSON data as a Json object.
 	 */
 	function parseJSONData(characterID:String = 'default'):Dynamic {
-		if (Assets.exists(Paths.json('funkerSelector/' + characterID))) {
-			// TODO: Should we use json2object instead?
-			return Json.parse(Assets.getText(Paths.json('funkerSelector/' + characterID)));
+		var filePath = Paths.json('funkerSelector/' + characterID);
+
+		if (Assets.exists(filePath)) {
+			var result = Tools.getValue(Parser.parse(Assets.getText(filePath), filePath));
+			return result;
 		}
+
 		return null;
 	}
 
@@ -635,9 +639,9 @@ class CharacterHandler extends Module {
 		ogCharID = PlayState.instance.currentChart.characters.player;
 
 		// Replace and swap out the characters.
-		replaceChar(characterIDs.bf, 'bf');
-		replaceChar(characterIDs.gf, 'gf');
-		replaceChar(characterIDs.dad, 'dad');
+		replaceChar(characterIDs.bf, CharacterType.BF);
+		replaceChar(characterIDs.gf, CharacterType.GF);
+		replaceChar(characterIDs.dad, CharacterType.DAD);
 		PlayState.instance.currentStage.refresh();
 
 		// If at least ONE of them was changed (means a vocal file was found), replace the vocals.

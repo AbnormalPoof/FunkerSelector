@@ -23,12 +23,11 @@ import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
 import funkin.util.MemoryUtil;
 import funkin.util.ReflectUtil;
-import funkin.util.assets.DataAssets;
+import funkin.util.SerializerUtil;
 import funkin.util.VersionUtil;
+import funkin.util.assets.DataAssets;
 import haxe.Exception;
 import haxe.ds.StringMap;
-import hxjsonast.Parser;
-import hxjsonast.Tools;
 import lime.app.Application;
 import openfl.display.BitmapData;
 import openfl.display3D.textures.RectangleTexture;
@@ -401,8 +400,7 @@ class CharacterHandler extends Module {
 		var filePath = Paths.json('funkerSelector/' + characterID);
 
 		if (Assets.exists(filePath)) {
-			var result = Tools.getValue(Parser.parse(Assets.getText(filePath), filePath));
-			return result;
+			return SerializerUtil.fromJSON(Assets.getText(filePath));
 		}
 
 		return null;
@@ -426,7 +424,7 @@ class CharacterHandler extends Module {
 			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
 			var funkerData:Dynamic = jsonCharacterCache.get(funker);
-			var data:Dynamic = funkerData[0];
+			var data:Dynamic = funkerData != null ? funkerData[0] : null;
 
 			if (data == null)
 				continue;
@@ -565,29 +563,16 @@ class CharacterHandler extends Module {
 		for (funker in funkerJSONs) {
 			trace('[Funker Selector] Loading JSON data for ' + funker);
 
-			// Exceptions continue the loop so there's no need for a continue; here.
-			try {
-				data = parseJSONData(funker);
-			} catch (e:Dynamic) {
-				trace(':(');
+			data = parseJSONData(funker);
+			if (data == null) {
+				PolymodErrorHandler.showAlert("Funker Selector JSON Parsing Error", "Something went wrong when parsing the following JSON file:\n\n" + Assets.getPath(Paths.json('funkerSelector/' + funker)));
+				continue;
 			}
-
-			// If the parsing succeeds, then they get pushed to a temporary array.
-			tempArray.push(funker);
 
 			// Caching the character data.
 			charData = CharacterDataParser.parseCharacterData(data.characterID);
 
 			jsonCharacterCache.set(funker, [data, charData]);
-		}
-
-		// If a character ID doesn't exist in the array, then something definitely went wrong
-		for (funker in funkerJSONs) {
-			if (tempArray.indexOf(funker) == -1) {
-				trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(Paths.json('funkerSelector/' + funker))) +
-				"!\nIs the syntax correct?";
-				continue;
-			}
 		}
 	}
 

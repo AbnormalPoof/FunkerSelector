@@ -666,32 +666,37 @@ class CharacterHandler extends Module {
 	 * file of the current song exists for the specified character,
 	 * and replaces the original character's vocals with that.
 	 *
-	 * @param id The character ID to change into.
-	 * @param type The character type we're replacing.
+	 * @param characterID The character ID to change into.
+	 * @param characterType The character type we're using.
 	 * 
 	 */
-	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
-		var characterInfo:Dynamic = characterMap.get(id);
+	function replaceChar(characterID:String = 'bf', characterType:CharacterType = null):Void {
+		var characterInfo:Dynamic = characterMap.get(characterID);
 		var ownerJSONname:String = characterInfo != null ? characterInfo[0] : null;
 		var characterData:Dynamic = ownerJSONname != null ? jsonCharacterCache.get(ownerJSONname)[0] : null;
 		var oldChar:BaseCharacter = null;
-		var charType:CharacterType = null;
+		var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
+		// TODO: Allow people to specify their own vocal ID instead of defaulting to the character ID
+		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + characterID + variationSuffix);
 
-		if (id == 'default')
+		if (characterID == 'default')
 			return;
 
-		trace('[Funker Selector] Replacing type ' + type + ' with id ' + id);
+		trace('[Funker Selector] Replacing type ' + characterType + ' with id ' + characterID);
 
-		switch (type) {
-			case 'bf':
+		switch (characterType) {
+			case CharacterType.BF:
 				oldChar = PlayState.instance.currentStage.getBoyfriend();
-				charType = CharacterType.BF;
-			case 'gf':
+				if (Assets.exists(voiceFile)) {
+					voiceList[0] = voiceFile;
+				}
+			case CharacterType.GF:
 				oldChar = PlayState.instance.currentStage.getGirlfriend();
-				charType = CharacterType.GF;
-			case 'dad':
+			case CharacterType.DAD:
 				oldChar = PlayState.instance.currentStage.getDad();
-				charType = CharacterType.DAD;
+				if (Assets.exists(voiceFile)) {
+					voiceList[1] = voiceFile;
+				}
 			default:
 				trace('How did you get here?');
 				return;
@@ -702,14 +707,14 @@ class CharacterHandler extends Module {
 			return;
 
 		// TODO: Add visual indicator for variations.
-		if (characterData != null && characterData.characterVariations != null) {
+		if (characterData?.characterVariations != null) {
 			for (variation in characterData.characterVariations) {
 				if (variation.songID == null || variation.characterID == null) {
 					continue;
 				}
 
-				var songMatch = false;
-				var variationMatch = false;
+				var songMatch:Bool = false;
+				var variationMatch:Bool = false;
 
 				if (variation.songID is Array) {
 					songMatch = (variation.songID.indexOf(PlayState.instance.currentSong.id) != -1);
@@ -732,7 +737,7 @@ class CharacterHandler extends Module {
 
 					if (charJSONCheck(variation.characterID)) {
 						trace('[Funker Selector] Variation found: ' + variation.characterID);
-						id = variation.characterID;
+						characterID = variation.characterID;
 					} else {
 						PolymodErrorHandler.showAlert('Funker Selector Error',
 							'The character variation "' + variation.characterID + '" does not exist. The base character ID will be used instead.');
@@ -742,27 +747,23 @@ class CharacterHandler extends Module {
 			}
 		}
 
-		var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-'
-			+ PlayState.instance.currentVariation : '';
-		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
-
 		// Don't bother replacing the character if both character IDs match.
-		if (oldChar.characterId != id) {
+		if (oldChar.characterId != characterID) {
 			var charZIndex:Int = oldChar.zIndex;
-			var character = CharacterDataParser.fetchCharacter(id);
+			var character = CharacterDataParser.fetchCharacter(characterID);
 
 			if (character != null) {
 				oldChar.destroy();
 				character.zIndex = charZIndex;
-				PlayState.instance.currentStage.addCharacter(character, charType);
+				PlayState.instance.currentStage.addCharacter(character, characterType);
 			} else {
-				PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + type + ' character. How the fuck???');
+				PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + characterType + ' character. How the fuck???');
 			}
 		} else {
-			trace('[Funker Selector] ID ' + id + ' and ID ' + oldChar.characterID + ' match. Not replacing...');
+			trace('[Funker Selector] ID ' + characterType + ' and ID ' + oldChar.characterID + ' match. Not replacing...');
 		}
 
-		if (characterData != null && type == 'bf') {
+		if (characterData != null && characterType == CharacterType.BF) {
 			PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null
 				&& characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : PauseSubState.musicSuffix;
 			GameOverSubState.musicSuffix = (characterData.gameOverMusicSuffix != null
@@ -773,17 +774,6 @@ class CharacterHandler extends Module {
 
 		trace('[Funker Selector] Suffixes\n\nPause Music: ' + PauseSubState.musicSuffix + '\nGame Over Music: ' + GameOverSubState.musicSuffix
 			+ '\nGame Over SFX: ' + GameOverSubState.blueBallSuffix);
-
-		switch (type) {
-			case 'bf':
-				if (Assets.exists(voiceFile)) {
-					voiceList[0] = voiceFile;
-				}
-			case 'dad':
-				if (Assets.exists(voiceFile)) {
-					voiceList[1] = voiceFile;
-				}
-		}
 	}
 
 	/**

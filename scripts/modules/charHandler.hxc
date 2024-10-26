@@ -177,7 +177,7 @@ class CharacterHandler extends Module {
 			potatoMode: false,
 			preloadSprites: true,
 			preferredSFX: "funkin",
-			djSwapping: false
+			djSwapping: true
 		};
 
 		if (Save.instance.modOptions.get("FunkerSelectorSettings") == null) {

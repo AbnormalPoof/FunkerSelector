@@ -274,6 +274,14 @@ class CharacterHandler extends Module {
 		var state = event.targetState;
 		// Set up the Character Select button.
 		if (state is FreeplayState) {
+			var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+			var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
+			if (playableChar != null && ownedCharID != state.dj.characterId) {
+				if (playableChar.getFreeplayDJData() != null) {
+					ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [state, true]);
+				}
+			}
+
 			charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
 			charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
 			charSelectIcon.animation.addByPrefix('idle', 'idle', 24, true);

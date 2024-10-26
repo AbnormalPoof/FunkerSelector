@@ -1,5 +1,7 @@
 import flixel.FlxG;
 import flixel.text.FlxText;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
 import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
@@ -23,36 +25,58 @@ class DJReplace extends Module {
 	 * Swap out the Freeplay DJ.
 	 * @param freeplay The Freeplay SubState we're using. 
 	 */
-	function transitionToNewDJ(freeplay:FreeplayState):Void {
+	function transitionToNewDJ(freeplay:FreeplayState, ?inIntro:Bool = false):Void {
 		var freeplayDJ = freeplay.dj;
 		var playableCharData = freeplayDJ.playableCharData;
 
-		if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect'))) {
+		if (!inIntro) {
 			freeplay.busy = true;
-			freeplayDJ.currentState = FreeplayDJState.CharSelect;
-			var animPrefix = freeplayDJ.playableCharData.getAnimationPrefix('charSelect');
-			freeplayDJ.playFlashAnimation(animPrefix, true, false, false);
-			freeplayDJ.anim.onComplete.add(function() {
-				if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect')) {
-					var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
-					var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
-
-					freeplayDJ.destroy();
-					freeplayDJ = new FreeplayDJ(640, 366, playableCharId);
-					FlxG.state.subState.dj = freeplayDJ;
-					freeplayDJ.camera = FlxG.state.subState.funnyCam;
-					FlxG.state.subState.add(freeplayDJ);
-					freeplayDJ.currentState = FreeplayDJState.Intro;
-					var animPrefix = freeplayDJ.playableCharData.getAnimationPrefix('intro');
-					freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 3);
-					if (FlxG.state.subState.backingCard.funnyScroll != null)
-						reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
-							playableChar.getFreeplayDJText(3));
-					FlxG.state.subState.busy = false;
-					trace(FlxG.state.subState.dj != null);
-				}
-			});
+			freeplayDJ.onIntroDone.removeAll();
+			freeplayDJ.onAnimationComplete.add(replaceDJNoIntro);
+			if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect'))) {
+				freeplayDJ.currentState = FreeplayDJState.CharSelect;
+				var animPrefix = freeplayDJ.playableCharData.getAnimationPrefix('charSelect');
+				freeplayDJ.playFlashAnimation(animPrefix, true, false, false);
+			}
+		} else {
+			replaceDJIntro();
 		}
+	}
+
+	function replaceDJNoIntro():Void {
+		var freeplayDJ = FlxG.state.subState.dj;
+		if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect')) {
+			freeplayDJ.anim.onComplete.remove(replaceDJNoIntro);
+			var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+			var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
+			var playableCharData = playableChar.getFreeplayDJData();
+
+			freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
+			freeplayDJ.characterId = playableCharId;
+			freeplayDJ.playableCharData = playableCharData;
+			freeplayDJ.currentState = FreeplayDJState.Intro;
+			var animPrefix = playableCharData.getAnimationPrefix('intro');
+			freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 3);
+			if (FlxG.state.subState.backingCard.funnyScroll != null)
+				reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
+					playableChar.getFreeplayDJText(3));
+			FlxG.state.subState.busy = false;
+		}
+	}
+
+	function replaceDJIntro():Void {
+		var freeplayDJ = FlxG.state.subState.dj;
+		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
+		var playableCharData = playableChar.getFreeplayDJData();
+
+		freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
+		freeplayDJ.characterId = playableCharId;
+		freeplayDJ.playableCharData = playableCharData;
+		if (FlxG.state.subState.backingCard.funnyScroll != null)
+			reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
+				playableChar.getFreeplayDJText(3));
+		freeplayDJ.anim.onComplete.remove(replaceDJIntro);
 	}
 
 	/**

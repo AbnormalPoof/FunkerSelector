@@ -836,8 +836,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					if (characterSprite != null)
 						characterSprite.visible = false;
 
-					var unlockHint = characterData.description != null
-						&& characterData.description.unlockCondition != null ? "\n\nUnlock Condition: " + characterData.description.unlockCondition : "";
+					var unlockHint = characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: "
+						+ characterData.description.unlockCondition : "";
 
 					configureText(charDesc, "This character is locked! I wonder who it could be..." + unlockHint, null, null, Paths.font("PhantomMuff.ttf"));
 				} else {
@@ -901,6 +901,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 		}
 
-		trace('[Funker Selector] Updated character information.');
+		trace('[Funker Selector] Updated character information.\n\nName: '
+			+ charName.text
+			+ "\nDescription: "
+			+ charDesc.text
+			+ (characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: " + characterData.description.unlockCondition : ""));
 	}
 }

@@ -479,7 +479,6 @@ class CharacterHandler extends Module {
 	function cacheJSONSparrows():Void {
 		var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
 		for (funker in funkerJSONs) {
-
 			var funkerData:Dynamic = jsonCharacterCache.get(funker);
 			var data:Dynamic = funkerData[0];
 			var charData:Dynamic = funkerData[1];

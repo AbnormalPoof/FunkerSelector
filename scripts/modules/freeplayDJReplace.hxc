@@ -61,6 +61,7 @@ class DJReplace extends Module {
 				reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
 					playableChar.getFreeplayDJText(3));
 			FlxG.state.subState.busy = false;
+			freeplayDJ.onAnimationComplete.remove(replaceDJNoIntro);
 		}
 	}
 

@@ -176,7 +176,8 @@ class CharacterHandler extends Module {
 		var defaultSettings:Dynamic = {
 			potatoMode: false,
 			preloadSprites: true,
-			preferredSFX: "funkin"
+			preferredSFX: "funkin",
+			djSwapping: false
 		};
 
 		if (Save.instance.modOptions.get("FunkerSelectorSettings") == null) {
@@ -210,7 +211,9 @@ class CharacterHandler extends Module {
 				+ '\nPreload Sprites: '
 				+ funkerSettings.preloadSprites
 				+ '\nPreferred SFX: '
-				+ funkerSettings.preferredSFX);
+				+ funkerSettings.preferredSFX
+				+ '\nDJ Replacement: '
+				+ funkerSettings.djSwapping);
 		}
 
 		if (Save.instance.modOptions.get("FunkerSelector-SeenChars") == null) {
@@ -271,11 +274,13 @@ class CharacterHandler extends Module {
 		var state = event.targetState;
 		// Set up the Character Select button.
 		if (state is FreeplayState) {
-			var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
-			var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
-			if (playableChar != null && ownedCharID != state.dj.characterId) {
-				if (playableChar.getFreeplayDJData() != null) {
-					ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [state, true]);
+			if (funkerSettings.djSwapping) {
+				var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+				var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
+				if (playableChar != null && ownedCharID != state.dj.characterId) {
+					if (playableChar.getFreeplayDJData() != null) {
+						ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [state, true]);
+					}
 				}
 			}
 

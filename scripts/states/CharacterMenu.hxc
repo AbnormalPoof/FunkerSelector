@@ -905,6 +905,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			+ charName.text
 			+ "\nDescription: "
 			+ charDesc.text
-			+ (characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: " + characterData.description.unlockCondition : ""));
+			+ (characterData.description?.unlockCondition != null ? "\nUnlocked: "
+				+ ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [curCharID, characterData.unlockMethod])
+				+ (characterData.description?.unlockCondition != null ? "\nUnlock Condition: " + characterData.description.unlockCondition : "") : ""));
 	}
 }

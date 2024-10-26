@@ -31,10 +31,10 @@ class DJReplace extends Module {
 		var playableCharData = freeplayDJ.playableCharData;
 
 		if (!inIntro) {
-			freeplay.busy = true;
-			freeplayDJ.onIntroDone.removeAll();
-			freeplayDJ.onAnimationComplete.add(replaceDJNoIntro);
 			if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect'))) {
+				freeplay.busy = true;
+				freeplayDJ.onIntroDone.removeAll();
+				freeplayDJ.onAnimationComplete.addOnce(replaceDJNoIntro);
 				freeplayDJ.currentState = FreeplayDJState.CharSelect;
 				var animPrefix = playableCharData.getAnimationPrefix('charSelect');
 				freeplayDJ.playFlashAnimation(animPrefix, true, false, false);
@@ -48,9 +48,15 @@ class DJReplace extends Module {
 		var freeplayDJ = FlxG.state.subState.dj;
 		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
 		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
-		var playableCharData = playableChar.getFreeplayDJData();
+		var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
 
 		var startTime = Timer.stamp();
+
+		if (playableCharData == null) {
+			trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
+			trace(characterIDs.bf);
+			return;
+		}
 
 		if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect')) {
 			trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
@@ -68,8 +74,6 @@ class DJReplace extends Module {
 					playableChar.getFreeplayDJText(3));
 			FlxG.state.subState.busy = false;
 
-			freeplayDJ.onAnimationComplete.remove(replaceDJNoIntro);
-
 			var endTime = Timer.stamp();
 			var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
 			trace("[Funker Selector] replaceDJNoIntro took " + elapsedTime + " seconds to complete.");
@@ -77,12 +81,18 @@ class DJReplace extends Module {
 	}
 
 	function replaceDJIntro():Void {
-		var startTime = Timer.stamp();
-
 		var freeplayDJ = FlxG.state.subState.dj;
 		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
 		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
-		var playableCharData = playableChar.getFreeplayDJData();
+		var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
+
+		var startTime = Timer.stamp();
+
+		if (playableCharData == null) {
+			trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
+			trace(characterIDs.bf);
+			return;
+		}
 
 		trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
 		freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
@@ -91,8 +101,6 @@ class DJReplace extends Module {
 
 		if (FlxG.state.subState.backingCard.funnyScroll != null)
 			reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3));
-
-		freeplayDJ.anim.onComplete.remove(replaceDJIntro);
 
 		var endTime = Timer.stamp();
 		var elapsedTime = Math.round((endTime - startTime) * 100) / 100;

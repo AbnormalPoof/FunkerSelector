@@ -8,6 +8,7 @@ import funkin.modding.module.ModuleHandler;
 import funkin.ui.freeplay.FreeplayDJ;
 import funkin.ui.freeplay.FreeplayDJState;
 import funkin.ui.freeplay.FreeplayState;
+import haxe.Timer;
 
 /**
  * Separate module for replacing the Freeplay DJ to prevent messy code in CharacterHandler.
@@ -45,12 +46,13 @@ class DJReplace extends Module {
 
 	function replaceDJNoIntro():Void {
 		var freeplayDJ = FlxG.state.subState.dj;
-		if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect')) {
-			freeplayDJ.anim.onComplete.remove(replaceDJNoIntro);
-			var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
-			var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
-			var playableCharData = playableChar.getFreeplayDJData();
+		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
+		var playableCharData = playableChar.getFreeplayDJData();
 
+		var startTime = Timer.stamp();
+		
+		if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect')) {
 			trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
 			freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
 			freeplayDJ.characterId = playableCharId;
@@ -67,10 +69,16 @@ class DJReplace extends Module {
 			FlxG.state.subState.busy = false;
 
 			freeplayDJ.onAnimationComplete.remove(replaceDJNoIntro);
+
+			var endTime = Timer.stamp();
+			var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
+			trace("[Funker Selector] replaceDJNoIntro took " + elapsedTime + " seconds to complete.");
 		}
 	}
 
 	function replaceDJIntro():Void {
+		var startTime = Timer.stamp();
+
 		var freeplayDJ = FlxG.state.subState.dj;
 		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
 		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
@@ -86,6 +94,10 @@ class DJReplace extends Module {
 				playableChar.getFreeplayDJText(3));
 
 		freeplayDJ.anim.onComplete.remove(replaceDJIntro);
+
+		var endTime = Timer.stamp();
+    var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
+		trace("[Funker Selector] replaceDJIntro took " + elapsedTime + " seconds to complete.");
 	}
 
 	/**

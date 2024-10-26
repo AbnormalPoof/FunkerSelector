@@ -241,7 +241,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		var x = (FlxG.width - Math.ceil(FlxG.width / spacing) * spacing) / 2;
 		var y = (FlxG.height - Math.ceil(FlxG.height / spacing) * spacing) / 2;
 
-		// Icons are generated in cubes (2x2) to prevent weird shit from happening when they scroll.
+		// Icons are generated in squares (2x2) to prevent weird shit from happening when they scroll.
 		for (i in 0...Math.ceil(FlxG.height / spacing / 2)) {
 			for (j in 0...Math.ceil(FlxG.width / spacing / 2)) {
 				for (k in 0...2) {

@@ -149,12 +149,6 @@ class CharacterHandler extends Module {
 				+ characterIDs.gf
 				+ '\nOpponent: '
 				+ characterIDs.dad);
-			trace('[Funker Selector] Successfully created save data:\n\nBoyfriend: '
-				+ characterIDs.bf
-				+ '\nGirlfriend: '
-				+ characterIDs.gf
-				+ '\nOpponent: '
-				+ characterIDs.dad);
 		} else {
 			characterIDs = Save.instance.modOptions.get("FunkerSelector");
 			trace('[Funker Selector] Successfully retrieved save data:\n\nBoyfriend: '
@@ -190,7 +184,9 @@ class CharacterHandler extends Module {
 				+ '\nPreload Sprites: '
 				+ funkerSettings.preloadSprites
 				+ '\nPreferred SFX: '
-				+ funkerSettings.preferredSFX);
+				+ funkerSettings.preferredSFX
+				+ '\nDJ Replacement: '
+				+ funkerSettings.djSwapping);
 		} else {
 			funkerSettings = Save.instance.modOptions.get("FunkerSelectorSettings");
 
@@ -223,8 +219,7 @@ class CharacterHandler extends Module {
 			seenUnlocks = Save.instance.modOptions.get("FunkerSelector-SeenChars");
 		}
 
-		trace("SEEN UNLOCK ANIMATIONS: " + seenUnlocks);
-
+		trace("[Funker Selector] SEEN UNLOCK ANIMATIONS: " + seenUnlocks);
 		return funkerSettings;
 	}
 
@@ -247,6 +242,7 @@ class CharacterHandler extends Module {
 				var charSelect:FlxSubState = ScriptedMusicBeatSubState.init("CharacterSelectSubState");
 				charSelect.camera = FlxG.state.subState.funnyCam;
 				FlxG.state.subState.persistentUpdate = false;
+				trace("[Funker Selector] Opening the Character Select SubState...");
 				FlxG.state.subState.openSubState(charSelect);
 			}
 		}
@@ -436,6 +432,7 @@ class CharacterHandler extends Module {
 				var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
 				if (playableChar != null && ownedCharID != FlxG.state.subState.dj.characterId) {
 					if (playableChar.getFreeplayDJData() != null) {
+						trace("[Funker Selector] Character has valid Freeplay DJ data! Replacing DJ...");
 						ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState]);
 					}
 				}
@@ -482,7 +479,6 @@ class CharacterHandler extends Module {
 	function cacheJSONSparrows():Void {
 		var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
 		for (funker in funkerJSONs) {
-			trace('[Funker Selector] Fetching JSON data for ' + funker);
 
 			var funkerData:Dynamic = jsonCharacterCache.get(funker);
 			var data:Dynamic = funkerData[0];
@@ -533,7 +529,7 @@ class CharacterHandler extends Module {
 		var data:Dynamic = null;
 
 		for (funker in funkerJSONs) {
-			trace('[Funker Selector] Loading JSON data for ' + funker);
+			trace('[Funker Selector] Parsing JSON data for ' + funker);
 
 			data = parseJSONData(funker);
 

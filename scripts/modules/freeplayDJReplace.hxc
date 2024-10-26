@@ -127,13 +127,16 @@ class DJReplace extends Module {
 		];
 		var moreWaysArray:Array<Dynamic> = [freeplay.backingCard.moreWays, freeplay.backingCard.moreWays2];
 		for (scrollText in funnyScrollArray) {
+			trace("[Funker Selector] Setting up text group with text " + text1);
 			setupTextGroup(scrollText, 60, FlxG.width / 2, text1, -3.8, false);
 		}
 
 		for (scrollText in moreWaysArray) {
+			trace("[Funker Selector] Setting up text group with text " + text2);
 			setupTextGroup(scrollText, 43, FlxG.width, text2, 6.8, true);
 		}
 
+		trace("[Funker Selector] Setting up text group with text " + text3);
 		setupTextGroup(freeplay.backingCard.txtNuts, 43, FlxG.width / 2, text3, 3.5, true);
 
 		freeplay.backingCard.funnyScroll.funnyColor = 0xFFFF9963;
@@ -170,6 +173,7 @@ class DJReplace extends Module {
 			coolText.font = "5by7";
 			coolText.bold = bold;
 			coolText.updateHitbox();
+			trace("[Funker Selector] Adding to text group: " + coolText.text);
 			textObject.grpTexts.add(coolText);
 		}
 

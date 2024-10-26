@@ -24,9 +24,9 @@ import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
 import funkin.util.MemoryUtil;
 import funkin.util.ReflectUtil;
-import funkin.util.assets.DataAssets;
+import funkin.util.SerializerUtil;
 import funkin.util.VersionUtil;
-import haxe.Json;
+import funkin.util.assets.DataAssets;
 import haxe.Exception;
 import haxe.ds.StringMap;
 import lime.app.Application;
@@ -125,9 +125,6 @@ class CharacterHandler extends Module {
 
 		// Parses and caches JSON character data.
 		loadJSONDataCache();
-
-		// Initialize the Character Map.
-		initChars();
 	}
 
 	/**
@@ -208,7 +205,7 @@ class CharacterHandler extends Module {
 			Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
 			Save.instance.flush();
 
-			trace('[Funker Selector] Successfully created save data:\n\nSimplify UI: '
+			trace('[Funker Selector] Successfully retrieved save data:\n\nSimplify UI: '
 				+ funkerSettings.potatoMode
 				+ '\nPreload Sprites: '
 				+ funkerSettings.preloadSprites
@@ -412,12 +409,17 @@ class CharacterHandler extends Module {
 	/**
 	 * Parse a Funker Selector JSON file and return the data.
 	 * @param characterID The character ID to use.
-	 * @return The JSON data.
+	 * @return The JSON data as a Json object.
 	 */
 	function parseJSONData(characterID:String = 'default'):Dynamic {
-		if (Assets.exists(Paths.json('funkerSelector/' + characterID))) {
-			return Json.parse(Assets.getText(Paths.json('funkerSelector/' + characterID)));
+		var filePath = Paths.json('funkerSelector/' + characterID);
+
+		if (Assets.exists(filePath)) {
+			var result = SerializerUtil.fromJSON(Assets.getText(filePath));
+			if (result == null) trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(filePath) + "! Returning null...");
+			return result;
 		}
+
 		return null;
 	}
 
@@ -432,78 +434,6 @@ class CharacterHandler extends Module {
 					}
 				}
 			}
-		}
-	}
-
-	/**
-	 * Initializing character data for use in the `CharacterMenu` SubState itself.
-	 * 
-	 * Characters use a JSON file and are loaded from `data/funkerSelector/` and
-	 * then parsed, they can specify Game Over music, Blue Ball, 
-	 * and Pause Menu music suffixes.
-	 * If no character type is specified in the JSON, it is pushed
-	 * to the Boyfriend character list. 
-	 * If no character ID exists in the file (or the character ID is invalid), the character will be skipped. 
-	 */
-	function initChars():Void {
-		var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
-		var data:Dynamic = null;
-
-		for (funker in funkerJSONs) {
-			trace('[Funker Selector] Fetching JSON data for ' + funker);
-
-			var funkerData:Dynamic = jsonCharacterCache.get(funker);
-			var data:Dynamic = funkerData[0];
-
-			if (data == null)
-				continue;
-
-			// If the "characterID" field was not found.
-			if (data.characterID == null) {
-				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-					'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
-					'":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
-				continue;
-			}
-
-			// If the Character ID is "default"
-			if (data.characterID == 'default') {
-				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-					'In "'
-					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
-					+ '":\n\nThe specified Character ID ('
-					+ data.characterID
-					+
-					') is set to "default"! Please change it, since it will conflict with the "default" character object in the menu.\nThis character will be skipped to prevent any issues.');
-				continue;
-			}
-
-			// If the specified Character ID does not exist in data/characters/
-			if (!charJSONCheck(data.characterID)) {
-				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-					'In "'
-					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
-					+ '":\n\nThe specified Character ID ('
-					+ data.characterID
-					+ ') is invalid. This character will be skipped to prevent any issues.');
-				continue;
-			}
-
-			if (data.mustUnlock && data.unlockMethod != null) {
-				if (!isCharacterUnlocked(data.characterID, data.unlockMethod)) {
-					trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
-					lockedCharMap.set(data.characterID, data);
-				} else {
-					if (seenUnlocks.indexOf(data.characterID) == -1) {
-						trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
-						lockedCharMap.set(data.characterID, data);
-					}
-				}
-			}
-
-			if (data.characterType == null)
-				data.characterType = 'bf';
-			characterMap.set(data.characterID, [funker, data.characterType]);
 		}
 	}
 
@@ -583,38 +513,83 @@ class CharacterHandler extends Module {
 	}
 
 	/**
-	 * Loads and caches the JSON data for characters.
+	 * Initializing and caching character data for use in the `CharacterMenu` SubState itself.
+	 * 
+	 * Characters use a JSON file and are loaded from `data/funkerSelector/` and
+	 * then parsed, they can specify Game Over music, Blue Ball, 
+	 * and Pause Menu music suffixes.
+	 * If no character type is specified in the JSON, it is pushed
+	 * to the Boyfriend character list. 
+	 * If no character ID exists in the file (or the character ID is invalid), the character will be skipped.
 	 */
 	function loadJSONDataCache():Void {
 		var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
 		var data:Dynamic = null;
-		var tempArray:Array<String> = [];
+
 		for (funker in funkerJSONs) {
 			trace('[Funker Selector] Loading JSON data for ' + funker);
 
-			// Exceptions continue the loop so there's no need for a continue; here.
-			try {
-				data = parseJSONData(funker);
-			} catch (e:Dynamic) {
-				trace(':(');
+			data = parseJSONData(funker);
+
+			// If the data is null (Caused by an issue when parsing the json file)
+			if (data == null) {
+				PolymodErrorHandler.showAlert("Funker Selector JSON Parsing Error", "Something went wrong when parsing the following JSON file:\n\n" + Assets.getPath(Paths.json('funkerSelector/' + funker)) + "\n\nPlease check the JSON file for any syntax errors.");
+				continue;
 			}
 
-			// If the parsing succeeds, then they get pushed to a temporary array.
-			tempArray.push(funker);
+			// If the "characterID" field was not found.
+			if (data.characterID == null) {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+					'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
+					'":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
+				continue;
+			}
+
+			// If the Character ID is "default"
+			if (data.characterID == 'default') {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+					'In "'
+					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
+					+ '":\n\nThe specified Character ID ('
+					+ data.characterID
+					+
+					') is set to "default"! Please change it, since it will conflict with the "default" character object in the menu.\nThis character will be skipped to prevent any issues.');
+				continue;
+			}
+
+			// If the specified Character ID does not exist in data/characters/
+			if (!charJSONCheck(data.characterID)) {
+				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+					'In "'
+					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
+					+ '":\n\nThe specified Character ID ('
+					+ data.characterID
+					+ ') is invalid. This character will be skipped to prevent any issues.');
+				continue;
+			}
+
+			if (data.mustUnlock && data.unlockMethod != null) {
+				if (!isCharacterUnlocked(data.characterID, data.unlockMethod)) {
+					trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
+					lockedCharMap.set(data.characterID, data);
+				} else {
+					if (seenUnlocks.indexOf(data.characterID) == -1) {
+						trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
+						lockedCharMap.set(data.characterID, data);
+					}
+				}
+			}
+
+			// Default to bf if the character type doesn't exist.
+			if (data.characterType == null)
+				data.characterType = 'bf';
 
 			// Caching the character data.
 			charData = CharacterDataParser.parseCharacterData(data.characterID);
 
+			// NOTE: `jsonCharacterCache` and `characterMap` serve 2 different purposes.
 			jsonCharacterCache.set(funker, [data, charData]);
-		}
-
-		// If a character ID doesn't exist in the array, then something definitely went wrong
-		for (funker in funkerJSONs) {
-			if (tempArray.indexOf(funker) == -1) {
-				trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(Paths.json('funkerSelector/' + funker))) +
-				"!\nIs the syntax correct?";
-				continue;
-			}
+			characterMap.set(data.characterID, [funker, data.characterType]);
 		}
 	}
 
@@ -666,9 +641,9 @@ class CharacterHandler extends Module {
 		ogCharID = PlayState.instance.currentChart.characters.player;
 
 		// Replace and swap out the characters.
-		replaceChar(characterIDs.bf, 'bf');
-		replaceChar(characterIDs.gf, 'gf');
-		replaceChar(characterIDs.dad, 'dad');
+		replaceChar(characterIDs.bf, CharacterType.BF);
+		replaceChar(characterIDs.gf, CharacterType.GF);
+		replaceChar(characterIDs.dad, CharacterType.DAD);
 		PlayState.instance.currentStage.refresh();
 
 		// If at least ONE of them was changed (means a vocal file was found), replace the vocals.
@@ -697,32 +672,37 @@ class CharacterHandler extends Module {
 	 * file of the current song exists for the specified character,
 	 * and replaces the original character's vocals with that.
 	 *
-	 * @param id The character ID to change into.
-	 * @param type The character type we're replacing.
+	 * @param characterID The character ID to change into.
+	 * @param characterType The character type we're using.
 	 * 
 	 */
-	function replaceChar(id:String = 'bf', type:String = 'bf'):Void {
-		var characterInfo:Dynamic = characterMap.get(id);
+	function replaceChar(characterID:String = 'bf', characterType:CharacterType = null):Void {
+		var characterInfo:Dynamic = characterMap.get(characterID);
 		var ownerJSONname:String = characterInfo != null ? characterInfo[0] : null;
 		var characterData:Dynamic = ownerJSONname != null ? jsonCharacterCache.get(ownerJSONname)[0] : null;
 		var oldChar:BaseCharacter = null;
-		var charType:CharacterType = null;
+		var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
+		// TODO: Allow people to specify their own vocal ID instead of defaulting to the character ID
+		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + characterID + variationSuffix);
 
-		if (id == 'default')
+		if (characterID == 'default')
 			return;
 
-		trace('[Funker Selector] Replacing type ' + type + ' with id ' + id);
+		trace('[Funker Selector] Replacing type ' + characterType + ' with id ' + characterID);
 
-		switch (type) {
-			case 'bf':
+		switch (characterType) {
+			case CharacterType.BF:
 				oldChar = PlayState.instance.currentStage.getBoyfriend();
-				charType = CharacterType.BF;
-			case 'gf':
+				if (Assets.exists(voiceFile)) {
+					voiceList[0] = voiceFile;
+				}
+			case CharacterType.GF:
 				oldChar = PlayState.instance.currentStage.getGirlfriend();
-				charType = CharacterType.GF;
-			case 'dad':
+			case CharacterType.DAD:
 				oldChar = PlayState.instance.currentStage.getDad();
-				charType = CharacterType.DAD;
+				if (Assets.exists(voiceFile)) {
+					voiceList[1] = voiceFile;
+				}
 			default:
 				trace('How did you get here?');
 				return;
@@ -733,14 +713,14 @@ class CharacterHandler extends Module {
 			return;
 
 		// TODO: Add visual indicator for variations.
-		if (characterData != null && characterData.characterVariations != null) {
+		if (characterData?.characterVariations != null) {
 			for (variation in characterData.characterVariations) {
 				if (variation.songID == null || variation.characterID == null) {
 					continue;
 				}
 
-				var songMatch = false;
-				var variationMatch = false;
+				var songMatch:Bool = false;
+				var variationMatch:Bool = false;
 
 				if (variation.songID is Array) {
 					songMatch = (variation.songID.indexOf(PlayState.instance.currentSong.id) != -1);
@@ -763,7 +743,7 @@ class CharacterHandler extends Module {
 
 					if (charJSONCheck(variation.characterID)) {
 						trace('[Funker Selector] Variation found: ' + variation.characterID);
-						id = variation.characterID;
+						characterID = variation.characterID;
 					} else {
 						PolymodErrorHandler.showAlert('Funker Selector Error',
 							'The character variation "' + variation.characterID + '" does not exist. The base character ID will be used instead.');
@@ -773,27 +753,23 @@ class CharacterHandler extends Module {
 			}
 		}
 
-		var suffix:String = (PlayState.instance.currentVariation != null && PlayState.instance.currentVariation != 'default') ? '-'
-			+ PlayState.instance.currentVariation : '';
-		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + id + suffix);
-
 		// Don't bother replacing the character if both character IDs match.
-		if (oldChar.characterId != id) {
+		if (oldChar.characterId != characterID) {
 			var charZIndex:Int = oldChar.zIndex;
-			var character = CharacterDataParser.fetchCharacter(id);
+			var character = CharacterDataParser.fetchCharacter(characterID);
 
 			if (character != null) {
 				oldChar.destroy();
 				character.zIndex = charZIndex;
-				PlayState.instance.currentStage.addCharacter(character, charType);
+				PlayState.instance.currentStage.addCharacter(character, characterType);
 			} else {
-				PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + type + ' character. How the fuck???');
+				PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + characterType + ' character. How the fuck???');
 			}
 		} else {
-			trace('[Funker Selector] ID ' + id + ' and ID ' + oldChar.characterID + ' match. Not replacing...');
+			trace('[Funker Selector] ID ' + characterID + ' and ID ' + oldChar.characterId + ' match. Not replacing...');
 		}
 
-		if (characterData != null && type == 'bf') {
+		if (characterData != null && characterType == CharacterType.BF) {
 			PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null
 				&& characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : PauseSubState.musicSuffix;
 			GameOverSubState.musicSuffix = (characterData.gameOverMusicSuffix != null
@@ -804,17 +780,6 @@ class CharacterHandler extends Module {
 
 		trace('[Funker Selector] Suffixes\n\nPause Music: ' + PauseSubState.musicSuffix + '\nGame Over Music: ' + GameOverSubState.musicSuffix
 			+ '\nGame Over SFX: ' + GameOverSubState.blueBallSuffix);
-
-		switch (type) {
-			case 'bf':
-				if (Assets.exists(voiceFile)) {
-					voiceList[0] = voiceFile;
-				}
-			case 'dad':
-				if (Assets.exists(voiceFile)) {
-					voiceList[1] = voiceFile;
-				}
-		}
 	}
 
 	/**

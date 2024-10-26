@@ -81,7 +81,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var jsonCharacterCache:StringMap<String, Dynamic> = ModuleHandler.getModule("CharacterHandler").scriptGet('jsonCharacterCache');
 
 	// For the top text in the menu.
-	var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "GIRLFRIEND CHARACTERS"];
+	var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "SPEAKER CHARACTERS"];
 	var topTextColor = [0xFF2DB2D2, 0xFFAF66CE, 0xFFA7004C];
 
 	/**
@@ -183,9 +183,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 						return characterType == 'dad' || characterType == 'opponent';
 				case 2:
 					if (characterType is Array)
-						return characterType.indexOf('gf') != -1;
+						return characterType.indexOf('gf') != -1 || characterType.indexOf('speaker') != -1;
 					else
-						return characterType == 'gf';
+						return characterType == 'gf' || characterType == 'speaker';
 			}
 		});
 

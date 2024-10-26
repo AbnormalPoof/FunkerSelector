@@ -147,6 +147,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		if (!busy)
 			handleKeyShit();
+
+		for (icon in iconGrid) {
+			icon.x -= 0.3 * (songBPM / 60);
+
+			if (icon.x < -icon.width) {
+				icon.x += (FlxG.width + icon.width) + 70;
+			}
+		}
 	}
 
 	function beatHit():Void {
@@ -227,21 +235,23 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		var x = (FlxG.width - Math.ceil(FlxG.width / spacing) * spacing) / 2;
 		var y = (FlxG.height - Math.ceil(FlxG.height / spacing) * spacing) / 2;
 		for (i in 0...Math.ceil(FlxG.height / spacing)) {
-			for (j in 0...Math.ceil(FlxG.width / spacing)) {
-				var icon = new HealthIcon('dad', 0);
-				icon.x = x + j * spacing;
-				icon.y = y + i * spacing;
-				icon.alpha = (alpha != null ? alpha : 0.2);
+			for (j in 0...Math.ceil(FlxG.width / spacing / 2)) {
+				for (k in 0...2) {
+					var icon = new HealthIcon('dad', 0);
+					icon.x = x + (j * 2 + k) * spacing;
+					icon.y = y + i * spacing;
+					icon.alpha = (alpha != null ? alpha : 0.2);
 
-				if (charIconData != null) {
-					icon.configure(charIconData.healthIcon);
-				} else {
-					icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+					if (charIconData != null) {
+						icon.configure(charIconData.healthIcon);
+					} else {
+						icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+					}
+
+					add(icon);
+					iconGrid.push(icon);
+					icon.camera = spriteCam;
 				}
-
-				add(icon);
-				iconGrid.push(icon);
-				icon.camera = spriteCam;
 			}
 		}
 	}
@@ -857,8 +867,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			for (icon in iconGrid) {
 				if (curCharID == 'default' || lockedCharMap.exists(curCharID)) {
 					icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-				}
-				else if (icon.characterId != charIconData?.healthIcon.id) {
+				} else if (icon.characterId != charIconData?.healthIcon.id) {
 					icon.configure(charIconData?.healthIcon);
 				}
 			}

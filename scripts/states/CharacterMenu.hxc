@@ -900,13 +900,5 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				doUnlockAnimation();
 			}
 		}
-
-		trace('[Funker Selector] Updated character information.\n\nName: '
-			+ charName.text
-			+ "\nDescription: "
-			+ charDesc.text
-			+ (characterData.description?.unlockCondition != null ? "\nUnlocked: "
-				+ ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [curCharID, characterData.unlockMethod])
-				+ (characterData.description?.unlockCondition != null ? "\nUnlock Condition: " + characterData.description.unlockCondition : "") : ""));
 	}
 }

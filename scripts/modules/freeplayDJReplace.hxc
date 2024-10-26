@@ -56,7 +56,8 @@ class DJReplace extends Module {
 			freeplayDJ.playableCharData = playableCharData;
 			freeplayDJ.currentState = FreeplayDJState.Intro;
 			var animPrefix = playableCharData.getAnimationPrefix('intro');
-			freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 4);
+			// TODO: Make the frame a variable.
+			freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 3);
 			if (FlxG.state.subState.backingCard.funnyScroll != null)
 				reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
 					playableChar.getFreeplayDJText(3));

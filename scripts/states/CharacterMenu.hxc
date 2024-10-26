@@ -149,10 +149,16 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			handleKeyShit();
 
 		for (icon in iconGrid) {
-			icon.x -= 0.3 * (Math.min(songBPM, 300) / 60); // Speed is capped at 300 BPM, I don't want motion sickness.
+			// Speed is capped at 300 BPM, I don't want motion sickness.
+			icon.x -= 0.3 * (Math.min(songBPM, 300) / 60);
+			icon.y += (0.3 * (Math.min(songBPM, 300) / 60)) / 2; // Vertical speed is halved.
 
 			if (icon.x < -icon.width) {
 				icon.x += (FlxG.width + icon.width) + 70;
+			}
+
+			if (icon.y > FlxG.height) {
+				icon.y -= (FlxG.height + icon.height) + 30;
 			}
 		}
 	}
@@ -234,23 +240,27 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		var charIconData = curCharID != 'default' ? jsonCharacterCache.get(curCharID)[1] : null;
 		var x = (FlxG.width - Math.ceil(FlxG.width / spacing) * spacing) / 2;
 		var y = (FlxG.height - Math.ceil(FlxG.height / spacing) * spacing) / 2;
-		for (i in 0...Math.ceil(FlxG.height / spacing)) {
+
+		// Icons are generated in cubes (2x2) to prevent weird shit from happening when they scroll.
+		for (i in 0...Math.ceil(FlxG.height / spacing / 2)) {
 			for (j in 0...Math.ceil(FlxG.width / spacing / 2)) {
-				for (k in 0...2) { // We create the icons in pairs so the scrolling doesn't look weird.
-					var icon = new HealthIcon('dad', 0);
-					icon.x = x + (j * 2 + k) * spacing;
-					icon.y = y + i * spacing;
-					icon.alpha = (alpha != null ? alpha : 0.2);
+				for (k in 0...2) {
+					for (l in 0...2) {
+						var icon = new HealthIcon('dad', 0);
+						icon.x = x + (j * 2 + k) * spacing;
+						icon.y = y + (i * 2 + l) * spacing;
+						icon.alpha = (alpha != null ? alpha : 0.2);
 
-					if (charIconData != null) {
-						icon.configure(charIconData.healthIcon);
-					} else {
-						icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+						if (charIconData != null) {
+							icon.configure(charIconData.healthIcon);
+						} else {
+							icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+						}
+
+						add(icon);
+						iconGrid.push(icon);
+						icon.camera = spriteCam;
 					}
-
-					add(icon);
-					iconGrid.push(icon);
-					icon.camera = spriteCam;
 				}
 			}
 		}

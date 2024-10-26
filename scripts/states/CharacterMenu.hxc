@@ -236,7 +236,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		var y = (FlxG.height - Math.ceil(FlxG.height / spacing) * spacing) / 2;
 		for (i in 0...Math.ceil(FlxG.height / spacing)) {
 			for (j in 0...Math.ceil(FlxG.width / spacing / 2)) {
-				for (k in 0...2) {
+				for (k in 0...2) { // We create the icons in pairs so the scrolling doesn't look weird.
 					var icon = new HealthIcon('dad', 0);
 					icon.x = x + (j * 2 + k) * spacing;
 					icon.y = y + i * spacing;

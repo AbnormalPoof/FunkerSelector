@@ -19,6 +19,7 @@ import funkin.play.character.CharacterDataParser;
 import funkin.play.character.CharacterType;
 import funkin.save.Save;
 import funkin.ui.AtlasText;
+import funkin.ui.MusicBeatSubState;
 import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
@@ -102,6 +103,12 @@ class CharacterHandler extends Module {
 	 * The original character ID from the chart.
 	 */
 	var ogCharID:String = null;
+
+	/**
+	 * The current Character Select SubState.
+	 * This is set to `null` when not in use.
+	 */
+	var charSelect:MusicBeatSubState = null;
 
 	var charText:AtlasText;
 	var charSelectIcon:FunkinSprite;
@@ -238,12 +245,16 @@ class CharacterHandler extends Module {
 			// Open the CharacterMenu substate.
 			// We need to make a new one everytime since it gets destroyed when it's closed.
 			if (FlxG.keys.justPressed.G && charText.visible && !FlxG.state.subState.busy) {
-				freeplayBPM = getFreeplayCapsuleBPM((FlxG.state.subState));
-				var charSelect:FlxSubState = ScriptedMusicBeatSubState.init("CharacterSelectSubState");
-				charSelect.camera = FlxG.state.subState.funnyCam;
-				FlxG.state.subState.persistentUpdate = false;
-				trace("[Funker Selector] Opening the Character Select SubState...");
-				FlxG.state.subState.openSubState(charSelect);
+				if (charSelect == null) {
+					freeplayBPM = getFreeplayCapsuleBPM((FlxG.state.subState));
+					charSelect = ScriptedMusicBeatSubState.init("CharacterSelectSubState");
+					charSelect.camera = FlxG.state.subState.funnyCam;
+					FlxG.state.subState.persistentUpdate = false;
+					trace("[Funker Selector] Opening the Character Select SubState...");
+					FlxG.state.subState.openSubState(charSelect);
+				} else {
+					trace("[Funker Selector] The Character Select SubState is already open!");
+				}
 			}
 		}
 	}
@@ -424,8 +435,9 @@ class CharacterHandler extends Module {
 	}
 
 	function onScriptEvent(event) {
-		if (funkerSettings.djSwapping) {
-			if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
+		if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
+			charSelect = null;
+			if (funkerSettings.djSwapping) {
 				var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
 				var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
 				if (playableChar != null && ownedCharID != FlxG.state.subState.dj.characterId) {

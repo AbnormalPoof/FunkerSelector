@@ -386,20 +386,18 @@ class CharacterHandler extends Module {
 							MemoryUtil.collect(true);
 						}
 					}, funkerSettings.preloadSprites);
-				
-				prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.', [
-					"funkin" => "Funkin' Main Menu",
-					"charSelect" => "Funkin' Character Select"
-				], (value) -> {
-					funkerSettings.preferredSFX = value;
-					Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
-					Save.instance.flush();
-					if (value == "charSelect") {
-						FunkinSound.playOnce(Paths.sound('CS_confirm'));
-					} else {
-						FunkinSound.playOnce(Paths.sound('confirmMenu'));
-					}
-				}, funkerSettings.preferredSFX);
+
+				prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
+					["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
+						funkerSettings.preferredSFX = value;
+						Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
+						Save.instance.flush();
+						if (value == "charSelect") {
+							FunkinSound.playOnce(Paths.sound('CS_confirm'));
+						} else {
+							FunkinSound.playOnce(Paths.sound('confirmMenu'));
+						}
+					}, funkerSettings.preferredSFX);
 
 				prefs.createPrefItemCheckbox("DJ Replacement",
 					"When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.", (value) -> {
@@ -423,7 +421,8 @@ class CharacterHandler extends Module {
 
 		if (Assets.exists(filePath)) {
 			var result = SerializerUtil.fromJSON(Assets.getText(filePath));
-			if (result == null) trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(filePath) + "! Returning null...");
+			if (result == null)
+				trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(filePath) + "! Returning null...");
 			return result;
 		}
 
@@ -540,7 +539,9 @@ class CharacterHandler extends Module {
 
 			// If the data is null (Caused by an issue when parsing the json file)
 			if (data == null) {
-				PolymodErrorHandler.showAlert("Funker Selector JSON Parsing Error", "Something went wrong when parsing the following JSON file:\n\n" + Assets.getPath(Paths.json('funkerSelector/' + funker)) + "\n\nPlease check the JSON file for any syntax errors.");
+				PolymodErrorHandler.showAlert("Funker Selector JSON Parsing Error",
+					"Something went wrong when parsing the following JSON file:\n\n" + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
+					"\n\nPlease check the JSON file for any syntax errors.");
 				continue;
 			}
 

@@ -317,12 +317,10 @@ class CharacterHandler extends Module {
 			// More playable character shit
 			// The results anim will still play, it's just Freeplay won't bug out when we do this.
 			// If the original player is part of a Playable Character, we don't do this.
-			if (PlayState.instance.currentStage.getBoyfriend()?.characterId == characterIDs.bf) {
-				PlayState.instance.currentChart.characters.player = ogCharID;
-				state.playerCharacterId = null;
-				if (PlayerRegistry.instance.isCharacterOwned(ogCharID))
-					state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);
-			}
+			PlayState.instance.currentChart.characters.player = ogCharID;
+			state.playerCharacterId = null;
+			if (PlayerRegistry.instance.isCharacterOwned(ogCharID))
+				state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);
 		}
 	}
 
@@ -663,8 +661,8 @@ class CharacterHandler extends Module {
 	 * selected character if they exist.
 	 */
 	function onSongEnd() {
-		if (PlayerRegistry.instance.isCharacterOwned(characterIDs.bf)
-			&& PlayState.instance.currentStage.getBoyfriend()?.characterId == characterIDs.bf) {
+		if (PlayerRegistry.instance.isCharacterOwned(characterIDs.bf)) {
+			trace("[Funker Selector] Character ID is owned.");
 			PlayState.instance.currentChart.characters.player = characterIDs.bf;
 		}
 	}

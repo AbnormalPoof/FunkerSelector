@@ -149,7 +149,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			handleKeyShit();
 
 		for (icon in iconGrid) {
-			icon.x -= 0.3 * (songBPM / 60);
+			icon.x -= 0.3 * (Math.min(songBPM, 300) / 60); // Speed is capped at 300 BPM, I don't want motion sickness.
 
 			if (icon.x < -icon.width) {
 				icon.x += (FlxG.width + icon.width) + 70;

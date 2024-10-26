@@ -51,17 +51,21 @@ class DJReplace extends Module {
 			var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
 			var playableCharData = playableChar.getFreeplayDJData();
 
+			trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
 			freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
 			freeplayDJ.characterId = playableCharId;
 			freeplayDJ.playableCharData = playableCharData;
+
 			freeplayDJ.currentState = FreeplayDJState.Intro;
 			var animPrefix = playableCharData.getAnimationPrefix('intro');
 			// TODO: Make the frame a variable.
 			freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 3);
+
 			if (FlxG.state.subState.backingCard.funnyScroll != null)
 				reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
 					playableChar.getFreeplayDJText(3));
 			FlxG.state.subState.busy = false;
+
 			freeplayDJ.onAnimationComplete.remove(replaceDJNoIntro);
 		}
 	}
@@ -72,12 +76,15 @@ class DJReplace extends Module {
 		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
 		var playableCharData = playableChar.getFreeplayDJData();
 
+		trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
 		freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
 		freeplayDJ.characterId = playableCharId;
 		freeplayDJ.playableCharData = playableCharData;
+
 		if (FlxG.state.subState.backingCard.funnyScroll != null)
 			reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
 				playableChar.getFreeplayDJText(3));
+
 		freeplayDJ.anim.onComplete.remove(replaceDJIntro);
 	}
 
@@ -89,6 +96,11 @@ class DJReplace extends Module {
 	 * @param text3 The 3rd string.
 	 */
 	function reapplyBackingText(freeplay:FreeplayState, text1:String, text2:String, text3:String) {
+		trace("[Funker Selector] Applying backing text...");
+		trace(text1);
+		trace(text2);
+		trace(text3);
+		
 		var funnyScrollArray:Array<Dynamic> = [
 			freeplay.backingCard.funnyScroll,
 			freeplay.backingCard.funnyScroll2,

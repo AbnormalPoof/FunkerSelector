@@ -35,7 +35,7 @@ class DJReplace extends Module {
 			freeplayDJ.onAnimationComplete.add(replaceDJNoIntro);
 			if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect'))) {
 				freeplayDJ.currentState = FreeplayDJState.CharSelect;
-				var animPrefix = freeplayDJ.playableCharData.getAnimationPrefix('charSelect');
+				var animPrefix = playableCharData.getAnimationPrefix('charSelect');
 				freeplayDJ.playFlashAnimation(animPrefix, true, false, false);
 			}
 		} else {

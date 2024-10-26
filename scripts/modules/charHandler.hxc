@@ -9,6 +9,7 @@ import funkin.graphics.FunkinSprite;
 import funkin.modding.PolymodErrorHandler;
 import funkin.modding.base.ScriptedMusicBeatSubState;
 import funkin.modding.module.Module;
+import funkin.modding.module.ModuleHandler;
 import funkin.play.GameOverSubState;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
@@ -270,6 +271,14 @@ class CharacterHandler extends Module {
 		var state = event.targetState;
 		// Set up the Character Select button.
 		if (state is FreeplayState) {
+			var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+			var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
+			if (playableChar != null && ownedCharID != state.dj.characterId) {
+				if (playableChar.getFreeplayDJData() != null) {
+					ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [state, true]);
+				}
+			}
+
 			charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
 			charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
 			charSelectIcon.animation.addByPrefix('idle', 'idle', 24, true);
@@ -370,18 +379,27 @@ class CharacterHandler extends Module {
 							MemoryUtil.collect(true);
 						}
 					}, funkerSettings.preloadSprites);
+				
+				prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.', [
+					"funkin" => "Funkin' Main Menu",
+					"charSelect" => "Funkin' Character Select"
+				], (value) -> {
+					funkerSettings.preferredSFX = value;
+					Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
+					Save.instance.flush();
+					if (value == "charSelect") {
+						FunkinSound.playOnce(Paths.sound('CS_confirm'));
+					} else {
+						FunkinSound.playOnce(Paths.sound('confirmMenu'));
+					}
+				}, funkerSettings.preferredSFX);
 
-				prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
-					["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
-						funkerSettings.preferredSFX = value;
+				prefs.createPrefItemCheckbox("DJ Replacement",
+					"When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.", (value) -> {
+						funkerSettings.djSwapping = value;
 						Save.instance.modOptions.set("FunkerSelectorSettings", funkerSettings);
 						Save.instance.flush();
-						if (value == "charSelect") {
-							FunkinSound.playOnce(Paths.sound('CS_confirm'));
-						} else {
-							FunkinSound.playOnce(Paths.sound('confirmMenu'));
-						}
-					}, funkerSettings.preferredSFX);
+					}, funkerSettings.djSwapping);
 
 				prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold", () -> {})).fireInstantly = true;
 			}
@@ -403,6 +421,20 @@ class CharacterHandler extends Module {
 		}
 
 		return null;
+	}
+
+	function onScriptEvent(event) {
+		if (funkerSettings.djSwapping) {
+			if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
+				var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+				var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
+				if (playableChar != null && ownedCharID != FlxG.state.subState.dj.characterId) {
+					if (playableChar.getFreeplayDJData() != null) {
+						ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState]);
+					}
+				}
+			}
+		}
 	}
 
 	/**

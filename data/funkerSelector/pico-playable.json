@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "characterID": "pico-playable",
   "characterType": "bf",
-  "mustUnlock": false,
+  "mustUnlock": true,
   "unlockMethod": {
     "type": "playableCharacter"
   },

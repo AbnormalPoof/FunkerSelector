@@ -816,7 +816,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (!simplifyUI) {
 			characterSprite = CharacterDataParser.fetchCharacter(curCharID, true);
 			if (characterSprite != null) {
-				characterSprite.dance();
 				if (characterData.characterMenu != null) {
 					configureChar(characterData.characterMenu);
 				}

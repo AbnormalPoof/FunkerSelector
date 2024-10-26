@@ -51,7 +51,7 @@ class DJReplace extends Module {
 		var playableCharData = playableChar.getFreeplayDJData();
 
 		var startTime = Timer.stamp();
-		
+
 		if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect')) {
 			trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
 			freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
@@ -90,13 +90,12 @@ class DJReplace extends Module {
 		freeplayDJ.playableCharData = playableCharData;
 
 		if (FlxG.state.subState.backingCard.funnyScroll != null)
-			reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
-				playableChar.getFreeplayDJText(3));
+			reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3));
 
 		freeplayDJ.anim.onComplete.remove(replaceDJIntro);
 
 		var endTime = Timer.stamp();
-    var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
+		var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
 		trace("[Funker Selector] replaceDJIntro took " + elapsedTime + " seconds to complete.");
 	}
 
@@ -112,7 +111,7 @@ class DJReplace extends Module {
 		trace(text1);
 		trace(text2);
 		trace(text3);
-		
+
 		var funnyScrollArray:Array<Dynamic> = [
 			freeplay.backingCard.funnyScroll,
 			freeplay.backingCard.funnyScroll2,

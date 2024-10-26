@@ -855,10 +855,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		if (!simplifyUI) {
 			for (icon in iconGrid) {
-				if (curCharID != 'default' && !lockedCharMap.exists(curCharID)) {
-					icon?.configure(charIconData?.healthIcon);
-				} else {
-					icon?.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+				if (curCharID == 'default' || lockedCharMap.exists(curCharID)) {
+					icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+				}
+				else if (icon.characterId != charIconData?.healthIcon.id) {
+					icon.configure(charIconData?.healthIcon);
 				}
 			}
 		}

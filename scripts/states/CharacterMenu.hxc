@@ -22,6 +22,8 @@ import funkin.ui.charSelect.Lock;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
 import funkin.util.WindowUtil;
 import funkin.util.assets.DataAssets;
+import flixel.group.FlxTypedGroup;
+import funkin.util.MathUtil;
 import haxe.Json;
 import haxe.ds.StringMap;
 import Std;
@@ -96,6 +98,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var charIndex:Int = 0;
 	var pageIndex:Int = 0;
 
+	var characterWheel:FlxTypedGroup<BaseCharacter> = new FlxTypedGroup();
+
 	/**
 	 * The current song BPM in Freeplay.
 	 */
@@ -133,6 +137,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		setupUIStuff();
 		updateFilteredKeys();
+		buildCharacterWheel();
 		jumpToCurSelected();
 	}
 
@@ -157,12 +162,85 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				icon.y -= (FlxG.height + icon.height) + 30;
 			}
 		}
+
+		for (index in 0...characterWheel.members.length)
+    {
+      var item:BaseCharacter = characterWheel.members[index];
+      item.x = MathUtil.smoothLerp(item.x, (index - (charIndex - 1)) * 500 + 100, FlxG.elapsed, 0.2);
+		}
 	}
+
+	function buildCharacterWheel():Void {
+		characterWheel.clear();
+
+		// The spacing between characters.
+		// Yes, this has to be really really fucking high.
+		var spacing:Float = (120 * 100);
+
+		for (characterIndex in 0...filteredKeys.length) {
+			var characterID:String = filteredKeys[characterIndex];
+			var characterSprite:BaseCharacter = (characterID != 'default' ? CharacterDataParser.fetchCharacter(characterID) : null);
+
+			if (characterID != 'default') {
+				characterInfo = characterMap.get(characterID);
+				ownerJSONname = characterInfo[0];
+				characterData = jsonCharacterCache.get(ownerJSONname)[0];
+				charIconData = (characterID != 'default') ? jsonCharacterCache.get(ownerJSONname)[1] : null;
+			}
+
+			if (characterSprite != null) {
+				characterSprite.camera = spriteCam;
+				configureChar(characterSprite, characterData.characterMenu);
+				characterWheel.add(characterSprite);
+			} else {
+				characterWheel.add(null);
+			}
+		}
+
+		changeCharacter();
+	}
+
+	/**
+   * Changes the selected character.
+   * @param change +1 (right), -1 (left)
+   */
+  function changeCharacter(change:Int = 0):Void
+  {
+		var prevIndex:Int = charIndex;
+    charIndex = (prevIndex + (change + filteredKeys.length)) % filteredKeys.length;
+
+    // Wrap around
+    if (charIndex < 0) charIndex = filteredKeys.length - 1;
+    if (charIndex >= filteredKeys.length) charIndex = 0;
+
+    curCharID = filteredKeys[charIndex];
+
+    for (index in 0...characterWheel.members.length)
+    {
+      var item:BaseCharacter = characterWheel.members[index];
+
+      if (item.characterId == curCharID)
+      {
+        item.alpha = 1.0;
+      }
+      else
+      {
+        item.alpha = 0.6;
+      }
+    }
+
+    if (charIndex != prevIndex) FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+
+    updateCharInfo();
+  }
 
 	function beatHit():Void {
 		bopDaThing();
-		if (characterSprite != null)
-			characterSprite.dance();
+		for (index in 0...characterWheel.members.length)
+    {
+      var item:BaseCharacter = characterWheel.members[index];
+      item.dance();
+		}
 	}
 
 	/**
@@ -290,7 +368,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	/**
 	 * Configuring the JSON character, setting up position, scale, flipping, etc.
 	 */
-	function configureChar(data:Null):Void {
+	function configureChar(characterSprite:BaseCharacter, data:Null):BaseCharacter {
+		if (data == null)
+			return;
 		var position = data.position != null ? data.position : [0, 0];
 		var scale = data.scale != null ? (data.isPixel ? data.scale * 6 : data.scale) : (data.isPixel ? 6.0 : 1.0);
 		characterSprite.x += position[0];
@@ -298,6 +378,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		characterSprite.flipX = data.flipX != null ? data.flipX : false;
 		characterSprite.scale.set(scale, scale);
 		characterSprite.antialiasing = data.isPixel != null ? !data.isPixel : true;
+
+		return characterSprite;
 	}
 
 	/**
@@ -410,6 +492,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			createIconGrid(150, 0.2);
 		add(leftDifficultyArrow);
 		add(rightDifficultyArrow);
+		add(characterWheel);
 		add(selectText);
 		add(numberThing);
 		add(selected);
@@ -498,16 +581,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		if (!hotkeyCam.visible) {
 			if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT) {
-				if (saveData.preferences.preferredSFX == "charSelect") {
-					FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
-				} else {
-					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-				}
-				charIndex = (charIndex + (FlxG.keys.justPressed.RIGHT ? 1 : -1) + filteredKeys.length) % filteredKeys.length;
+				changeCharacter(FlxG.keys.justPressed.LEFT ? -1 : 1);
 				numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
 				numberThing.screenCenter(0x01);
-				curCharID = filteredKeys[charIndex];
-				updateCharInfo();
 			}
 
 			leftDifficultyArrow.animation.play(FlxG.keys.pressed.LEFT ? 'press' : 'idle');
@@ -522,7 +598,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
 				charIndex = 0;
 				updateFilteredKeys();
-				curCharID = filteredKeys[charIndex];
+				buildCharacterWheel();
+				changeCharacter();
 				updateCharInfo();
 			}
 
@@ -652,8 +729,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (!saveData.preferences.potatoMode) {
 			characterData = jsonCharacterCache.get(curCharID) != null ? jsonCharacterCache.get(curCharID)[0] : null;
 			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
-			if (characterSprite != null)
-				characterSprite.playAnimation(animation, true, true);
+			var item:BaseCharacter = characterWheel.members[charIndex - 1];
+			if (item != null)
+      	item.playAnimation(animation, true, true);
 		}
 		if (charIcon?.hasAnimation('winning')) {
 			// Play the winning animation if it's available.
@@ -820,7 +898,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		// If "Simplify UI" is enabled in the Options Menu, the sprites will not load.
-		if (!saveData.preferences.potatoMode) {
+		/* 		if (!saveData.preferences.potatoMode) {
 			characterSprite = CharacterDataParser.fetchCharacter(curCharID, true);
 			if (characterSprite != null) {
 				if (characterData.characterMenu != null) {
@@ -829,7 +907,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				add(characterSprite);
 				characterSprite.camera = spriteCam;
 			}
-		}
+		}*/
 
 		switch (curCharID) {
 			case 'default':

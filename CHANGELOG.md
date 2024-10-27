@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Reworked the structure for suffixes in the JSON data.
   - **This is a breaking change for characters which use suffixes!**
   - Please see the documentation for the new structure.
+- The icon grid in the character menu now scrolls digonally, the scroll speed is relative to the current song's BPM.
+  - The speed is capped at 300 BPM.
 
 ## [1.5.2] - 2024-10-23
 ### Fixed

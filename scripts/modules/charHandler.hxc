@@ -362,8 +362,8 @@ class CharacterHandler extends Module {
 
 				prefs.createPrefItemCheckbox("Simplify UI", "Simplifies the UI and disables character sprite caching.", (value) -> {
 					saveData.preferences.potatoMode = value;
-						Save.instance.modOptions.set("FunkerSelector", saveData);
-						Save.instance.flush();
+					Save.instance.modOptions.set("FunkerSelector", saveData);
+					Save.instance.flush();
 				}, saveData.preferences.potatoMode);
 
 				prefs.createPrefItemCheckbox("Preload Sprites",
@@ -435,14 +435,8 @@ class CharacterHandler extends Module {
 		if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
 			charSelect = null;
 			if (saveData.preferences.djSwapping) {
-				var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf);
-				var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
-				if (playableChar != null && ownedCharID != FlxG.state.subState.dj.characterId) {
-					if (playableChar.getFreeplayDJData() != null) {
-						trace("[Funker Selector] Character has valid Freeplay DJ data! Replacing DJ...");
-						ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState]);
-					}
-				}
+				trace("[Funker Selector] Switching out DJ...");
+				ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState]);
 			}
 		}
 	}

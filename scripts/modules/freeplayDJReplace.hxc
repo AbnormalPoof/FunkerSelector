@@ -27,24 +27,29 @@ class DJReplace extends Module {
 	function transitionToNewDJ(freeplay:FreeplayState, ?inIntro:Bool = false):Void {
 		var freeplayDJ = freeplay.dj;
 		var playableCharData = freeplayDJ.playableCharData;
+		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : 'bf';
+		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
 
-		if (!inIntro) {
-			if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect'))) {
-				freeplay.busy = true;
-				freeplayDJ.onIntroDone.removeAll();
-				freeplayDJ.onAnimationComplete.addOnce(replaceDJNoIntro);
-				freeplayDJ.currentState = FreeplayDJState.CharSelect;
-				var animPrefix = playableCharData.getAnimationPrefix('charSelect');
-				freeplayDJ.playFlashAnimation(animPrefix, true, false, false);
+		if (freeplayDJ.characterId != playableCharId) {
+			if (!inIntro) {
+				if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect'))) {
+					freeplay.busy = true;
+					freeplayDJ.onIntroDone.removeAll();
+					freeplayDJ.onAnimationComplete.addOnce(replaceDJNoIntro);
+					freeplayDJ.currentState = FreeplayDJState.CharSelect;
+					var animPrefix = playableCharData.getAnimationPrefix('charSelect');
+					freeplayDJ.playFlashAnimation(animPrefix, true, false, false);
+				}
+			} else {
+				replaceDJIntro();
 			}
-		} else {
-			replaceDJIntro();
 		}
 	}
 
 	function replaceDJNoIntro():Void {
 		var freeplayDJ = FlxG.state.subState.dj;
-		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf);
+		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : 'bf';
+		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
 		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
 		var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
 
@@ -52,7 +57,7 @@ class DJReplace extends Module {
 
 		if (playableCharData == null) {
 			trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
-			trace(saveData.characterIDs.bf);
+			trace(characterID);
 			return;
 		}
 
@@ -80,7 +85,8 @@ class DJReplace extends Module {
 
 	function replaceDJIntro():Void {
 		var freeplayDJ = FlxG.state.subState.dj;
-		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf);
+		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : 'bf';
+		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
 		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
 		var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
 
@@ -88,7 +94,7 @@ class DJReplace extends Module {
 
 		if (playableCharData == null) {
 			trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
-			trace(saveData.characterIDs.bf);
+			trace(characterID);
 			return;
 		}
 

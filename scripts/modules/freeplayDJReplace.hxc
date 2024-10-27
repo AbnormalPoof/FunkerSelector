@@ -27,7 +27,7 @@ class DJReplace extends Module {
 	function transitionToNewDJ(freeplay:FreeplayState, ?inIntro:Bool = false):Void {
 		var freeplayDJ = freeplay.dj;
 		var playableCharData = freeplayDJ.playableCharData;
-		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : 'bf';
+		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : freeplay.currentCharacterId;
 		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
 
 		if (freeplayDJ.characterId != playableCharId) {
@@ -50,7 +50,7 @@ class DJReplace extends Module {
 
 	function replaceDJNoIntro():Void {
 		var freeplayDJ = FlxG.state.subState.dj;
-		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : 'bf';
+		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
 		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
 		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
 		var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
@@ -87,7 +87,7 @@ class DJReplace extends Module {
 
 	function replaceDJIntro():Void {
 		var freeplayDJ = FlxG.state.subState.dj;
-		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : 'bf';
+		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
 		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
 		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
 		var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;

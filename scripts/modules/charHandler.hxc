@@ -197,17 +197,18 @@ class CharacterHandler extends Module {
 	 * @param oldSave The old save data to use.
 	 * @return The migrated save file.
 	 */
-	function migrateSaveData(oldSave:Dynamic):Dynamic {
+	function migrateSaveData():Dynamic {
 		trace('[Funker Selector] Migrating save data...');
 
-		var oldSeenUnlocks:Array = Save.instance.modOptions.get("FunkerSelector-SeenChars");
+		var oldCharacterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
 		var oldPrefs:Dynamic = Save.instance.modOptions.get("FunkerSelectorSettings");
+		var oldSeenUnlocks:Array = Save.instance.modOptions.get("FunkerSelector-SeenChars");
 
 		var migratedSave:Dynamic = {
 			characterIDs: {
-				bf: oldSave.bf,
-				gf: oldSave.gf,
-				dad: oldSave.dad
+				bf: oldCharacterIDs.bf,
+				gf: oldCharacterIDs.gf,
+				dad: oldCharacterIDs.dad
 			},
 			preferences: {
 				potatoMode: oldPrefs?.potatoMode != null ? oldPrefs.potatoMode : false,

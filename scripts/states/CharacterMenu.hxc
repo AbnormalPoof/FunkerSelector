@@ -62,13 +62,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var filteredKeys:Array<String> = [];
 
 	/**
-	 * An array of unlock animations we've seen already.
-	 * This ensures the unlock animation only plays once per save file.
+	 * The save data for Funker Selector.
 	 */
-	var seenUnlocks:Array<String> = ModuleHandler.getModule("CharacterHandler").scriptGet('seenUnlocks');
+	var saveData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptGet('saveData');
 
 	// NOTE: For writing, access characterIDs directly. This is only for reading.
-	var characterIDsArray:Array<String> = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
+	var characterIDsArray:Array<String> = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
 
 	/**
 	 * A map of all the locked characters.
@@ -108,14 +107,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var curCharID:String = 'default';
 
 	var characterSprite:BaseCharacter;
-
-	/**
-	 * These are retrieved from the save file.
-	 */
-	var characterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
-
-	var simplifyUI:Bool = Save.instance.modOptions.get("FunkerSelectorSettings").potatoMode;
-	var preferredSFX:String = Save.instance.modOptions.get("FunkerSelectorSettings").preferredSFX;
 
 	/**
 	 * If enabled, the menu will stop responding to inputs.
@@ -371,7 +362,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		rightDifficultyArrow.scale.set(1.5, 1.5);
 		rightDifficultyArrow.camera = uiCam;
 
-		if (!simplifyUI) {
+		if (!saveData.preferences.potatoMode) {
 			lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
 			lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
 			lockedChill.animation.addByPrefix('denied', 'cannot select0', 24, false);
@@ -414,7 +405,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		unlockSound.volume = 1;
 
 		add(bg);
-		if (!simplifyUI)
+		if (!saveData.preferences.potatoMode)
 			createIconGrid(150, 0.2);
 		add(leftDifficultyArrow);
 		add(rightDifficultyArrow);
@@ -506,7 +497,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		if (!hotkeyCam.visible) {
 			if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT) {
-				if (preferredSFX == "charSelect") {
+				if (saveData.preferences.preferredSFX == "charSelect") {
 					FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
 				} else {
 					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
@@ -522,7 +513,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			rightDifficultyArrow.animation.play(FlxG.keys.pressed.RIGHT ? 'press' : 'idle');
 
 			if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E) {
-				if (preferredSFX == "charSelect") {
+				if (saveData.preferences.preferredSFX == "charSelect") {
 					FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
 				} else {
 					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
@@ -535,7 +526,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 
 			if (FlxG.keys.justPressed.J) {
-				if (preferredSFX == "charSelect") {
+				if (saveData.preferences.preferredSFX == "charSelect") {
 					FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
 				} else {
 					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
@@ -545,26 +536,26 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 			if (FlxG.keys.justPressed.F) {
 				var shouldPlaySound:Bool = false;
-				if (characterIDs.bf != 'default') {
-					characterIDs.bf = 'default';
+				if (saveData.characterIDs.bf != 'default') {
+					saveData.characterIDs.bf = 'default';
 					shouldPlaySound = true;
 				}
-				if (characterIDs.dad != 'default') {
-					characterIDs.dad = 'default';
+				if (saveData.characterIDs.dad != 'default') {
+					saveData.characterIDs.dad = 'default';
 					shouldPlaySound = true;
 				}
-				if (characterIDs.gf != 'default') {
-					characterIDs.gf = 'default';
+				if (saveData.characterIDs.gf != 'default') {
+					saveData.characterIDs.gf = 'default';
 					shouldPlaySound = true;
 				}
 				if (shouldPlaySound) {
 					FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
 					selected.visible = selectedTextVisibility();
-					Save.instance.modOptions.set("FunkerSelector", characterIDs);
+					Save.instance.modOptions.set("FunkerSelector", saveData);
 					Save.instance.flush();
 
 					// Updating the array with the latest changes
-					characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
+					characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
 				}
 			}
 
@@ -578,18 +569,18 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					if (!lockedCharMap.exists(curCharID)) {
 						switch (pageIndex) {
 							case 0:
-								if (characterIDs.bf != curCharID) {
-									characterIDs.bf = curCharID;
+								if (saveData.characterIDs.bf != curCharID) {
+									saveData.characterIDs.bf = curCharID;
 									shouldConfirm = true;
 								}
 							case 1:
-								if (characterIDs.dad != curCharID) {
-									characterIDs.dad = curCharID;
+								if (saveData.characterIDs.dad != curCharID) {
+									saveData.characterIDs.dad = curCharID;
 									shouldConfirm = true;
 								}
 							case 2:
-								if (characterIDs.gf != curCharID) {
-									characterIDs.gf = curCharID;
+								if (saveData.characterIDs.gf != curCharID) {
+									saveData.characterIDs.gf = curCharID;
 									shouldConfirm = true;
 								}
 						}
@@ -599,20 +590,20 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					confirmThing();
 					selected.visible = selectedTextVisibility();
 					newGraphic.visible = false;
-					Save.instance.modOptions.set("FunkerSelector", characterIDs);
+					Save.instance.modOptions.set("FunkerSelector", saveData);
 					Save.instance.flush();
 
 					// Updating the array with the latest changes
-					characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
+					characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
 				} else {
-					if (preferredSFX == "charSelect") {
+					if (saveData.preferences.preferredSFX == "charSelect") {
 						FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
 					} else {
 						FunkinSound.playOnce(Paths.sound('cancelMenu'));
 					}
 					flashScreen(0xFFFF0000, 0.03, 0.1);
 					if (lockedChill != null) {
-						if (!simplifyUI)
+						if (!saveData.preferences.potatoMode)
 							lockedChill.animation.play('denied', true);
 						else
 							lockedChill.playAnimation("clicked", true);
@@ -631,18 +622,18 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
 			switch (pageIndex) {
 				case 0:
-					characterIDs.bf = 'default';
+					saveData.characterIDs.bf = 'default';
 				case 1:
-					characterIDs.dad = 'default';
+					saveData.characterIDs.dad = 'default';
 				case 2:
-					characterIDs.gf = 'default';
+					saveData.characterIDs.gf = 'default';
 			}
 			// Save everything
-			Save.instance.modOptions.set("FunkerSelector", characterIDs);
+			Save.instance.modOptions.set("FunkerSelector", saveData);
 			Save.instance.flush();
 
 			// Updating the array with the latest changes
-			characterIDsArray = [characterIDs.bf, characterIDs.dad, characterIDs.gf];
+			characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
 		}
 		charIndex = filteredKeys.indexOf(characterIDsArray[pageIndex]);
 		curCharID = characterIDsArray[pageIndex];
@@ -652,12 +643,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	}
 
 	function confirmThing():Void {
-		if (preferredSFX == "charSelect") {
+		if (saveData.preferences.preferredSFX == "charSelect") {
 			FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
 		} else {
 			FunkinSound.playOnce(Paths.sound('confirmMenu'));
 		}
-		if (!simplifyUI) {
+		if (!saveData.preferences.potatoMode) {
 			characterData = jsonCharacterCache.get(curCharID) != null ? jsonCharacterCache.get(curCharID)[0] : null;
 			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
 			if (characterSprite != null)
@@ -670,7 +661,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			// I wanted this really cool effect where the icons in the icon grid would also
 			// play the winning animation!
 			// But let's not play that if "Simplify UI" is turned on.
-			if (!simplifyUI && iconGrid != null) {
+			if (!saveData.preferences.potatoMode && iconGrid != null) {
 				for (i in 0...iconGrid.length) {
 					var icon = iconGrid[i];
 					new FlxTimer().start(0.01 * i, function() {
@@ -694,11 +685,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	function selectedTextVisibility():Bool {
 		switch (pageIndex) {
 			case 0:
-				return curCharID == characterIDs.bf;
+				return curCharID == saveData.characterIDs.bf;
 			case 1:
-				return curCharID == characterIDs.dad;
+				return curCharID == saveData.characterIDs.dad;
 			case 2:
-				return curCharID == characterIDs.gf;
+				return curCharID == saveData.characterIDs.gf;
 			default:
 				return false;
 		}
@@ -738,7 +729,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	function doUnlockAnimation():Void {
 		busy = true;
 		FlxG.sound.music?.fadeOut();
-		if (!simplifyUI) {
+		if (!saveData.preferences.potatoMode) {
 			lockedChill.offset.set();
 			lockedChill.animation.play('idle', true);
 		} else {
@@ -749,7 +740,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			onComplete: function(twn:FlxTween) {
 				unlockSound.play(true);
 				new FlxTimer().start(1.45, function() {
-					if (!simplifyUI) {
+					if (!saveData.preferences.potatoMode) {
 						lockedChill.offset.set(170, 220);
 						lockedChill.animation.play('death');
 						lockedChill.animation.callback = function(name, frame) {
@@ -828,7 +819,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		// If "Simplify UI" is enabled in the Options Menu, the sprites will not load.
-		if (!simplifyUI) {
+		if (!saveData.preferences.potatoMode) {
 			characterSprite = CharacterDataParser.fetchCharacter(curCharID, true);
 			if (characterSprite != null) {
 				if (characterData.characterMenu != null) {
@@ -872,12 +863,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		// Making it not look so awkward when "Simplify UI" is turned on.
-		if (simplifyUI || curCharID == 'default') {
+		if (saveData.preferences.potatoMode || curCharID == 'default') {
 			charIcon?.setPosition(250, 270);
 			charIcon?.size.set(2, 2);
 		}
 
-		if (!simplifyUI) {
+		if (!saveData.preferences.potatoMode) {
 			for (icon in iconGrid) {
 				if (curCharID == 'default' || lockedCharMap.exists(curCharID)) {
 					icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
@@ -905,13 +896,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		// Do the unlock animation if we haven't seen it yet.
 		if (lockedCharMap.exists(curCharID)
 			&& ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [curCharID, characterData.unlockMethod])) {
-			if (seenUnlocks.indexOf(curCharID) == -1) {
+			if (saveData.seenUnlocks.indexOf(curCharID) == -1) {
 				lockedCharMap.remove(curCharID);
-				seenUnlocks.push(curCharID);
-				Save.instance.modOptions.set("FunkerSelector-SeenChars", seenUnlocks);
+				saveData.seenUnlocks.push(curCharID);
+				ModuleHandler.getModule("CharacterHandler").scriptSet('saveData', saveData);
+				Save.instance.modOptions.set("FunkerSelector", saveData);
 				Save.instance.flush();
 				ModuleHandler.getModule("CharacterHandler").scriptSet('lockedCharMap', lockedCharMap);
-				ModuleHandler.getModule("CharacterHandler").scriptSet('seenUnlocks', seenUnlocks);
 				doUnlockAnimation();
 			}
 		}

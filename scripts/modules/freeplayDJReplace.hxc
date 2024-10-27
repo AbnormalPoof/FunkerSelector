@@ -14,12 +14,10 @@ import haxe.Timer;
  * Separate module for replacing the Freeplay DJ to prevent messy code in CharacterHandler.
  */
 class DJReplace extends Module {
-	public var characterIDs:Dynamic;
+	public var saveData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptGet('saveData');
 
 	public function new() {
 		super('DJReplace');
-
-		characterIDs = ModuleHandler.getModule("CharacterHandler").scriptCall('initializeCharIDs');
 	}
 
 	/**
@@ -46,7 +44,7 @@ class DJReplace extends Module {
 
 	function replaceDJNoIntro():Void {
 		var freeplayDJ = FlxG.state.subState.dj;
-		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf);
 		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
 		var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
 
@@ -54,7 +52,7 @@ class DJReplace extends Module {
 
 		if (playableCharData == null) {
 			trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
-			trace(characterIDs.bf);
+			trace(saveData.characterIDs.bf);
 			return;
 		}
 
@@ -82,7 +80,7 @@ class DJReplace extends Module {
 
 	function replaceDJIntro():Void {
 		var freeplayDJ = FlxG.state.subState.dj;
-		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterIDs.bf);
+		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf);
 		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
 		var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
 
@@ -90,7 +88,7 @@ class DJReplace extends Module {
 
 		if (playableCharData == null) {
 			trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
-			trace(characterIDs.bf);
+			trace(saveData.characterIDs.bf);
 			return;
 		}
 

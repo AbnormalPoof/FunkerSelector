@@ -14,7 +14,7 @@
   },
   "characterMenu":
   {
-    "position": [340, 560],
+    "position": [160, 560],
     "scale": 1.15,
     "isPixel": true
   }

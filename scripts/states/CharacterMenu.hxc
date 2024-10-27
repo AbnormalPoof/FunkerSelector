@@ -110,8 +110,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 */
 	var curCharID:String = 'default';
 
-	var characterSprite:BaseCharacter;
-
 	/**
 	 * If enabled, the menu will stop responding to inputs.
 	 * This is used for the unlock animation
@@ -167,7 +165,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (!saveData.preferences.potatoMode) {
 			for (index in 0...characterWheel.members.length) {
 				var item:BaseCharacter = characterWheel.members[index];
-				item.x = MathUtil.smoothLerp(item.x, (index - (charIndex - 1)) * 500 + 100, FlxG.elapsed, 0.2);
+				if (item != null) {
+					characterInfo = characterMap.get(item.characterId);
+					ownerJSONname = characterInfo[0];
+					characterData = jsonCharacterCache.get(ownerJSONname)[0];
+				}
+				var xOffset:Float = characterData?.characterMenu != null ? characterData.characterMenu.position[0] : 0;
+
+				item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset, FlxG.elapsed, 0.2);
 			}
 		}
 	}
@@ -381,7 +386,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			return;
 		var position = data.position != null ? data.position : [0, 0];
 		var scale = data.scale != null ? (data.isPixel ? data.scale * 6 : data.scale) : (data.isPixel ? 6.0 : 1.0);
-		characterSprite.x += position[0];
 		characterSprite.y += position[1];
 		characterSprite.flipX = data.flipX != null ? data.flipX : false;
 		characterSprite.scale.set(scale, scale);
@@ -878,9 +882,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * Update character information.
 	 */
 	function updateCharInfo():Void {
-		if (characterSprite != null)
-			remove(characterSprite);
-
 		if (charDesc != null)
 			remove(charDesc);
 
@@ -903,18 +904,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			charIconData = (curCharID != 'default') ? jsonCharacterCache.get(ownerJSONname)[1] : null;
 		}
 
-		// If "Simplify UI" is enabled in the Options Menu, the sprites will not load.
-		/* 		if (!saveData.preferences.potatoMode) {
-			characterSprite = CharacterDataParser.fetchCharacter(curCharID, true);
-			if (characterSprite != null) {
-				if (characterData.characterMenu != null) {
-					configureChar(characterData.characterMenu);
-				}
-				add(characterSprite);
-				characterSprite.camera = spriteCam;
-			}
-		}*/
-
 		switch (curCharID) {
 			case 'default':
 				charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
@@ -923,9 +912,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			default:
 				if (lockedCharMap.exists(curCharID)) {
 					charName.text = "LOCKED";
-
-					if (characterSprite != null)
-						characterSprite.visible = false;
 
 					var unlockHint = characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: "
 						+ characterData.description.unlockCondition : "";

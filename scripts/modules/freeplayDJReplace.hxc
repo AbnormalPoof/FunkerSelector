@@ -43,6 +43,8 @@ class DJReplace extends Module {
 			} else {
 				replaceDJIntro();
 			}
+		} else {
+			trace("[Funker Selector] DJ Character IDs match! Not replacing.");
 		}
 	}
 

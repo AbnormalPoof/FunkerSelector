@@ -694,7 +694,7 @@ class CharacterHandler extends Module {
 
 		var voiceID:String = characterData?.voiceID != null ? characterData.voiceID : characterID;
 		var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
-		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + vocalID + variationSuffix);
+		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + voiceID + variationSuffix);
 
 		if (characterID == 'default')
 			return;

@@ -213,7 +213,7 @@ class CharacterHandler extends Module {
 			preferences: {
 				potatoMode: oldPrefs?.potatoMode != null ? oldPrefs.potatoMode : false,
 				preloadSprites: oldPrefs?.preloadSprites != null ? oldPrefs.preloadSprites : false,
-				preferredSFX: oldPrefs?.preferredSFX != null ? oldPrefs.preferredSFX : false,
+				preferredSFX: oldPrefs?.preferredSFX != null ? oldPrefs.preferredSFX : 'funkin',
 				djSwapping: oldPrefs?.djSwapping != null ? oldPrefs.djSwapping : true
 			},
 			seenUnlocks: oldSeenUnlocks != null ? oldSeenUnlocks : []

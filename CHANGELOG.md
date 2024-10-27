@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - Completely reworked the save data system. Internally, eerything is now one object instead of multiple.
   - Your save data will be migrated!
+- Reworked the structure for suffixes in the JSON data.
+  - **This is a breaking change for characters which use suffixes!**
+  - Please see the documentation for the new structure.
 
 ## [1.5.2] - 2024-10-23
 ### Fixed

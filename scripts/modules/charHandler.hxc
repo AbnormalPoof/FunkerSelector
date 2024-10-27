@@ -691,9 +691,10 @@ class CharacterHandler extends Module {
 		var ownerJSONname:String = characterInfo != null ? characterInfo[0] : null;
 		var characterData:Dynamic = ownerJSONname != null ? jsonCharacterCache.get(ownerJSONname)[0] : null;
 		var oldChar:BaseCharacter = null;
+
+		var vocalID:String = characterData?.voiceID != null ? characterData.voiceID : characterID;
 		var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
-		// TODO: Allow people to specify their own vocal ID instead of defaulting to the character ID
-		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + characterID + variationSuffix);
+		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + vocalID + variationSuffix);
 
 		if (characterID == 'default')
 			return;
@@ -780,12 +781,12 @@ class CharacterHandler extends Module {
 		}
 
 		if (characterData != null && characterType == CharacterType.BF) {
-			PauseSubState.musicSuffix = (characterData.pauseMusicSuffix != null
-				&& characterData.pauseMusicSuffix != '') ? characterData.pauseMusicSuffix : PauseSubState.musicSuffix;
-			GameOverSubState.musicSuffix = (characterData.gameOverMusicSuffix != null
-				&& characterData.gameOverMusicSuffix != '') ? characterData.gameOverMusicSuffix : GameOverSubState.musicSuffix;
-			GameOverSubState.blueBallSuffix = (characterData.blueBallSuffix != null
-				&& characterData.blueBallSuffix != '') ? characterData.blueBallSuffix : GameOverSubState.blueBallSuffix;
+			PauseSubState.musicSuffix = (characterData.suffixes.pauseMusic != null
+				&& characterData.suffixes.pauseMusic != '') ? characterData.suffixes.pauseMusic : PauseSubState.musicSuffix;
+			GameOverSubState.musicSuffix = (characterData.suffixes.gameOverMusic != null
+				&& characterData.suffixes.gameOverMusic != '') ? characterData.suffixes.gameOverMusic : GameOverSubState.musicSuffix;
+			GameOverSubState.blueBallSuffix = (characterData.suffixes.blueBall != null
+				&& characterData.suffixes.blueBall != '') ? characterData.suffixes.blueBall : GameOverSubState.blueBallSuffix;
 		}
 
 		trace('[Funker Selector] Suffixes\n\nPause Music: ' + PauseSubState.musicSuffix + '\nGame Over Music: ' + GameOverSubState.musicSuffix

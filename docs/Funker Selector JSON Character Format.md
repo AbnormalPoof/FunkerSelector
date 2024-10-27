@@ -64,11 +64,20 @@ The Character ID to use, this is ***needed*** or else the character will not sho
 The character type, accepted values are: `bf`, `gf`, `dad`, `player`, and `opponent`.
 (`player` and `opponent` are just aliases for `bf` and `dad` respectively.)
 
+---
+
 ```json
 "mustUnlock": false
 ```
 Wether or not you need to unlock the character first in order for them to be playable.
 You'll have to specify an unlock method.
+
+---
+
+```json
+"voiceID": "bf"
+```
+The ID to use for Vocal Replacement, defaults to the character ID.
 
 ---
 
@@ -120,25 +129,33 @@ The required difficulties, defaults to `["easy", "normal", "hard"]`.
 
 ---
 
-***(These will be grouped together since they serve basically the same functionality.)***
+#### Suffix data
 
 ```json
-"gameOverMusicSuffix": ""
+"suffixes": {
+  "gameOverMusic": "-pico",
+  "blueBall": "-pico",
+  "pauseMusic": "-pico"
+}
+```
+
+```json
+"gameOverMusic": "-pico"
 ```
 The music suffix used in the Game Over screen.
 
 ```json
-"blueBallSuffix": ""
+"blueBall": "-pico"
 ```
 The blue ball suffix used in the Game Over screen.
 
 ```json
-"pauseMusicSuffix": ""
+"pauseMusic": "-pico"
 ```
 The music suffix used in the Pause Menu.
 
 You can use pretty much any suffix for these three as long as it's valid (exists in the files, either through a mod or the game's assets).
-For example, Boyfriend (Pixel) uses `-pixel`, while Pico (Playable) uses `-pico`!
+For example, Boyfriend (Pixel) uses `-pixel`, while Pico (Playable) uses `-pico`.
 
 ---
 

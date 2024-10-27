@@ -781,11 +781,11 @@ class CharacterHandler extends Module {
 		}
 
 		if (characterData != null && characterType == CharacterType.BF) {
-			PauseSubState.musicSuffix = (characterData.suffixes.pauseMusic != null
+			PauseSubState.musicSuffix = (characterData.suffixes?.pauseMusic != null
 				&& characterData.suffixes.pauseMusic != '') ? characterData.suffixes.pauseMusic : PauseSubState.musicSuffix;
-			GameOverSubState.musicSuffix = (characterData.suffixes.gameOverMusic != null
+			GameOverSubState.musicSuffix = (characterData.suffixes?.gameOverMusic != null
 				&& characterData.suffixes.gameOverMusic != '') ? characterData.suffixes.gameOverMusic : GameOverSubState.musicSuffix;
-			GameOverSubState.blueBallSuffix = (characterData.suffixes.blueBall != null
+			GameOverSubState.blueBallSuffix = (characterData.suffixes?.blueBall != null
 				&& characterData.suffixes.blueBall != '') ? characterData.suffixes.blueBall : GameOverSubState.blueBallSuffix;
 		}
 

@@ -281,13 +281,8 @@ class CharacterHandler extends Module {
 		// Set up the Character Select button.
 		if (state is FreeplayState) {
 			if (saveData.preferences.djSwapping) {
-				var ownedCharID = PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf);
-				var playableChar = PlayerRegistry.instance.fetchEntry(ownedCharID);
-				if (playableChar != null && ownedCharID != state.dj.characterId) {
-					if (playableChar.getFreeplayDJData() != null) {
-						ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [state, true]);
-					}
-				}
+				trace("[Funker Selector] Switching out DJ...");
+				ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, true]);
 			}
 
 			charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');

@@ -128,6 +128,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 */
 	var FS_EXITED_SUBSTATE:String = "FS_EXITED_SUBSTATE";
 
+	/**
+	 * The base scroll speed for the icon grid.
+	 */
+	var ICON_SCROLL_SPEED:Float = 0.3;
+
 	public function new() {
 		super();
 	}
@@ -150,15 +155,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		for (icon in iconGrid) {
 			// Speed is capped at 300 BPM, I don't want motion sickness.
-			icon.x -= 0.3 * (Math.min(songBPM, 300) / 60);
-			icon.y += (0.3 * (Math.min(songBPM, 300) / 60)) / 2; // Vertical speed is halved.
+			icon.x -= ICON_SCROLL_SPEED * (Math.min(songBPM, 300) / 60);
+			icon.y += (ICON_SCROLL_SPEED * (Math.min(songBPM, 300) / 60)) / 2; // Vertical speed is halved.
 
 			if (icon.x < -icon.width) {
 				icon.x += (FlxG.width + icon.width) + 70;
 			}
 
 			if (icon.y > FlxG.height) {
-				icon.y -= (FlxG.height + icon.height) + 30;
+				icon.y -= (FlxG.height + icon.height) + 10;
 			}
 		}
 	}

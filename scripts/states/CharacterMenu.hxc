@@ -137,7 +137,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		setupUIStuff();
 		updateFilteredKeys();
-		buildCharacterWheel();
+		if (!saveData.preferences.potatoMode)
+			buildCharacterWheel();
 		jumpToCurSelected();
 	}
 
@@ -163,9 +164,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 		}
 
-		for (index in 0...characterWheel.members.length) {
-			var item:BaseCharacter = characterWheel.members[index];
-			item.x = MathUtil.smoothLerp(item.x, (index - (charIndex - 1)) * 500 + 100, FlxG.elapsed, 0.2);
+		if (!saveData.preferences.potatoMode) {
+			for (index in 0...characterWheel.members.length) {
+				var item:BaseCharacter = characterWheel.members[index];
+				item.x = MathUtil.smoothLerp(item.x, (index - (charIndex - 1)) * 500 + 100, FlxG.elapsed, 0.2);
+			}
 		}
 	}
 
@@ -215,27 +218,36 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		curCharID = filteredKeys[charIndex];
 
-		for (index in 0...characterWheel.members.length) {
-			var item:BaseCharacter = characterWheel.members[index];
+		if (!saveData.preferences.potatoMode) {
+			for (index in 0...characterWheel.members.length) {
+				var item:BaseCharacter = characterWheel.members[index];
 
-			if (item.characterId == curCharID) {
-				item.alpha = 1.0;
-			} else {
-				item.alpha = 0.6;
+				if (item.characterId == curCharID) {
+					item.alpha = 1.0;
+				} else {
+					item.alpha = 0.6;
+				}
 			}
 		}
 
-		if (charIndex != prevIndex)
-			FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+		if (charIndex != prevIndex) {
+			if (saveData.preferences.preferredSFX == "charSelect") {
+				FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
+			} else {
+				FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+			}
+		}
 
 		updateCharInfo();
 	}
 
 	function beatHit():Void {
 		bopDaThing();
-		for (index in 0...characterWheel.members.length) {
-			var item:BaseCharacter = characterWheel.members[index];
-			item.dance();
+		if (!saveData.preferences.potatoMode) {
+			for (index in 0...characterWheel.members.length) {
+				var item:BaseCharacter = characterWheel.members[index];
+				item.dance();
+			}
 		}
 	}
 
@@ -488,7 +500,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			createIconGrid(150, 0.2);
 		add(leftDifficultyArrow);
 		add(rightDifficultyArrow);
-		add(characterWheel);
+		if (!saveData.preferences.potatoMode)
+			add(characterWheel);
 		add(selectText);
 		add(numberThing);
 		add(selected);
@@ -586,15 +599,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			rightDifficultyArrow.animation.play(FlxG.keys.pressed.RIGHT ? 'press' : 'idle');
 
 			if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E) {
-				if (saveData.preferences.preferredSFX == "charSelect") {
-					FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
-				} else {
-					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-				}
 				pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
 				charIndex = 0;
 				updateFilteredKeys();
-				buildCharacterWheel();
+				if (!saveData.preferences.potatoMode)
+					buildCharacterWheel();
 				changeCharacter();
 				updateCharInfo();
 			}

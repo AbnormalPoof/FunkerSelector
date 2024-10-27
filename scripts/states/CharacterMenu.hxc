@@ -169,7 +169,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * Updates the `filteredKeys` array based on the current `pageIndex`.
 	 */
 	function updateFilteredKeys():Void {
-		trace('[Funker Selector] Updating filteredKeys');
+		trace('[Funker Selector] Sorting the Character Map...');
 		filteredKeys = ['default']; // Ensures 'default' is always the first thing.
 
 		tempArray = [];

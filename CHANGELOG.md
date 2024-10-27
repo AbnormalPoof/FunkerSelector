@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 - The Freeplay DJ will now change if your character is associated with a Playable Character (and has valid Freeplay DJ data).
   - You can disable this in the Options Menu.
+### Changed
+- Completely reworked the save data system. Internally, eerything is now one object instead of multiple.
+  - Your save data will be migrated!
 
 ## [1.5.2] - 2024-10-23
 ### Fixed

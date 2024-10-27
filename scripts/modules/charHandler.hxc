@@ -692,7 +692,7 @@ class CharacterHandler extends Module {
 		var characterData:Dynamic = ownerJSONname != null ? jsonCharacterCache.get(ownerJSONname)[0] : null;
 		var oldChar:BaseCharacter = null;
 
-		var vocalID:String = characterData?.voiceID != null ? characterData.voiceID : characterID;
+		var voiceID:String = characterData?.voiceID != null ? characterData.voiceID : characterID;
 		var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
 		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + vocalID + variationSuffix);
 

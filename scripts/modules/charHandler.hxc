@@ -206,9 +206,9 @@ class CharacterHandler extends Module {
 
 		var migratedSave:Dynamic = {
 			characterIDs: {
-				bf: oldCharacterIDs.bf,
-				gf: oldCharacterIDs.gf,
-				dad: oldCharacterIDs.dad
+				bf: oldCharacterIDs.bf != null ? oldCharacterIDs.bf : 'default',
+				gf: oldCharacterIDs.gf != null ? oldCharacterIDs.gf : 'default',
+				dad: oldCharacterIDs.dad != null ? oldCharacterIDs.dad : 'default'
 			},
 			preferences: {
 				potatoMode: oldPrefs?.potatoMode != null ? oldPrefs.potatoMode : false,
@@ -219,8 +219,12 @@ class CharacterHandler extends Module {
 			seenUnlocks: oldSeenUnlocks != null ? oldSeenUnlocks : []
 		};
 
+		// Clear out the old save data.
+		Save.instance.modOptions.remove("FunkerSelector");
 		Save.instance.modOptions.remove("FunkerSelectorSettings");
 		Save.instance.modOptions.remove("FunkerSelector-SeenChars");
+
+		// Save the new data.
 		Save.instance.modOptions.set("FunkerSelector", migratedSave);
 		Save.instance.flush();
 

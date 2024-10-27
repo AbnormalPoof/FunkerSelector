@@ -163,10 +163,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 		}
 
-		for (index in 0...characterWheel.members.length)
-    {
-      var item:BaseCharacter = characterWheel.members[index];
-      item.x = MathUtil.smoothLerp(item.x, (index - (charIndex - 1)) * 500 + 100, FlxG.elapsed, 0.2);
+		for (index in 0...characterWheel.members.length) {
+			var item:BaseCharacter = characterWheel.members[index];
+			item.x = MathUtil.smoothLerp(item.x, (index - (charIndex - 1)) * 500 + 100, FlxG.elapsed, 0.2);
 		}
 	}
 
@@ -201,45 +200,42 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	}
 
 	/**
-   * Changes the selected character.
-   * @param change +1 (right), -1 (left)
-   */
-  function changeCharacter(change:Int = 0):Void
-  {
+	 * Changes the selected character.
+	 * @param change +1 (right), -1 (left)
+	 */
+	function changeCharacter(change:Int = 0):Void {
 		var prevIndex:Int = charIndex;
-    charIndex = (prevIndex + (change + filteredKeys.length)) % filteredKeys.length;
+		charIndex = (prevIndex + (change + filteredKeys.length)) % filteredKeys.length;
 
-    // Wrap around
-    if (charIndex < 0) charIndex = filteredKeys.length - 1;
-    if (charIndex >= filteredKeys.length) charIndex = 0;
+		// Wrap around
+		if (charIndex < 0)
+			charIndex = filteredKeys.length - 1;
+		if (charIndex >= filteredKeys.length)
+			charIndex = 0;
 
-    curCharID = filteredKeys[charIndex];
+		curCharID = filteredKeys[charIndex];
 
-    for (index in 0...characterWheel.members.length)
-    {
-      var item:BaseCharacter = characterWheel.members[index];
+		for (index in 0...characterWheel.members.length) {
+			var item:BaseCharacter = characterWheel.members[index];
 
-      if (item.characterId == curCharID)
-      {
-        item.alpha = 1.0;
-      }
-      else
-      {
-        item.alpha = 0.6;
-      }
-    }
+			if (item.characterId == curCharID) {
+				item.alpha = 1.0;
+			} else {
+				item.alpha = 0.6;
+			}
+		}
 
-    if (charIndex != prevIndex) FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+		if (charIndex != prevIndex)
+			FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
 
-    updateCharInfo();
-  }
+		updateCharInfo();
+	}
 
 	function beatHit():Void {
 		bopDaThing();
-		for (index in 0...characterWheel.members.length)
-    {
-      var item:BaseCharacter = characterWheel.members[index];
-      item.dance();
+		for (index in 0...characterWheel.members.length) {
+			var item:BaseCharacter = characterWheel.members[index];
+			item.dance();
 		}
 	}
 
@@ -717,6 +713,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		curCharID = characterIDsArray[pageIndex];
 		numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
 		numberThing.screenCenter(0x01);
+		changeCharacter();
 		updateCharInfo();
 	}
 
@@ -731,7 +728,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
 			var item:BaseCharacter = characterWheel.members[charIndex - 1];
 			if (item != null)
-      	item.playAnimation(animation, true, true);
+				item.playAnimation(animation, true, true);
 		}
 		if (charIcon?.hasAnimation('winning')) {
 			// Play the winning animation if it's available.

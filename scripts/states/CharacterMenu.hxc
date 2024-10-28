@@ -195,6 +195,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				charIconData = (characterID != 'default') ? jsonCharacterCache.get(ownerJSONname)[1] : null;
 			}
 
+			// TODO: Add `lockedChill` functionality
 			if (characterSprite != null) {
 				characterSprite.camera = spriteCam;
 				configureChar(characterSprite, characterData.characterMenu);
@@ -952,11 +953,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (lockedCharMap.exists(curCharID)) {
 			if (charIcon != null)
 				charIcon.visible = false;
-			lockedChill.visible = true;
 		} else {
 			if (charIcon != null)
 				charIcon.visible = true;
-			lockedChill.visible = false;
 		}
 
 		charName.screenCenter(0x01);

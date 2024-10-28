@@ -454,6 +454,7 @@ class CharacterHandler extends Module {
 	 * - storyWeek: Checks if the week has been beaten on the specified difficulty list.
 	 */
 	function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool {
+		if (unlockMethod == null) return false;
 		switch (unlockMethod.type) {
 			case 'playableCharacter':
 				if (PlayerRegistry.instance.isCharacterOwned(characterID)) {

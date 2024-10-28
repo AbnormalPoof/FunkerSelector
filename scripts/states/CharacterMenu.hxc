@@ -126,6 +126,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 */
 	var ICON_SCROLL_SPEED:Float = 0.3;
 
+	var typewriterTimer:FlxTimer = null;
+
+	var typewriterIndex:Int = 0;
+
 	public function new() {
 		super();
 	}
@@ -172,7 +176,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				}
 				var xOffset:Float = characterData?.characterMenu != null ? characterData.characterMenu.position[0] : 0;
 
-				item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset, FlxG.elapsed, 0.2);
+				item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.33);
 			}
 		}
 	}
@@ -478,7 +482,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			lockedChill.scale.set(2, 2);
 		}
 		lockedChill.camera = spriteCam;
-		lockedChill.visible = false;
+		if (saveData.preferences.potatoMode)
+			lockedChill.visible = false;
 
 		newGraphic = FunkinSprite.createSparrow(840, 250, 'freeplay/freeplayCapsule/new');
 		newGraphic.animation.addByPrefix('new', 'NEW notif', 24);
@@ -513,7 +518,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		add(hotkeyText);
 		add(charIcon);
 		add(charName);
-		add(lockedChill);
+		if (saveData.preferences.potatoMode)
+			add(lockedChill);
 		add(keyBox);
 		add(hotkeys);
 		add(newGraphic);
@@ -898,6 +904,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		charDesc.fieldWidth = 550;
 		charDesc.camera = uiCam;
 
+		var descText:String;
+
 		if (curCharID != 'default') {
 			characterInfo = characterMap.get(curCharID);
 			ownerJSONname = characterInfo[0];
@@ -909,7 +917,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			case 'default':
 				charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 				charName.text = "DEFAULT";
-				configureText(charDesc, "This is the Default character defined by the song.", [-20, 0], 50, Paths.font("PhantomMuff.ttf"));
+				descText = "This is the Default character defined by the song.";
+				configureText(charDesc, "", [-20, 0], 50, Paths.font("PhantomMuff.ttf"));
 			default:
 				if (lockedCharMap.exists(curCharID)) {
 					charName.text = "LOCKED";
@@ -917,22 +926,38 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					var unlockHint = characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: "
 						+ characterData.description.unlockCondition : "";
 
-					configureText(charDesc, "This character is locked! I wonder who it could be..." + unlockHint, null, null, Paths.font("PhantomMuff.ttf"));
+					descText = "This character is locked! I wonder who it could be..." + unlockHint;
+
+					configureText(charDesc, "", null, null, Paths.font("PhantomMuff.ttf"));
 				} else {
 					charName.text = charIconData?.name;
 					charIcon.configure(charIconData?.healthIcon);
 					charIcon.size.set(1, 1);
 					charIcon.setPosition(550, 160);
 
-					var descText:String = (characterData.description?.text != null) ? characterData.description.text : "No description was specified in the JSON file.";
+					descText = (characterData.description?.text != null) ? characterData.description.text : "No description was specified in the JSON file.";
 					var offsets:Array<Int> = [
 						characterData.description?.offsets != null ? characterData.description?.offsets[0] : 0,
 						characterData.description?.offsets != null ? characterData.description?.offsets[1] : 0
 					];
 
-					configureText(charDesc, descText, offsets, characterData.description?.size, Paths.font("PhantomMuff.ttf"));
+					configureText(charDesc, "", offsets, characterData.description?.size, Paths.font("PhantomMuff.ttf"));
 				}
 		}
+
+		if (typewriterTimer != null)
+			typewriterTimer.cancel();
+
+		typewriterIndex = 0;
+		typewriterTimer = new FlxTimer();
+		typewriterTimer.start(0.01, function(timer:FlxTimer) {
+			if (typewriterIndex <= descText.length) {
+				charDesc.text = descText.substring(0, typewriterIndex);
+				typewriterIndex++;
+			} else {
+				timer.cancel();
+			}
+		}, descText.length);
 
 		// Making it not look so awkward when "Simplify UI" is turned on.
 		if (saveData.preferences.potatoMode || curCharID == 'default') {
@@ -953,9 +978,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (lockedCharMap.exists(curCharID)) {
 			if (charIcon != null)
 				charIcon.visible = false;
+			if (saveData.preferences.potatoMode)
+				lockedChill.visible = true;
 		} else {
 			if (charIcon != null)
 				charIcon.visible = true;
+			if (saveData.preferences.potatoMode)
+				lockedChill.visible = false;
 		}
 
 		charName.screenCenter(0x01);

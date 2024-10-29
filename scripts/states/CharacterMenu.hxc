@@ -179,12 +179,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 							characterMenu: {
 								position: [200, 0]
 							}
-						}
+						};
 					}
 				}
+
 				var xOffset:Float = characterData?.characterMenu != null ? characterData.characterMenu.position[0] : 0;
 
-				item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.33);
+				item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.25);
 			}
 		}
 	}
@@ -253,12 +254,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			for (index in 0...characterWheel.members.length) {
 				var item:Dynamic = characterWheel.members[index];
 
-				if (item is BaseCharacter) {
-					if (item.characterId == curCharID) {
-						item.alpha = 1.0;
-					} else {
-						item.alpha = 0.6;
-					}
+				if (index == charIndex - 1) {
+					item.alpha = 1.0;
+				} else {
+					item.alpha = 0.5;
 				}
 			}
 		}
@@ -494,6 +493,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			});
 			lockedChill.playAnimation('idle');
 			lockedChill.scale.set(2, 2);
+			lockedChill.camera = spriteCam;
 			lockedChill.visible = false;
 		}
 
@@ -854,7 +854,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 		}
 		busy = true;
-		if (FlxG.sound.music != null) FlxG.sound.music.fadeOut();
+		if (FlxG.sound.music != null)
+			FlxG.sound.music.fadeOut();
 
 		if (!saveData.preferences.potatoMode) {
 			lockedChill.offset.set();
@@ -882,10 +883,19 @@ class CharacterSelectSubState extends MusicBeatSubState {
 									spriteCam.shake(0.01, 0.2);
 									FlxG.state.subState.funnyCam.shake(0.01, 0.2);
 								});
-								buildCharacterWheel();
+
+								var characterSprite:BaseCharacter = CharacterDataParser.fetchCharacter(curCharID);
+								characterInfo = characterMap.get(curCharID);
+								ownerJSONname = characterInfo[0];
+								characterData = jsonCharacterCache.get(ownerJSONname)[0];
+								characterWheel.replace(lockedChill, characterSprite);
+								characterSprite.camera = spriteCam;
+								configureChar(characterSprite, characterData?.characterMenu);
+
 								busy = false;
 								uiCam.alpha = 1;
-								if (FlxG.sound.music != null) FlxG.sound.music.fadeIn();
+								if (FlxG.sound.music != null)
+									FlxG.sound.music.fadeIn();
 							}
 						}
 					} else {
@@ -905,7 +915,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 								});
 								busy = false;
 								uiCam.alpha = 1;
-								if (FlxG.sound.music != null) FlxG.sound.music.fadeIn();
+								if (FlxG.sound.music != null)
+									FlxG.sound.music.fadeIn();
 							}
 						});
 					}
@@ -932,8 +943,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		charDesc.wordWrap = true;
 		charDesc.fieldWidth = 550;
 		charDesc.camera = uiCam;
-
-		typewriterIndex = 0;
 
 		var descText:String;
 
@@ -979,15 +988,18 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (typewriterTimer != null)
 			typewriterTimer.cancel();
 
+		typewriterIndex = 0;
+
 		typewriterTimer = new FlxTimer();
 		typewriterTimer.start(0.01, function(timer:FlxTimer) {
-			if (typewriterIndex <= descText.length) {
-				charDesc.text = descText.substring(0, typewriterIndex);
+			if (typewriterIndex < descText.length) {
+				charDesc.text = descText.substring(0, typewriterIndex + 1);
 				typewriterIndex++;
 			} else {
 				timer.cancel();
+				typewriterIndex = 0;
 			}
-		}, descText.length);
+		}, descText.length + 1);
 
 		// Making it not look so awkward when "Simplify UI" is turned on.
 		if (saveData.preferences.potatoMode || curCharID == 'default') {

@@ -98,6 +98,11 @@ class CharacterHandler extends Module {
 	 */
 	var charSelect:MusicBeatSubState = null;
 
+	/**
+	 * DEBUG: Enable the hotkey to wipe save data.
+	 */
+	var wipeSaveHotkey:Bool = false;
+
 	var charText:AtlasText;
 	var charSelectIcon:FunkinSprite;
 
@@ -257,6 +262,14 @@ class CharacterHandler extends Module {
 					trace("[Funker Selector] The Character Select SubState is already open!");
 				}
 			}
+		}
+
+		if (FlxG.keys.justPressed.F6 && wipeSaveHotkey) {
+			trace("[Funker Selector] DEBUG: Wiping save data...");
+			Save.instance.modOptions.remove("FunkerSelector");
+			Save.instance.flush();
+			initializeSaveData();
+			loadJSONDataCache();
 		}
 	}
 

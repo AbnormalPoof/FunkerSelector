@@ -975,6 +975,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					charIcon.size.set(1, 1);
 					charIcon.setPosition(550, 160);
 
+					// TODO: Move this somewhere else in the menu.
 					descText = characterData.description?.text != null ? characterData.description.text : "No description was specified in the JSON file.";
 					var offsets:Array<Int> = [
 						characterData.description?.offsets != null ? characterData.description?.offsets[0] : 0,
@@ -1030,6 +1031,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		charName.screenCenter(0x01);
+		// TODO: Move this somewhere else in the menu.
 		selected.y = charDesc.y - 60;
 
 		add(charDesc);

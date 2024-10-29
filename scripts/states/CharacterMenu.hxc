@@ -213,10 +213,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	}
 
 	/**
+	 * Stolen from `StoryMenuState.hx` LOL
+	 * 
 	 * Changes the selected character.
 	 * @param change +1 (right), -1 (left)
 	 */
 	function changeCharacter(change:Int = 0):Void {
+
 		var prevIndex:Int = charIndex;
 		charIndex = (prevIndex + (change + filteredKeys.length)) % filteredKeys.length;
 
@@ -256,7 +259,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (!saveData.preferences.potatoMode) {
 			for (index in 0...characterWheel.members.length) {
 				var item:BaseCharacter = characterWheel.members[index];
-				item.dance();
+				if (index == charIndex - 1)
+					item.dance();
 			}
 		}
 	}

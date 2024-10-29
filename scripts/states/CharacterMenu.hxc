@@ -196,22 +196,17 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			var characterID:String = filteredKeys[characterIndex];
 			var characterSprite:BaseCharacter = (characterID != 'default' ? CharacterDataParser.fetchCharacter(characterID) : null);
 			var lockedChill:FunkinSprite;
-			var isCharacterUnlocked:Bool = true;
 
 			if (characterID != 'default') {
 				characterInfo = characterMap.get(characterID);
 				ownerJSONname = characterInfo[0];
 				characterData = jsonCharacterCache.get(ownerJSONname)[0];
 				charIconData = (characterID != 'default') ? jsonCharacterCache.get(ownerJSONname)[1] : null;
-				if (lockedCharMap.exists(characterID)) {
-					if (characterData?.unlockMethod != null && characterData?.mustUnlock)
-						isCharacterUnlocked = ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [characterID, characterData?.unlockMethod]);
-				}
 			}
 
 			if (characterSprite != null) {
 				characterSprite.camera = spriteCam;
-				if (lockedCharMap.exists(characterID) && (!isCharacterUnlocked || saveData.seenUnlocks.indexOf(characterID) == -1)) {
+				if (lockedCharMap.exists(characterID)) {
 					lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
 					lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
 					lockedChill.animation.addByPrefix('denied', 'cannot select0', 24, false);

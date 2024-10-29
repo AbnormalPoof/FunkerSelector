@@ -219,7 +219,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * @param change +1 (right), -1 (left)
 	 */
 	function changeCharacter(change:Int = 0):Void {
-
 		var prevIndex:Int = charIndex;
 		charIndex = (prevIndex + (change + filteredKeys.length)) % filteredKeys.length;
 
@@ -252,6 +251,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 
 		updateCharInfo();
+
+		numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
+		numberThing.screenCenter(0x01);
 	}
 
 	function beatHit():Void {
@@ -321,9 +323,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		});
 
 		filteredKeys = filteredKeys.concat(iHateMyLife);
-
-		numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
-		numberThing.screenCenter(0x01);
 	}
 
 	/**
@@ -606,8 +605,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (!hotkeyCam.visible) {
 			if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT) {
 				changeCharacter(FlxG.keys.justPressed.LEFT ? -1 : 1);
-				numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
-				numberThing.screenCenter(0x01);
 			}
 
 			leftDifficultyArrow.animation.play(FlxG.keys.pressed.LEFT ? 'press' : 'idle');
@@ -621,6 +618,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					buildCharacterWheel();
 				changeCharacter();
 				updateCharInfo();
+			}
+
+			// Mouse scrolling:
+			// Up = Left
+			// Down = Right
+			if (FlxG.mouse.wheel < 0) {
+				changeCharacter(1);
+			} else if (FlxG.mouse.wheel > 0) {
+				changeCharacter(-1);
 			}
 
 			if (FlxG.keys.justPressed.J) {
@@ -735,8 +741,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		}
 		charIndex = filteredKeys.indexOf(characterIDsArray[pageIndex]);
 		curCharID = characterIDsArray[pageIndex];
-		numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
-		numberThing.screenCenter(0x01);
 		changeCharacter();
 		updateCharInfo();
 	}
@@ -754,9 +758,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			if (item != null)
 				item.playAnimation(animation, true, true);
 		}
-		if (charIcon?.hasAnimation('winning')) {
+		if (charIcon.hasAnimation('winning')) {
 			// Play the winning animation if it's available.
-			charIcon?.playAnimation('winning');
+			charIcon.playAnimation('winning');
 
 			// I wanted this really cool effect where the icons in the icon grid would also
 			// play the winning animation!
@@ -765,14 +769,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				for (i in 0...iconGrid.length) {
 					var icon = iconGrid[i];
 					new FlxTimer().start(0.01 * i, function() {
-						icon?.playAnimation('winning');
+						icon.playAnimation('winning');
 					});
 				}
 				new FlxTimer().start(0.3, function() {
 					for (i in 0...iconGrid.length) {
 						var icon = iconGrid[i];
 						new FlxTimer().start(0.01 * i, function() {
-							icon?.playAnimation('idle');
+							icon.playAnimation('idle');
 						});
 					}
 				});
@@ -828,7 +832,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 */
 	function doUnlockAnimation():Void {
 		busy = true;
-		FlxG.sound.music?.fadeOut();
+		if (FlxG.sound.music != null) FlxG.sound.music.fadeOut();
 		if (!saveData.preferences.potatoMode) {
 			lockedChill.offset.set();
 			lockedChill.animation.play('idle', true);
@@ -860,7 +864,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 								}
 								busy = false;
 								uiCam.alpha = 1;
-								FlxG.sound.music?.fadeIn();
+								if (FlxG.sound.music != null) FlxG.sound.music.fadeIn();
 							}
 						}
 					} else {
@@ -880,7 +884,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 								});
 								busy = false;
 								uiCam.alpha = 1;
-								FlxG.sound.music?.fadeIn();
+								if (FlxG.sound.music != null) FlxG.sound.music.fadeIn();
 							}
 						});
 					}
@@ -939,7 +943,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					charIcon.size.set(1, 1);
 					charIcon.setPosition(550, 160);
 
-					descText = (characterData.description?.text != null) ? characterData.description.text : "No description was specified in the JSON file.";
+					descText = characterData.description?.text != null ? characterData.description.text : "No description was specified in the JSON file.";
 					var offsets:Array<Int> = [
 						characterData.description?.offsets != null ? characterData.description?.offsets[0] : 0,
 						characterData.description?.offsets != null ? characterData.description?.offsets[1] : 0
@@ -965,8 +969,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		// Making it not look so awkward when "Simplify UI" is turned on.
 		if (saveData.preferences.potatoMode || curCharID == 'default') {
-			charIcon?.setPosition(250, 270);
-			charIcon?.size.set(2, 2);
+			charIcon.setPosition(250, 270);
+			charIcon.size.set(2, 2);
 		}
 
 		if (!saveData.preferences.potatoMode) {

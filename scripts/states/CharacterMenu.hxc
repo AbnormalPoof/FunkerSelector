@@ -287,13 +287,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			}
 		}
 
-		if (conductorInUse.currentBeat % 4 == 0)
-    {
+		if (conductorInUse.currentBeat % 4 == 0) {
 			if (uiCam != null && spriteCam != null) {
 				uiCam.zoom = 1.02;
 				spriteCam.zoom = 1.02;
 			}
-    }
+		}
 	}
 
 	/**

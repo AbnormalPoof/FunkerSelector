@@ -847,7 +847,7 @@ class CharacterHandler extends Module {
 
 		return result;
 	}
-	
+
 	/**
 	 * Fetches the Character Data from the cache.
 	 * @param characterID The character ID we are using.
@@ -856,12 +856,14 @@ class CharacterHandler extends Module {
 	function getCharacterData(characterID:String):Dynamic {
 		characterInfo = characterMap.get(characterID);
 
-		if (characterInfo == null) return null;
+		if (characterInfo == null)
+			return null;
 
 		ownerJSONname = characterInfo[0];
 		characterData = jsonCharacterCache.get(ownerJSONname)[0];
 
-		if (characterData == null) return null;
+		if (characterData == null)
+			return null;
 		return characterData;
 	}
 }

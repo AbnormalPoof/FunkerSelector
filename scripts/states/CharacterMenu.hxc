@@ -375,11 +375,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 						icon.y = yStart + (i * 2 + l) * spacing;
 						icon.alpha = alpha ?? 0.2;
 
-						if (charIconData != null) {
-							icon.configure(charIconData.healthIcon);
-						} else {
-							icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-						}
+						icon.configure(charIconData.healthIcon ?? 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 
 						add(icon);
 						iconGrid.push(icon);

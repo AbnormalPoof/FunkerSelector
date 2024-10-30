@@ -65,7 +65,7 @@ class CharacterHandler extends Module {
 	 * It'd be annoying to have to re-cache everything everytime we exit, so we
 	 * keep track of JSON characters in a separate map instead.
 	 */
-	var cachedJSONSparrows:StringMap<String> = new StringMap();
+	var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
 
 	/**
 	 * A map containing every character.
@@ -320,6 +320,7 @@ class CharacterHandler extends Module {
 			state.add(charSelectIcon);
 			state.add(charText);
 
+			// TODO, remake the icon and add a new unlock indicator
 			state.dj.onIntroDone.add(function() {
 				charSelectIcon.visible = true;
 				charSelectIcon.animation.play('intro');
@@ -635,7 +636,7 @@ class CharacterHandler extends Module {
 			bitmap = BitmapData.fromTexture(texture);
 			var graphic:FlxGraphic = FlxGraphic.fromBitmapData(bitmap, false, path);
 			graphic.persist = true;
-			cachedJSONSparrows.set(path);
+			cachedJSONSparrows.set(path, graphic);
 			trace('[Funker Selector] Successfully cached graphic: ' + path);
 		} else {
 			trace('[ERROR] Failed to cache graphic: ' + path);
@@ -699,9 +700,7 @@ class CharacterHandler extends Module {
 	 * 
 	 */
 	function replaceChar(characterID:String = 'bf', characterType:CharacterType = null):Void {
-		var characterInfo:Dynamic = characterMap.get(characterID);
-		var ownerJSONname:String = characterInfo != null ? characterInfo[0] : null;
-		var characterData:Dynamic = ownerJSONname != null ? jsonCharacterCache.get(ownerJSONname)[0] : null;
+		var characterData:Dynamic = getCharacterData(characterID);
 		var oldChar:BaseCharacter = null;
 
 		var voiceID:String = characterData?.voiceID != null ? characterData.voiceID : characterID;
@@ -762,7 +761,7 @@ class CharacterHandler extends Module {
 				}
 
 				if (songMatch && variationMatch) {
-					characterData = characterMap.get(variation.characterID) != null ? jsonCharacterCache.get(characterMap.get(variation.characterID)[0])[0] : characterData;
+					characterData = getCharacterData(variation.characterID) != null ? getCharacterData(variation.characterID) : characterData;
 
 					if (charJSONCheck(variation.characterID)) {
 						trace('[Funker Selector] Variation found: ' + variation.characterID);
@@ -842,5 +841,22 @@ class CharacterHandler extends Module {
 		result.opponentVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.opponent);
 
 		return result;
+	}
+	
+	/**
+	 * Fetches the Character Data from the cache.
+	 * @param characterID The character ID we are using.
+	 * @return The character data as a dynamic object.
+	 */
+	function getCharacterData(characterID:String):Dynamic {
+		characterInfo = characterMap.get(characterID);
+
+		if (characterInfo == null) return null;
+
+		ownerJSONname = characterInfo[0];
+		characterData = jsonCharacterCache.get(ownerJSONname)[0];
+
+		if (characterData == null) return null;
+		return characterData;
 	}
 }

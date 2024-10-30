@@ -171,9 +171,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				var item:Dynamic = characterWheel.members[index];
 				if (item != null) {
 					if (item is BaseCharacter) {
-						characterInfo = characterMap.get(item.characterId);
-						ownerJSONname = characterInfo[0];
-						characterData = jsonCharacterCache.get(ownerJSONname)[0];
+						// TODO: Maybe *don't* do this every frame????
+						characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [item.characterId]);
 					} else { // Assume the object is `lockedChill`
 						characterData = {
 							characterMenu: {
@@ -204,10 +203,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			var lockedChill:FunkinSprite;
 
 			if (characterID != 'default') {
-				characterInfo = characterMap.get(characterID);
-				ownerJSONname = characterInfo[0];
-				characterData = jsonCharacterCache.get(ownerJSONname)[0];
-				charIconData = (characterID != 'default') ? jsonCharacterCache.get(ownerJSONname)[1] : null;
+				characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [characterID]);
 			}
 
 			if (characterSprite != null) {
@@ -898,9 +894,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 								});
 
 								var characterSprite:BaseCharacter = CharacterDataParser.fetchCharacter(curCharID);
-								characterInfo = characterMap.get(curCharID);
-								ownerJSONname = characterInfo[0];
-								characterData = jsonCharacterCache.get(ownerJSONname)[0];
+								characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
 								characterWheel.replace(lockedChill, characterSprite);
 								characterSprite.camera = spriteCam;
 								configureChar(characterSprite, characterData?.characterMenu);

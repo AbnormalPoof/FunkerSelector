@@ -304,6 +304,11 @@ class CharacterHandler extends Module {
 				ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, true]);
 			}
 
+			if (charSelect != null) {
+				trace("[Funker Selector] Character SubState still exists! Resetting...");
+				charSelect = null;
+			}
+
 			charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
 			charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
 			charSelectIcon.animation.addByPrefix('idle', 'idle', 24, true);

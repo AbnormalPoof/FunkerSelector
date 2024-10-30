@@ -188,6 +188,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.25);
 			}
 		}
+
+		if (uiCam != null && spriteCam != null) {
+			uiCam.zoom = MathUtil.smoothLerp(uiCam.zoom, 1, FlxG.elapsed, 0.45);
+			spriteCam.zoom = MathUtil.smoothLerp(spriteCam.zoom, 1, FlxG.elapsed, 0.45);
+		}
 	}
 
 	function buildCharacterWheel():Void {
@@ -285,6 +290,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					item.dance();
 			}
 		}
+
+		if (conductorInUse.currentBeat % 4 == 0)
+    {
+			if (uiCam != null && spriteCam != null) {
+				uiCam.zoom = 1.02;
+				spriteCam.zoom = 1.02;
+			}
+    }
 	}
 
 	/**

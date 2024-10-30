@@ -806,17 +806,8 @@ class CharacterHandler extends Module {
 		var result:VoicesGroup = new VoicesGroup();
 		var songVoices:Array<String> = currentChart.buildVoiceList();
 
-		if (voiceList[0] != null) {
-			result.addPlayerVoice(FunkinSound.load(voiceList[0]));
-		} else {
-			result.addPlayerVoice(FunkinSound.load(songVoices[0]));
-		}
-
-		if (voiceList[1] != null) {
-			result.addOpponentVoice(FunkinSound.load(voiceList[1]));
-		} else {
-			result.addOpponentVoice(FunkinSound.load(songVoices[1]));
-		}
+		result.addPlayerVoice(FunkinSound.load(voiceList[0] ?? songVoices[0]));
+		result.addOpponentVoice(FunkinSound.load(voiceList[1] ?? songVoices[1]));
 
 		result.playerVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.player);
 		result.opponentVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.opponent);

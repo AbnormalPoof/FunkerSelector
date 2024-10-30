@@ -283,8 +283,10 @@ class CharacterHandler extends Module {
 		var songBPM = daSongCapsule?.freeplayData?.songStartingBpm;
 		if (songBPM == null)
 			songBPM = 120;
-		if (daSongCapsule.songText.text == 'Random') // Random doesn't have freeplayData, so we manually set the BPM.
-			songBPM = 145;
+		if (daSongCapsule.songText.text == 'Random') {
+			var songMusicData:Null<SongMusicData> = SongRegistry.instance.parseMusicData(Paths.music('freeplayRandom/freeplayRandom'));
+			songBPM = songMusicData.timeChanges[0].bpm;
+		}
 
 		return songBPM;
 	}

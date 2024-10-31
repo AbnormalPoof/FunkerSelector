@@ -40,6 +40,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	var leftDifficultyArrow:FunkinSprite;
 	var rightDifficultyArrow:FunkinSprite;
 	var keyBox:FunkinSprite;
+	var descBox:FunkinSprite;
 	var newGraphic:FunkinSprite;
 
 	// NOTE: This is either a `FunkinSprite`, or a `Lock`
@@ -518,6 +519,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		keyBox.alpha = 0.8;
 		keyBox.screenCenter();
 
+		descBox = new FunkinSprite(0, 500);
+		descBox.makeSolidColor(850, 200, 0xFF000000);
+		descBox.camera = uiCam;
+		descBox.alpha = 0.6;
+		descBox.screenCenter(0x01);
+
 		charIcon = new HealthIcon('dad', 0);
 		charIcon.camera = uiCam;
 
@@ -543,6 +550,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		add(keyBox);
 		add(hotkeys);
 		add(newGraphic);
+		add(descBox);
 
 		WindowUtil.setWindowTitle('Friday Night Funkin\' - Funker Selector Menu');
 
@@ -835,7 +843,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		if (offsets == null)
 			offsets = [0, 0];
 		if (size == null)
-			size = 38;
+			size = 35;
 		if (object == null)
 			object = new FlxText(0, 0, 0, "PLACEHOLDER");
 
@@ -945,9 +953,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		newGraphic.visible = false;
 
-		charDesc = new FlxText(600, 300, 0, "PLACEHOLDER");
+		charDesc = new FlxText(250, 510, 0, "PLACEHOLDER");
 		charDesc.wordWrap = true;
-		charDesc.fieldWidth = 550;
+		charDesc.fieldWidth = 800;
 		charDesc.camera = uiCam;
 
 		var descText:String;
@@ -964,7 +972,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 				charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 				charName.text = "DEFAULT";
 				descText = "This is the Default character defined by the song.";
-				configureText(charDesc, "", [-20, 0], 50, Paths.font("PhantomMuff.ttf"));
+				configureText(charDesc, "", [-20, 0], 45, Paths.font("PhantomMuff.ttf"));
 			default:
 				if (lockedCharMap.exists(curCharID)) {
 					charName.text = "LOCKED";
@@ -979,7 +987,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					charName.text = charIconData?.name;
 					charIcon.configure(charIconData?.healthIcon);
 					charIcon.size.set(1, 1);
-					charIcon.setPosition(550, 160);
+					charIcon.setPosition(270, 380);
 
 					// TODO: Move this somewhere else in the menu.
 					descText = characterData.description?.text != null ? characterData.description.text : "No description was specified in the JSON file.";
@@ -1010,8 +1018,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
 		// Making it not look so awkward when "Simplify UI" is turned on.
 		if (saveData.preferences.potatoMode || curCharID == 'default') {
-			charIcon.setPosition(250, 270);
-			charIcon.size.set(2, 2);
+			charIcon.setPosition(500, 230);
+			charIcon.size.set(1.7, 1.7);
 		}
 
 		if (!saveData.preferences.potatoMode) {

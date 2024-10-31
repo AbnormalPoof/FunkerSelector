@@ -8,13 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The Freeplay DJ will now change if your character is associated with a Playable Character (and has valid Freeplay DJ data).
   - You can disable this in the Options Menu.
 ### Changed
-- Completely reworked the save data system. Internally, eerything is now one object instead of multiple.
+- Completely reworked the save data system. Internally, everything is now one object instead of multiple.
   - Your save data will be migrated!
 - Reworked the structure for suffixes in the JSON data.
   - **This is a breaking change for characters which use suffixes!**
   - Please see the documentation for the new structure.
 - The icon grid in the character menu now scrolls digonally, the scroll speed is relative to the current song's BPM.
   - The speed is capped at 300 BPM.
+- Complete UI makeover:
+  - Characters are now shown next to eachother in a scrollable layout
+  - Character descriptions are now shown with a typewriter effect.
+  - In addition, you can also now use the scroll wheel to navigate.
+  - If the new UI is too much, you can always turn on "Simplify UI" in the Options Menu.
+  - **This might cause your description to look awkward if you have custom offsets and size specified in the JSON file!**
+- `speaker` can now be used as an alias for the GF character type in the JSON data.
 
 ## [1.5.2] - 2024-10-23
 ### Fixed
@@ -32,12 +39,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [1.5.0] - 2024-10-22
 ### Added
 - The characters now bop to the BPM of the currently selected song in Freeplay.
-- New `mustUnlock` variable for JSON characters. If enabled, your character will become locked until you meet a requirement specified in the JSON file.
+- A brand new unlock system. You can assign an unlock condition for your character.
   - Please see the documentation on how to do this. 
   - In addition: Pico (Playable), Pico (Christmas), Daddy Dearest and all the Boyfriend variants are now locked, requiring you to complete their specified requirements to unlock them.
     - You'll probably be seeing the unlock animation a LOT if you already completed them. This is only done once!
-  - There's also a new `unlockCondition` variable for description data in turn.
-- The window title will change if you're in the Character Menu.
+- The window title will now change if you're in the Character Menu.
 - Added better visual feedback for selecting a character.
 - New option which allows you to change the SFX used in the menu. Currently, you can only switch between `Funkin' Main Menu` and `Funkin' Character Select`
 ### Changed

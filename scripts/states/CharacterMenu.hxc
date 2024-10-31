@@ -506,7 +506,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			lockedChill.visible = false;
 		}
 
-		newGraphic = FunkinSprite.createSparrow(840, 250, 'freeplay/freeplayCapsule/new');
+		newGraphic = FunkinSprite.createSparrow(840, 460, 'freeplay/freeplayCapsule/new');
 		newGraphic.animation.addByPrefix('new', 'NEW notif', 24);
 		newGraphic.animation.play('new');
 		newGraphic.camera = uiCam;
@@ -519,6 +519,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 		keyBox.alpha = 0.8;
 		keyBox.screenCenter();
 
+		// TODO: Find a way to keep the text within the confines of this
 		descBox = new FunkinSprite(0, 500);
 		descBox.makeSolidColor(850, 200, 0xFF000000);
 		descBox.camera = uiCam;

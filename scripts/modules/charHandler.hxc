@@ -114,7 +114,7 @@ class CharacterHandler extends Module {
 		// has added suffixes depending on if the game is a debug build or not.
 		if (!VersionUtil.validateVersionStr(Application.current.meta.get('version'), supportedVersionRule)) {
 			PolymodErrorHandler.showAlert("Funker Selector Error",
-				"Funker Selector is not supported on Friday Night Funkin' v" + Application.current.meta.get('version') + ".");
+				'Funker Selector is not supported on Friday Night Funkin\' v${Application.current.meta.get('version')}.');
 			this.active = false;
 			return;
 		}
@@ -151,22 +151,17 @@ class CharacterHandler extends Module {
 			Save.instance.flush();
 			saveData = defaultSaveData;
 
-			trace('[Funker Selector] Successfully created save data:\n\n---Character IDs---\n\nBoyfriend: '
-				+ saveData.characterIDs.bf
-				+ '\nGirlfriend: '
-				+ saveData.characterIDs.gf
-				+ '\nOpponent: '
-				+ saveData.characterIDs.dad
-				+ '\n\n---Settings---\n\nSimplify UI: '
-				+ saveData.preferences.potatoMode
-				+ '\nPreload Sprites: '
-				+ saveData.preferences.preloadSprites
-				+ '\nPreferred SFX: '
-				+ saveData.preferences.preferredSFX
-				+ '\nDJ Replacement: '
-				+ saveData.preferences.djSwapping
-				+ '\n\n---Seen Unlock Animations---\n\n'
-				+ saveData.seenUnlocks);
+			trace('[Funker Selector] Successfully created save data:\n\n---Character IDs---
+				\n\nBoyfriend: ${saveData.characterIDs.bf}
+				\nGirlfriend: ${saveData.characterIDs.gf}
+				\nOpponent: ${saveData.characterIDs.dad}
+				\n\n---Settings---
+				\n\nSimplify UI: ${saveData.preferences.potatoMode}
+				\nPreload Sprites: ${saveData.preferences.preloadSprites}
+				\nPreferred SFX: ${saveData.preferences.preferredSFX}
+				\nDJ Replacement: ${saveData.preferences.djSwapping}
+				\n\n---Seen Unlock Animations---
+				\n\n${saveData.seenUnlocks}');
 		} else {
 			saveData = Save.instance.modOptions.get("FunkerSelector");
 
@@ -176,22 +171,18 @@ class CharacterHandler extends Module {
 				saveData = migrateSaveData(saveData);
 			}
 
-			trace('[Funker Selector] Successfully retrieved save data:\n\n---Character IDs---\n\nBoyfriend: '
-				+ saveData.characterIDs.bf
-				+ '\nGirlfriend: '
-				+ saveData.characterIDs.gf
-				+ '\nOpponent: '
-				+ saveData.characterIDs.dad
-				+ '\n\n---Preferences---\n\nSimplify UI: '
-				+ saveData.preferences.potatoMode
-				+ '\nPreload Sprites: '
-				+ saveData.preferences.preloadSprites
-				+ '\nPreferred SFX: '
-				+ saveData.preferences.preferredSFX
-				+ '\nDJ Replacement: '
-				+ saveData.preferences.djSwapping
-				+ '\n\n---Seen Unlock Animations---\n\n'
-				+ saveData.seenUnlocks);
+			trace('[Funker Selector] Successfully retrieved save data:
+				\n\n---Character IDs---
+				\n\nBoyfriend: ${saveData.characterIDs.bf}
+				\nGirlfriend: ${saveData.characterIDs.gf}
+				\nOpponent: ${saveData.characterIDs.dad}
+				\n\n---Settings---
+				\n\nSimplify UI: ${saveData.preferences.potatoMode}
+				\nPreload Sprites: ${saveData.preferences.preloadSprites}
+				\nPreferred SFX: ${saveData.preferences.preferredSFX}
+				\nDJ Replacement: ${saveData.preferences.djSwapping}
+				\n\n---Seen Unlock Animations---
+				\n\n${saveData.seenUnlocks}');
 		}
 
 		return saveData;
@@ -211,17 +202,17 @@ class CharacterHandler extends Module {
 
 		var migratedSave:Dynamic = {
 			characterIDs: {
-				bf: oldCharacterIDs.bf != null ? oldCharacterIDs.bf : 'default',
-				gf: oldCharacterIDs.gf != null ? oldCharacterIDs.gf : 'default',
-				dad: oldCharacterIDs.dad != null ? oldCharacterIDs.dad : 'default'
+				bf: oldCharacterIDs.bf ?? 'default',
+				gf: oldCharacterIDs.gf ?? 'default',
+				dad: oldCharacterIDs.dad ?? 'default'
 			},
 			preferences: {
-				potatoMode: oldPrefs?.potatoMode != null ? oldPrefs.potatoMode : false,
-				preloadSprites: oldPrefs?.preloadSprites != null ? oldPrefs.preloadSprites : false,
-				preferredSFX: oldPrefs?.preferredSFX != null ? oldPrefs.preferredSFX : 'funkin',
-				djSwapping: oldPrefs?.djSwapping != null ? oldPrefs.djSwapping : true
+				potatoMode: oldPrefs?.potatoMode ?? false,
+				preloadSprites: oldPrefs?.preloadSprites ?? false,
+				preferredSFX: oldPrefs?.preferredSFX ?? 'funkin',
+				djSwapping: oldPrefs?.djSwapping ?? true
 			},
-			seenUnlocks: oldSeenUnlocks != null ? oldSeenUnlocks : []
+			seenUnlocks: oldSeenUnlocks ?? []
 		};
 
 		// Clear out the old save data.
@@ -441,12 +432,12 @@ class CharacterHandler extends Module {
 	 * @return The JSON data as a Json object.
 	 */
 	function parseJSONData(characterID:String = 'default'):Dynamic {
-		var filePath = Paths.json('funkerSelector/' + characterID);
+		var filePath = Paths.json('funkerSelector/${characterID}');
 
 		if (Assets.exists(filePath)) {
 			var result = SerializerUtil.fromJSON(Assets.getText(filePath));
 			if (result == null)
-				trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(filePath) + "! Returning null...");
+				trace('[Funker Selector] Something went wrong when parsing ${Assets.getPath(filePath)}! Returning null...');
 			return result;
 		}
 
@@ -538,13 +529,12 @@ class CharacterHandler extends Module {
 				continue;
 
 			if (data.characterID == null) {
-				trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker))
-					+ '! The "characterID" field does not exist.');
+				trace('[ERROR] Failed to cache sprite for ${Assets.getPath(Paths.json('funkerSelector/' + funker))}! The "characterID" field does not exist.');
 				continue;
 			}
 
 			if (!charJSONCheck(data.characterID)) {
-				trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
+				trace('[ERROR] Failed to cache sprite! The Character ID (${data.characterID}) is invalid.');
 				continue;
 			}
 
@@ -555,7 +545,7 @@ class CharacterHandler extends Module {
 							cacheSprite(Paths.image(anim.assetPath));
 					}
 				case 'animateatlas':
-					cacheSprite(Paths.image(charData.assetPath + '/spritemap1'));
+					cacheSprite(Paths.image('${charData.assetPath}/spritemap1'));
 				case 'sparrow':
 					cacheSprite(Paths.image(charData.assetPath));
 				default:
@@ -579,56 +569,45 @@ class CharacterHandler extends Module {
 		var data:Dynamic = null;
 
 		for (funker in funkerJSONs) {
-			trace('[Funker Selector] Parsing JSON data for ' + funker);
+			trace('[Funker Selector] Parsing JSON data for ${funker}');
 
 			data = parseJSONData(funker);
 
 			// If the data is null (Caused by an issue when parsing the json file)
 			if (data == null) {
 				PolymodErrorHandler.showAlert("Funker Selector JSON Parsing Error",
-					"Something went wrong when parsing the following JSON file:\n\n" + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
-					"\n\nPlease check the JSON file for any syntax errors.");
+					"Something went wrong when parsing the following JSON file:\n\n${Assets.getPath(Paths.json('funkerSelector/' + funker))}\n\nPlease check the JSON file for any syntax errors.");
 				continue;
 			}
 
 			// If the "characterID" field was not found.
 			if (data.characterID == null) {
 				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-					'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
-					'":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
+					'In "${Assets.getPath(Paths.json('funkerSelector/' + funker))}":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
 				continue;
 			}
 
 			// If the Character ID is "default"
 			if (data.characterID == 'default') {
 				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-					'In "'
-					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
-					+ '":\n\nThe specified Character ID ('
-					+ data.characterID
-					+
-					') is set to "default"! Please change it, since it will conflict with the "default" character object in the menu.\nThis character will be skipped to prevent any issues.');
+					'In "${Assets.getPath(Paths.json('funkerSelector/' + funker))}":\n\nThe specified Character ID (${data.characterID}) is set to "default"! Please change it, since it will conflict with the "default" character object in the menu.\nThis character will be skipped to prevent any issues.');
 				continue;
 			}
 
 			// If the specified Character ID does not exist in data/characters/
 			if (!charJSONCheck(data.characterID)) {
 				PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
-					'In "'
-					+ Assets.getPath(Paths.json('funkerSelector/' + funker))
-					+ '":\n\nThe specified Character ID ('
-					+ data.characterID
-					+ ') is invalid. This character will be skipped to prevent any issues.');
+					'In "${Assets.getPath(Paths.json('funkerSelector/' + funker))}":\n\nThe specified Character ID (${data.characterID}) is invalid. This character will be skipped to prevent any issues.');
 				continue;
 			}
 
 			if (data.mustUnlock && data.unlockMethod != null) {
 				if (!isCharacterUnlocked(data.characterID, data.unlockMethod)) {
-					trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
+					trace('[Funker Selector] Character ID ${data.characterID} is locked!');
 					lockedCharMap.set(data.characterID, data);
 				} else {
 					if (saveData.seenUnlocks.indexOf(data.characterID) == -1) {
-						trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
+						trace('[Funker Selector] Character ID ${data.characterID} was unlocked!');
 						lockedCharMap.set(data.characterID, data);
 					}
 				}
@@ -656,7 +635,7 @@ class CharacterHandler extends Module {
 	function cacheSprite(path:String) {
 		if (cachedJSONSparrows.exists(path))
 			return;
-		trace('[Funker Selector] Caching sprite ' + path);
+		trace('[Funker Selector] Caching sprite ${path}');
 		var bitmap:BitmapData = Assets.getBitmapData(path);
 		if (bitmap != null) {
 			var texture:RectangleTexture = FlxG.stage.context3D.createRectangleTexture(bitmap.width, bitmap.height, "bgra", true);
@@ -668,9 +647,9 @@ class CharacterHandler extends Module {
 			var graphic:FlxGraphic = FlxGraphic.fromBitmapData(bitmap, false, path);
 			graphic.persist = true;
 			cachedJSONSparrows.set(path, graphic);
-			trace('[Funker Selector] Successfully cached graphic: ' + path);
+			trace('[Funker Selector] Successfully cached graphic: ${path}');
 		} else {
-			trace('[ERROR] Failed to cache graphic: ' + path);
+			trace('[ERROR] Failed to cache graphic: ${path}');
 		}
 	}
 
@@ -702,7 +681,7 @@ class CharacterHandler extends Module {
 
 		// If at least ONE of them was changed (means a vocal file was found), replace the vocals.
 		if (voiceList[0] != null || voiceList[1] != null) {
-			trace('[Funker Selector] Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);
+			trace('[Funker Selector] Voice List:\n\nPlayer: ${voiceList[0]}\nOpponent: ${voiceList[1]}');
 			PlayState.instance.vocals.stop();
 			PlayState.instance.vocals = replaceVocals(voiceList);
 		}
@@ -734,14 +713,14 @@ class CharacterHandler extends Module {
 		var characterData:Dynamic = getCharacterData(characterID);
 		var oldChar:BaseCharacter = null;
 
-		var voiceID:String = characterData?.voiceID != null ? characterData.voiceID : characterID;
-		var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
-		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + voiceID + variationSuffix);
+		var voiceID:String = characterData?.voiceID ?? characterID;
+		var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-${PlayState.instance.currentVariation}' : '';
+		var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-${voiceID}' + variationSuffix);
 
 		if (characterID == 'default')
 			return;
 
-		trace('[Funker Selector] Replacing type ' + characterType + ' with id ' + characterID);
+		trace('[Funker Selector] Replacing type ${characterType} with id ${characterID}');
 
 		switch (characterType) {
 			case CharacterType.BF:
@@ -792,14 +771,14 @@ class CharacterHandler extends Module {
 				}
 
 				if (songMatch && variationMatch) {
-					characterData = getCharacterData(variation.characterID) != null ? getCharacterData(variation.characterID) : characterData;
+					characterData = getCharacterData(variation.characterID) ?? characterData;
 
 					if (charJSONCheck(variation.characterID)) {
-						trace('[Funker Selector] Variation found: ' + variation.characterID);
+						trace('[Funker Selector] Variation found: ${variation.characterID}');
 						characterID = variation.characterID;
 					} else {
 						PolymodErrorHandler.showAlert('Funker Selector Error',
-							'The character variation "' + variation.characterID + '" does not exist. The base character ID will be used instead.');
+							'The character variation ${variation.characterID} does not exist. The base character ID will be used instead.');
 					}
 					break;
 				}
@@ -816,19 +795,16 @@ class CharacterHandler extends Module {
 				character.zIndex = charZIndex;
 				PlayState.instance.currentStage.addCharacter(character, characterType);
 			} else {
-				PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + characterType + ' character. How the fuck???');
+				PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ${characterType} character. How the fuck???');
 			}
 		} else {
-			trace('[Funker Selector] ID ' + characterID + ' and ID ' + oldChar.characterId + ' match. Not replacing...');
+			trace('[Funker Selector] ID ${characterID} and ID ${oldChar.characterId} match. Not replacing...');
 		}
 
 		if (characterData != null && characterType == CharacterType.BF) {
-			PauseSubState.musicSuffix = (characterData.suffixes?.pauseMusic != null
-				&& characterData.suffixes.pauseMusic != '') ? characterData.suffixes.pauseMusic : PauseSubState.musicSuffix;
-			GameOverSubState.musicSuffix = (characterData.suffixes?.gameOverMusic != null
-				&& characterData.suffixes.gameOverMusic != '') ? characterData.suffixes.gameOverMusic : GameOverSubState.musicSuffix;
-			GameOverSubState.blueBallSuffix = (characterData.suffixes?.blueBall != null
-				&& characterData.suffixes.blueBall != '') ? characterData.suffixes.blueBall : GameOverSubState.blueBallSuffix;
+			PauseSubState.musicSuffix = characterData.suffixes?.pauseMusic ?? PauseSubState.musicSuffix;
+			GameOverSubState.musicSuffix = characterData.suffixes?.gameOverMusic ?? GameOverSubState.musicSuffix;
+			GameOverSubState.blueBallSuffix = characterData.suffixes?.blueBall ?? GameOverSubState.blueBallSuffix;
 		}
 
 		trace('[Funker Selector] Suffixes\n\nPause Music: ' + PauseSubState.musicSuffix + '\nGame Over Music: ' + GameOverSubState.musicSuffix
@@ -856,17 +832,8 @@ class CharacterHandler extends Module {
 		var result:VoicesGroup = new VoicesGroup();
 		var songVoices:Array<String> = currentChart.buildVoiceList();
 
-		if (voiceList[0] != null) {
-			result.addPlayerVoice(FunkinSound.load(voiceList[0]));
-		} else {
-			result.addPlayerVoice(FunkinSound.load(songVoices[0]));
-		}
-
-		if (voiceList[1] != null) {
-			result.addOpponentVoice(FunkinSound.load(voiceList[1]));
-		} else {
-			result.addOpponentVoice(FunkinSound.load(songVoices[1]));
-		}
+		result.addPlayerVoice(FunkinSound.load(voiceList[0] ?? songVoices[0]));
+		result.addOpponentVoice(FunkinSound.load(voiceList[1] ?? songVoices[1]));
 
 		result.playerVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.player);
 		result.opponentVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.opponent);

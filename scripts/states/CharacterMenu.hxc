@@ -183,7 +183,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					}
 				}
 
-				var xOffset:Float = characterData?.characterMenu != null ? characterData.characterMenu.position[0] : 0;
+				var xOffset:Float = characterData?.characterMenu ?? 0;
 
 				item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.25);
 			}
@@ -374,13 +374,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 						var icon = new HealthIcon('dad', 0);
 						icon.x = xStart + (j * 2 + k) * spacing;
 						icon.y = yStart + (i * 2 + l) * spacing;
-						icon.alpha = (alpha != null ? alpha : 0.2);
+						icon.alpha = alpha ?? 0.2;
 
-						if (charIconData != null) {
-							icon.configure(charIconData.healthIcon);
-						} else {
-							icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-						}
+						icon.configure(charIconData.healthIcon ?? 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 
 						add(icon);
 						iconGrid.push(icon);
@@ -408,7 +404,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	 * @return Returns a true or false if the file exists.
 	 */
 	function charJSONCheck(string:String):Bool {
-		if (Assets.exists(Paths.json('characters/' + string))) {
+		if (Assets.exists(Paths.json('characters/${string}'))) {
 			var characterFiles = DataAssets.listDataFilesInPath('characters/');
 			return characterFiles.indexOf(string) != -1;
 		}
@@ -421,10 +417,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 	function configureChar(characterSprite:BaseCharacter, data:Null):BaseCharacter {
 		if (data == null)
 			return;
-		var position = data.position != null ? data.position : [0, 0];
+		var position = data.position ?? [0, 0];
 		var scale = data.scale != null ? (data.isPixel ? data.scale * 6 : data.scale) : (data.isPixel ? 6.0 : 1.0);
 		characterSprite.y += position[1];
-		characterSprite.flipX = data.flipX != null ? data.flipX : false;
+		characterSprite.flipX = data.flipX ?? false;
 		characterSprite.scale.set(scale, scale);
 		characterSprite.antialiasing = data.isPixel != null ? !data.isPixel : true;
 		characterSprite.pixelPerfectRender = data?.isPixel;
@@ -782,8 +778,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 			FunkinSound.playOnce(Paths.sound('confirmMenu'));
 		}
 		if (!saveData.preferences.potatoMode) {
-			characterData = jsonCharacterCache.get(curCharID) != null ? jsonCharacterCache.get(curCharID)[0] : null;
-			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
+			characterData = jsonCharacterCache.get(curCharID)[0] ?? null;
+			animation = characterData?.characterMenu?.selectedAnim ?? 'hey';
 			var item:Dynamic = characterWheel.members[charIndex - 1];
 			if (item != null && item is BaseCharacter)
 				item.playAnimation(animation, true, true);
@@ -991,11 +987,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 					charIcon.setPosition(270, 380);
 
 					// TODO: Move this somewhere else in the menu.
-					descText = characterData.description?.text != null ? characterData.description.text : "No description was specified in the JSON file.";
-					var offsets:Array<Int> = [
-						characterData.description?.offsets != null ? characterData.description?.offsets[0] : 0,
-						characterData.description?.offsets != null ? characterData.description?.offsets[1] : 0
-					];
+					descText = characterData.description?.text ?? "No description was specified in the JSON file.";
+					var offsets:Array<Int> = [characterData.description?.offsets ?? 0, characterData.description?.offsets ?? 0];
 
 					configureText(charDesc, "", offsets, characterData.description?.size, Paths.font("PhantomMuff.ttf"));
 				}

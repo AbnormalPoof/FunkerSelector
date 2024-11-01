@@ -13,176 +13,195 @@ import haxe.Timer;
 /**
  * Separate module for replacing the Freeplay DJ to prevent messy code in CharacterHandler.
  */
-class DJReplace extends Module {
-	public var saveData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptGet('saveData');
+class DJReplace extends Module
+{
+  public var saveData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptGet('saveData');
 
-	public function new() {
-		super('DJReplace');
-	}
+  public function new()
+  {
+    super('DJReplace');
+  }
 
-	/**
-	 * Swap out the Freeplay DJ.
-	 * @param freeplay The Freeplay SubState we're using. 
-	 */
-	function transitionToNewDJ(freeplay:FreeplayState, ?inIntro:Bool = false):Void {
-		var freeplayDJ = freeplay.dj;
-		var playableCharData = freeplayDJ.playableCharData;
-		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : freeplay.currentCharacterId;
-		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+  /**
+   * Swap out the Freeplay DJ.
+   * @param freeplay The Freeplay SubState we're using. 
+   */
+  function transitionToNewDJ(freeplay:FreeplayState, ?inIntro:Bool = false):Void
+  {
+    var freeplayDJ = freeplay.dj;
+    var playableCharData = freeplayDJ.playableCharData;
+    var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : freeplay.currentCharacterId;
+    var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
 
-		if (freeplayDJ.characterId != playableCharId) {
-			if (!inIntro) {
-				if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect'))) {
-					freeplay.busy = true;
-					freeplayDJ.onIntroDone.removeAll();
-					freeplayDJ.onAnimationComplete.addOnce(replaceDJNoIntro);
-					freeplayDJ.currentState = FreeplayDJState.CharSelect;
-					var animPrefix = playableCharData.getAnimationPrefix('charSelect');
-					freeplayDJ.playFlashAnimation(animPrefix, true, false, false);
-				}
-			} else {
-				replaceDJIntro();
-			}
-		} else {
-			trace("[Funker Selector] DJ Character IDs match! Not replacing.");
-		}
-	}
+    if (freeplayDJ.characterId != playableCharId)
+    {
+      if (!inIntro)
+      {
+        if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect')))
+        {
+          freeplay.busy = true;
+          freeplayDJ.onIntroDone.removeAll();
+          freeplayDJ.onAnimationComplete.addOnce(replaceDJNoIntro);
+          freeplayDJ.currentState = FreeplayDJState.CharSelect;
+          var animPrefix = playableCharData.getAnimationPrefix('charSelect');
+          freeplayDJ.playFlashAnimation(animPrefix, true, false, false);
+        }
+      }
+      else
+      {
+        replaceDJIntro();
+      }
+    }
+    else
+    {
+      trace("[Funker Selector] DJ Character IDs match! Not replacing.");
+    }
+  }
 
-	function replaceDJNoIntro():Void {
-		var freeplayDJ = FlxG.state.subState.dj;
-		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
-		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
-		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
-		var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
+  function replaceDJNoIntro():Void
+  {
+    var freeplayDJ = FlxG.state.subState.dj;
+    var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
+    var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+    var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
+    var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
 
-		var startTime = Timer.stamp();
+    var startTime = Timer.stamp();
 
-		if (playableCharData == null) {
-			trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
-			trace(characterID);
-			return;
-		}
+    if (playableCharData == null)
+    {
+      trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
+      trace(characterID);
+      return;
+    }
 
-		if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect')) {
-			trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
-			freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
-			freeplayDJ.characterId = playableCharId;
-			freeplayDJ.playableCharData = playableCharData;
+    if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect'))
+    {
+      trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
+      freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
+      freeplayDJ.characterId = playableCharId;
+      freeplayDJ.playableCharData = playableCharData;
 
-			freeplayDJ.currentState = FreeplayDJState.Intro;
-			var animPrefix = playableCharData.getAnimationPrefix('intro');
-			// TODO: Make the frame a variable.
-			freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 3);
+      freeplayDJ.currentState = FreeplayDJState.Intro;
+      var animPrefix = playableCharData.getAnimationPrefix('intro');
+      // TODO: Make the frame a variable.
+      freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 3);
 
-			if (FlxG.state.subState.backingCard.funnyScroll != null)
-				reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2),
-					playableChar.getFreeplayDJText(3));
-			FlxG.state.subState.busy = false;
+      if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1),
+        playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3));
+      FlxG.state.subState.busy = false;
 
-			var endTime = Timer.stamp();
-			var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
-			trace("[Funker Selector] replaceDJNoIntro took " + elapsedTime + " seconds to complete.");
-		}
-	}
+      var endTime = Timer.stamp();
+      var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
+      trace("[Funker Selector] replaceDJNoIntro took " + elapsedTime + " seconds to complete.");
+    }
+  }
 
-	function replaceDJIntro():Void {
-		var freeplayDJ = FlxG.state.subState.dj;
-		var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
-		var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
-		var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
-		var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
+  function replaceDJIntro():Void
+  {
+    var freeplayDJ = FlxG.state.subState.dj;
+    var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
+    var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+    var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
+    var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
 
-		var startTime = Timer.stamp();
+    var startTime = Timer.stamp();
 
-		if (playableCharData == null) {
-			trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
-			trace(characterID);
-			return;
-		}
+    if (playableCharData == null)
+    {
+      trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
+      trace(characterID);
+      return;
+    }
 
-		trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
-		freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
-		freeplayDJ.characterId = playableCharId;
-		freeplayDJ.playableCharData = playableCharData;
+    trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
+    freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
+    freeplayDJ.characterId = playableCharId;
+    freeplayDJ.playableCharData = playableCharData;
 
-		if (FlxG.state.subState.backingCard.funnyScroll != null)
-			reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1), playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3));
+    if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1),
+      playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3));
 
-		var endTime = Timer.stamp();
-		var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
-		trace("[Funker Selector] replaceDJIntro took " + elapsedTime + " seconds to complete.");
-	}
+    var endTime = Timer.stamp();
+    var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
+    trace("[Funker Selector] replaceDJIntro took " + elapsedTime + " seconds to complete.");
+  }
 
-	/**
-	 * Replaces the backing text.
-	 * @param freeplay The Freeplay SubState we're using.
-	 * @param text1 The 1st string.
-	 * @param text2 The 2nd string.
-	 * @param text3 The 3rd string.
-	 */
-	function reapplyBackingText(freeplay:FreeplayState, text1:String, text2:String, text3:String) {
-		trace("[Funker Selector] Applying backing text...");
-		trace(text1);
-		trace(text2);
-		trace(text3);
+  /**
+   * Replaces the backing text.
+   * @param freeplay The Freeplay SubState we're using.
+   * @param text1 The 1st string.
+   * @param text2 The 2nd string.
+   * @param text3 The 3rd string.
+   */
+  function reapplyBackingText(freeplay:FreeplayState, text1:String, text2:String, text3:String)
+  {
+    trace("[Funker Selector] Applying backing text...");
+    trace(text1);
+    trace(text2);
+    trace(text3);
 
-		var funnyScrollArray:Array<Dynamic> = [
-			freeplay.backingCard.funnyScroll,
-			freeplay.backingCard.funnyScroll2,
-			freeplay.backingCard.funnyScroll3
-		];
-		var moreWaysArray:Array<Dynamic> = [freeplay.backingCard.moreWays, freeplay.backingCard.moreWays2];
-		for (scrollText in funnyScrollArray) {
-			trace("[Funker Selector] Setting up text group with text " + text1);
-			setupTextGroup(scrollText, 60, FlxG.width / 2, text1, -3.8, false);
-		}
+    var funnyScrollArray:Array<Dynamic> = [
+      freeplay.backingCard.funnyScroll,
+      freeplay.backingCard.funnyScroll2,
+      freeplay.backingCard.funnyScroll3
+    ];
+    var moreWaysArray:Array<Dynamic> = [freeplay.backingCard.moreWays, freeplay.backingCard.moreWays2];
+    for (scrollText in funnyScrollArray)
+    {
+      trace("[Funker Selector] Setting up text group with text " + text1);
+      setupTextGroup(scrollText, 60, FlxG.width / 2, text1, -3.8, false);
+    }
 
-		for (scrollText in moreWaysArray) {
-			trace("[Funker Selector] Setting up text group with text " + text2);
-			setupTextGroup(scrollText, 43, FlxG.width, text2, 6.8, true);
-		}
+    for (scrollText in moreWaysArray)
+    {
+      trace("[Funker Selector] Setting up text group with text " + text2);
+      setupTextGroup(scrollText, 43, FlxG.width, text2, 6.8, true);
+    }
 
-		trace("[Funker Selector] Setting up text group with text " + text3);
-		setupTextGroup(freeplay.backingCard.txtNuts, 43, FlxG.width / 2, text3, 3.5, true);
+    trace("[Funker Selector] Setting up text group with text " + text3);
+    setupTextGroup(freeplay.backingCard.txtNuts, 43, FlxG.width / 2, text3, 3.5, true);
 
-		freeplay.backingCard.funnyScroll.funnyColor = 0xFFFF9963;
-		freeplay.backingCard.funnyScroll2.funnyColor = 0xFFFF9963;
-		freeplay.backingCard.funnyScroll3.funnyColor = 0xFFFEA400;
-		freeplay.backingCard.moreWays.funnyColor = 0xFFFFF383;
-		freeplay.backingCard.moreWays2.funnyColor = 0xFFFFF383;
-	}
+    freeplay.backingCard.funnyScroll.funnyColor = 0xFFFF9963;
+    freeplay.backingCard.funnyScroll2.funnyColor = 0xFFFF9963;
+    freeplay.backingCard.funnyScroll3.funnyColor = 0xFFFEA400;
+    freeplay.backingCard.moreWays.funnyColor = 0xFFFFF383;
+    freeplay.backingCard.moreWays2.funnyColor = 0xFFFFF383;
+  }
 
-	/**
-	 * Sets up `grpTexts` for a `BGScrollingText` object
-	 * @param textObject The object we are using
-	 * @param size The text size
-	 * @param widthShit The width or something IDK
-	 * @param text The text itself
-	 * @param speed The speed of the text scrolling
-	 * @param bold Wether or not the text is bold
-	 */
-	function setupTextGroup(textObject:Dynamic, size:Int = 10, widthShit:Int = 1, text:String = "FUCK", speed:Float = 1.0, bold:Bool = false):Void {
-		textObject.grpTexts.clear();
-		var testText:FlxText = new FlxText(0, 0, 0, text, size);
-		testText.font = "5by7";
-		testText.bold = bold;
-		testText.updateHitbox();
-		textObject.grpTexts.add(testText);
+  /**
+   * Sets up `grpTexts` for a `BGScrollingText` object
+   * @param textObject The object we are using
+   * @param size The text size
+   * @param widthShit The width or something IDK
+   * @param text The text itself
+   * @param speed The speed of the text scrolling
+   * @param bold Wether or not the text is bold
+   */
+  function setupTextGroup(textObject:Dynamic, size:Int = 10, widthShit:Int = 1, text:String = "FUCK", speed:Float = 1.0, bold:Bool = false):Void
+  {
+    textObject.grpTexts.clear();
+    var testText:FlxText = new FlxText(0, 0, 0, text, size);
+    testText.font = "5by7";
+    testText.bold = bold;
+    testText.updateHitbox();
+    textObject.grpTexts.add(testText);
 
-		var needed:Int = Math.ceil(widthShit / testText.frameWidth) + 1;
+    var needed:Int = Math.ceil(widthShit / testText.frameWidth) + 1;
 
-		for (i in 0...needed) {
-			var lmfao:Int = i + 1;
+    for (i in 0...needed)
+    {
+      var lmfao:Int = i + 1;
 
-			var coolText:FlxText = new FlxText((lmfao * testText.frameWidth) + (lmfao * 20), 0, 0, text, size);
+      var coolText:FlxText = new FlxText((lmfao * testText.frameWidth) + (lmfao * 20), 0, 0, text, size);
 
-			coolText.font = "5by7";
-			coolText.bold = bold;
-			coolText.updateHitbox();
-			trace("[Funker Selector] Adding to text group: " + coolText.text);
-			textObject.grpTexts.add(coolText);
-		}
+      coolText.font = "5by7";
+      coolText.bold = bold;
+      coolText.updateHitbox();
+      trace("[Funker Selector] Adding to text group: " + coolText.text);
+      textObject.grpTexts.add(coolText);
+    }
 
-		textObject.speed = speed;
-	}
+    textObject.speed = speed;
+  }
 }

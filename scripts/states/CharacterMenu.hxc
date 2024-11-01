@@ -31,1160 +31,1038 @@ import Std;
 /**
  * This is a substate that acts as a Character Selection screen.
  */
-class CharacterSelectSubState extends MusicBeatSubState
-{
-  var charName:FlxText;
-  var charDesc:FlxText;
-  var selected:FlxText;
-  var numberThing:FlxText;
-
-  var leftDifficultyArrow:FunkinSprite;
-  var rightDifficultyArrow:FunkinSprite;
-  var keyBox:FunkinSprite;
-  var descBox:FunkinSprite;
-  var newGraphic:FunkinSprite;
-
-  // NOTE: This is either a `FunkinSprite`, or a `Lock`
-  // depending on if "Simplify UI" is enabled or not.
-  var lockedChill:Null;
-
-  var unlockSound:FunkinSound;
-
-  var hotkeyCam:FunkinCamera;
-  var uiCam:FunkinCamera;
-  var spriteCam:FunkinCamera;
-
-  /**
-   * A map containing every character.
-   */
-  var characterMap:StringMap<String, Array<String, String>> = ModuleHandler.getModule("CharacterHandler").scriptGet('characterMap');
-
-  /**
-   * A filtered character array for the current page.
-   * We still use this array since `CharacterMenu` is built around Arrays.
-   */
-  var filteredKeys:Array<String> = [];
-
-  /**
-   * The save data for Funker Selector.
-   */
-  var saveData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptGet('saveData');
-
-  // NOTE: For writing, access characterIDs directly. This is only for reading.
-  var characterIDsArray:Array<String> = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
-
-  /**
-   * A map of all the locked characters.
-   */
-  var lockedCharMap:StringMap<String> = ModuleHandler.getModule("CharacterHandler").scriptGet('lockedCharMap');
-
-  /**
-   * The JSON character cache, which is retrieved from `charHandler`.
-   */
-  var jsonCharacterCache:StringMap<String, Dynamic> = ModuleHandler.getModule("CharacterHandler").scriptGet('jsonCharacterCache');
-
-  // For the top text in the menu.
-  var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "SPEAKER CHARACTERS"];
-  var topTextColor = [0xFF2DB2D2, 0xFFAF66CE, 0xFFA7004C];
-
-  /**
-   * Pages.
-   * 
-   * This is just an array, their index is used to control a lot of things in the menu.
-   */
-  var pages:Array<String> = ['bf', 'dad', 'gf'];
-
-  var charIcon:HealthIcon;
-  var iconGrid:Array<HealthIcon> = [];
-
-  var charIndex:Int = 0;
-  var pageIndex:Int = 0;
-
-  var characterWheel:FlxTypedGroup<BaseCharacter> = new FlxTypedGroup();
-
-  /**
-   * The current song BPM in Freeplay.
-   */
-  var songBPM:Float = ModuleHandler.getModule("CharacterHandler").scriptGet('freeplayBPM');
-
-  /**
-   * The current character ID.
-   */
-  var curCharID:String = 'default';
-
-  /**
-   * If enabled, the menu will stop responding to inputs.
-   * This is used for the unlock animation
-   */
-  var busy:Bool = false;
-
-  /**
-   * Script Event called when this SubState is closed.
-   */
-  var FS_EXITED_SUBSTATE:String = "FS_EXITED_SUBSTATE";
-
-  /**
-   * The base scroll speed for the icon grid.
-   */
-  var ICON_SCROLL_SPEED:Float = 0.3;
-
-  var typewriterTimer:FlxTimer = null;
-
-  var typewriterIndex:Int = 0;
-
-  public function new()
-  {
-    super();
-  }
-
-  public override function create():Void
-  {
-    super.create();
-
-    setupUIStuff();
-    updateFilteredKeys();
-    if (!saveData.preferences.potatoMode) buildCharacterWheel();
-    jumpToCurSelected();
-  }
-
-  public override function update(elapsed:Float):Void
-  {
-    super.update(elapsed);
-
-    conductorInUse.update();
-
-    if (!busy) handleKeyShit();
-
-    for (icon in iconGrid)
-    {
-      // Speed is capped at 300 BPM, I don't want motion sickness.
-      icon.x -= ICON_SCROLL_SPEED * (Math.min(songBPM, 300) / 60);
-      icon.y += (ICON_SCROLL_SPEED * (Math.min(songBPM, 300) / 60)) / 2; // Vertical speed is halved.
-
-      if (icon.x < -icon.width)
-      {
-        icon.x += (FlxG.width + icon.width) + 70;
-      }
-
-      if (icon.y > FlxG.height)
-      {
-        icon.y -= (FlxG.height + icon.height) + 30;
-      }
-    }
-
-    if (!saveData.preferences.potatoMode)
-    {
-      for (index in 0...characterWheel.members.length)
-      {
-        var item:Dynamic = characterWheel.members[index];
-        if (item != null)
-        {
-          if (item is BaseCharacter)
-          {
-            // TODO: Maybe *don't* do this every frame????
-            characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [item.characterId]);
-          }
-          else
-          { // Assume the object is `lockedChill`
-            characterData =
-              {
-                characterMenu:
-                  {
-                    position: [200, 0]
-                  }
-              };
-          }
-        }
-
-        var xOffset:Float = characterData?.characterMenu != null ? characterData.characterMenu.position[0] : 0;
-
-        item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.25);
-      }
-    }
-
-    if (uiCam != null && spriteCam != null)
-    {
-      uiCam.zoom = MathUtil.smoothLerp(uiCam.zoom, 1, FlxG.elapsed, 0.45);
-      spriteCam.zoom = MathUtil.smoothLerp(spriteCam.zoom, 1, FlxG.elapsed, 0.45);
-    }
-  }
-
-  function buildCharacterWheel():Void
-  {
-    characterWheel.clear();
-
-    for (characterIndex in 0...filteredKeys.length)
-    {
-      var characterID:String = filteredKeys[characterIndex];
-      var characterSprite:BaseCharacter = (characterID != 'default' ? CharacterDataParser.fetchCharacter(characterID) : null);
-      var lockedChill:FunkinSprite;
-
-      if (characterID != 'default')
-      {
-        characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [characterID]);
-      }
-
-      if (characterSprite != null)
-      {
-        characterSprite.camera = spriteCam;
-        if (lockedCharMap.exists(characterID))
-        {
-          lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
-          lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
-          lockedChill.animation.addByPrefix('denied', 'cannot select0', 24, false);
-          lockedChill.animation.addByPrefix('death', 'locked man explodes0', 24, false);
-          lockedChill.animation.play('idle');
-          lockedChill.animation.finishCallback = function(_) {
-            lockedChill.offset.set();
-            lockedChill.animation.play('idle');
-          };
-          lockedChill.scale.set(1.2, 1.2);
-          lockedChill.camera = spriteCam;
-          characterWheel.add(lockedChill);
-        }
-        else
-        {
-          configureChar(characterSprite, characterData?.characterMenu);
-          characterWheel.add(characterSprite);
-        }
-      }
-      else
-      {
-        characterWheel.add(null);
-      }
-    }
-
-    changeCharacter();
-  }
-
-  /**
-   * Stolen from `StoryMenuState.hx` LOL
-   * 
-   * Changes the selected character.
-   * @param change +1 (right), -1 (left)
-   */
-  function changeCharacter(change:Int = 0):Void
-  {
-    var prevIndex:Int = charIndex;
-    charIndex = (prevIndex + (change + filteredKeys.length)) % filteredKeys.length;
-
-    // Wrap around
-    if (charIndex < 0) charIndex = filteredKeys.length - 1;
-    if (charIndex >= filteredKeys.length) charIndex = 0;
-
-    curCharID = filteredKeys[charIndex];
-
-    if (!saveData.preferences.potatoMode)
-    {
-      for (index in 0...characterWheel.members.length)
-      {
-        var item:Dynamic = characterWheel.members[index];
-
-        if (index == charIndex - 1)
-        {
-          item.alpha = 1.0;
-        }
-        else
-        {
-          item.alpha = 0.5;
-        }
-      }
-    }
-
-    if (charIndex != prevIndex)
-    {
-      if (saveData.preferences.preferredSFX == "charSelect")
-      {
-        FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
-      }
-      else
-      {
-        FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-      }
-    }
-
-    updateCharInfo();
-
-    numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
-    numberThing.screenCenter(0x01);
-  }
-
-  function beatHit():Void
-  {
-    bopDaThing();
-    if (!saveData.preferences.potatoMode)
-    {
-      for (index in 0...characterWheel.members.length)
-      {
-        var item:Dynamic = characterWheel.members[index];
-        if (index == charIndex - 1 && item is BaseCharacter) item.dance();
-      }
-    }
-
-    if (conductorInUse.currentBeat % 4 == 0)
-    {
-      if (uiCam != null && spriteCam != null)
-      {
-        uiCam.zoom = 1.02;
-        spriteCam.zoom = 1.02;
-      }
-    }
-  }
-
-  /**
-   * Updates the `filteredKeys` array based on the current `pageIndex`.
-   */
-  function updateFilteredKeys():Void
-  {
-    trace('[Funker Selector] Sorting the Character Map...');
-    filteredKeys = ['default']; // Ensures 'default' is always the first thing.
-
-    tempArray = [];
-
-    for (key in characterMap.keys())
-    {
-      tempArray.push(key);
-    }
-
-    iHateMyLife = tempArray.filter(function(shit) {
-      characterType = characterMap.get(shit)[1];
-      switch (pageIndex)
-      {
-        case 0:
-          if (characterType is Array) return characterType.indexOf('bf') != -1 || characterType.indexOf('player') != -1;
-          else
-            return characterType == 'bf' || characterType == 'player';
-        case 1:
-          if (characterType is Array) return characterType.indexOf('dad') != -1 || characterType.indexOf('opponent') != -1;
-          else
-            return characterType == 'dad' || characterType == 'opponent';
-        case 2:
-          if (characterType is Array) return characterType.indexOf('gf') != -1 || characterType.indexOf('speaker') != -1;
-          else
-            return characterType == 'gf' || characterType == 'speaker';
-      }
-    });
-
-    iHateMyLife.sort(function(a:String, b:String):Int {
-      characterOwnerA = characterMap.get(a)[0];
-      characterOwnerB = characterMap.get(b)[0];
-      characterA = jsonCharacterCache.get(characterOwnerA);
-      characterB = jsonCharacterCache.get(characterOwnerB);
-
-      characterDataA = characterA[1];
-      characterDataB = characterB[1];
-
-      nameA = characterDataA.name.toUpperCase();
-      nameB = characterDataB.name.toUpperCase();
-
-      if (nameA < nameB)
-      {
-        return -1;
-      }
-      else if (nameA > nameB)
-      {
-        return 1;
-      }
-      else
-      {
-        return 0;
-      }
-    });
-
-    filteredKeys = filteredKeys.concat(iHateMyLife);
-  }
-
-  /**
-   * Make a super awesome cool icon grid!
-   * @param spacing The spacing of the icons, I guess.
-   * 
-   * This is disabled if "Simplify UI" is turned on in the Options Menu.
-   */
-  function createIconGrid(spacing:Int, ?alpha:Float = null):Void
-  {
-    var charIconData = curCharID != 'default' ? jsonCharacterCache.get(curCharID)[1] : null;
-    var columns = Math.ceil(FlxG.width / (spacing * 2));
-    var rows = Math.ceil(FlxG.height / (spacing * 2));
-    var xStart = (FlxG.width - columns * spacing * 2) / 2;
-    var yStart = (FlxG.height - rows * spacing * 2) / 2;
-
-    for (i in 0...rows)
-    {
-      for (j in 0...columns)
-      {
-        for (k in 0...2)
-        {
-          for (l in 0...2)
-          {
-            var icon = new HealthIcon('dad', 0);
-            icon.x = xStart + (j * 2 + k) * spacing;
-            icon.y = yStart + (i * 2 + l) * spacing;
-            icon.alpha = (alpha != null ? alpha : 0.2);
-
-            if (charIconData != null)
-            {
-              icon.configure(charIconData.healthIcon);
-            }
-            else
-            {
-              icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-            }
-
-            add(icon);
-            iconGrid.push(icon);
-            icon.camera = spriteCam;
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Check if the JSON file in `data/characters/` ACTUALLY exists.
-   * 
-   * I wrote this function because OpenFL Assets is case-insensitive
-   * on Windows and macOS. This is for an edge case where the JSON filename
-   * in data/characters/ has different capitalization than the Character ID
-   * specified in the Funker Selector JSON. Because OpenFL is case insensitive, it will
-   * always return true, which confuses Funker Selector!
-   * 
-   * This was reported in issue [#1](https://github.com/AbnormalPoof/FunkerSelector/issues/1)!
-   * 
-   * This should hopefully solve any and all issues like that one.
-   * 
-   * @param string The character ID we're comparing.
-   * @return Returns a true or false if the file exists.
-   */
-  function charJSONCheck(string:String):Bool
-  {
-    if (Assets.exists(Paths.json('characters/' + string)))
-    {
-      var characterFiles = DataAssets.listDataFilesInPath('characters/');
-      return characterFiles.indexOf(string) != -1;
-    }
-    return false;
-  }
-
-  /**
-   * Configuring the JSON character, setting up position, scale, flipping, etc.
-   */
-  function configureChar(characterSprite:BaseCharacter, data:Null):BaseCharacter
-  {
-    if (data == null) return;
-    var position = data.position != null ? data.position : [0, 0];
-    var scale = data.scale != null ? (data.isPixel ? data.scale * 6 : data.scale) : (data.isPixel ? 6.0 : 1.0);
-    characterSprite.y += position[1];
-    characterSprite.flipX = data.flipX != null ? data.flipX : false;
-    characterSprite.scale.set(scale, scale);
-    characterSprite.antialiasing = data.isPixel != null ? !data.isPixel : true;
-    characterSprite.pixelPerfectRender = data?.isPixel;
-
-    return characterSprite;
-  }
-
-  /**
-   * Set up UI stuff like the BG and text.
-   */
-  function setupUIStuff():Void
-  {
-    spriteCam = new FunkinCamera('SpriteCam');
-    FlxG.cameras.add(spriteCam, false);
-    spriteCam.bgColor = 0x0;
-
-    uiCam = new FunkinCamera('UIElements');
-    FlxG.cameras.add(uiCam, false);
-    uiCam.bgColor = 0x0;
-
-    hotkeyCam = new FunkinCamera('HotkeyMenu');
-    FlxG.cameras.add(hotkeyCam, false);
-    hotkeyCam.bgColor = 0x0;
-    hotkeyCam.visible = false;
-
-    bg = new FunkinSprite(0, 0);
-    bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
-    bg.alpha = 0;
-    bg.camera = spriteCam;
-
-    selectText = configureText(null, null, [170, 10], 50, Paths.font("PhantomMuff.ttf"));
-    selectText.screenCenter(0x01);
-    selectText.camera = uiCam;
-
-    numberThing = configureText(null, null, [170, 60], 45, Paths.font("PhantomMuff.ttf"));
-    numberThing.color = 0xFFE3E1E1;
-    numberThing.camera = uiCam;
-
-    selected = configureText(null, '(SELECTED)', [720, 220], 50, Paths.font("PhantomMuff.ttf"));
-    selected.color = 0xFF53FF38;
-    selected.visible = false;
-    selected.camera = uiCam;
-
-    hotkeyText = configureText(null, 'D - Hotkeys', [990, 15], 45, Paths.font("PhantomMuff.ttf"));
-    hotkeyText.color = 0xFFE3E1E1;
-    hotkeyText.camera = uiCam;
-
-    hotkeys = configureText(null,
-      'F - Reset everything to default.\n\nJ - Jump to the currently selected character.\n\nQ - Switch to the previous page.\n\nE - Switch to the next page.\n\nESC - Close this.',
-      [350, 80], 40, Paths.font("PhantomMuff.ttf"));
-    hotkeys.camera = hotkeyCam;
-    hotkeys.wordWrap = true;
-    hotkeys.fieldWidth = 600;
-
-    charName = configureText(null, null, [170, 110], 70, Paths.font("PhantomMuff.ttf"));
-    charName.camera = uiCam;
-
-    leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
-    leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
-    leftDifficultyArrow.animation.addByPrefix('press', 'leftConfirm0');
-    leftDifficultyArrow.animation.play('idle');
-    leftDifficultyArrow.scale.set(1.5, 1.5);
-    leftDifficultyArrow.camera = uiCam;
-
-    rightDifficultyArrow = FunkinSprite.createSparrow(1200, leftDifficultyArrow.y, 'storymenu/ui/arrows');
-    rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
-    rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
-    rightDifficultyArrow.animation.play('idle');
-    rightDifficultyArrow.scale.set(1.5, 1.5);
-    rightDifficultyArrow.camera = uiCam;
-
-    if (saveData.preferences.potatoMode)
-    {
-      lockedChill = new Lock(300, 270, FlxG.random.int(1, 9));
-      lockedChill.onAnimationComplete.add(function(_) {
-        lockedChill.playAnimation('idle');
-      });
-      lockedChill.playAnimation('idle');
-      lockedChill.scale.set(2, 2);
-      lockedChill.camera = spriteCam;
-      lockedChill.visible = false;
-    }
-
-    newGraphic = FunkinSprite.createSparrow(840, 460, 'freeplay/freeplayCapsule/new');
-    newGraphic.animation.addByPrefix('new', 'NEW notif', 24);
-    newGraphic.animation.play('new');
-    newGraphic.camera = uiCam;
-    newGraphic.scale.set(1.8, 1.8);
-    newGraphic.visible = false;
-
-    keyBox = new FunkinSprite(0, 0);
-    keyBox.makeSolidColor(600, 600, 0xFF000000);
-    keyBox.camera = hotkeyCam;
-    keyBox.alpha = 0.8;
-    keyBox.screenCenter();
-
-    // TODO: Find a way to keep the text within the confines of this
-    descBox = new FunkinSprite(0, 500);
-    descBox.makeSolidColor(850, 200, 0xFF000000);
-    descBox.camera = uiCam;
-    descBox.alpha = 0.6;
-    descBox.screenCenter(0x01);
-
-    charIcon = new HealthIcon('dad', 0);
-    charIcon.camera = uiCam;
-
-    unlockSound = new FunkinSound();
-    unlockSound.loadEmbedded(Paths.sound('funkerSelector/charUnlock'));
-    unlockSound.volume = 1;
-
-    add(bg);
-    if (!saveData.preferences.potatoMode) createIconGrid(150, 0.2);
-    add(leftDifficultyArrow);
-    add(rightDifficultyArrow);
-    if (!saveData.preferences.potatoMode) add(characterWheel);
-    add(selectText);
-    add(numberThing);
-    add(selected);
-    add(hotkeyText);
-    add(charIcon);
-    add(charName);
-    if (saveData.preferences.potatoMode) add(lockedChill);
-    add(keyBox);
-    add(hotkeys);
-    add(newGraphic);
-    add(descBox);
-
-    WindowUtil.setWindowTitle('Friday Night Funkin\' - Funker Selector Menu');
-
-    FlxTween.tween(bg, {alpha: 0.5}, 0.5, {ease: FlxEase.quartOut});
-
-    trace('[Funker Selector] UI has been set up.');
-
-    conductorInUse.forceBPM(songBPM);
-  }
-
-  /**
-   * Bopping the icons, because why not?
-   */
-  function bopDaThing():Void
-  {
-    if (charIcon != null)
-    {
-      if (charIcon.width > charIcon.height)
-      {
-        charIcon.setGraphicSize(Std.int(charIcon.width + (150 * charIcon.size.x * 0.2)), 0);
-      }
-      else
-      {
-        charIcon.setGraphicSize(0, Std.int(charIcon.height + (150 * charIcon.size.y * 0.2)));
-      }
-
-      charIcon.angle += 1;
-
-      charIcon.updateHitbox();
-      charIcon.updatePosition();
-    }
-  }
-
-  /**
-   * Flash the screen with a specific color.
-   */
-  function flashScreen(color:FlxColor, duration:Float, ?alpha:Float = 1)
-  {
-    var duration:Float = duration;
-    var alpha:Float = alpha;
-
-    var white = new FunkinSprite(0, 0);
-    white.makeSolidColor(FlxG.width, FlxG.height, color);
-    white.alpha = 0;
-    white.camera = uiCam;
-    this.add(white);
-
-    FlxTween.tween(white, {alpha: alpha}, duration,
-      {
-        ease: FlxEase.quadOut,
-        onComplete: function(twn:FlxTween) {
-          FlxTween.tween(white, {alpha: alpha}, duration,
-            {
-              ease: FlxEase.quadOut,
-              onComplete: function(twn:FlxTween) {
-                this.remove(white);
-              }
-            });
-        }
-      });
-  }
-
-  /**
-   * Reponsible for handling inputs in the menu.
-   */
-  function handleKeyShit():Void
-  {
-    if (FlxG.keys.justPressed.ESCAPE)
-    {
-      if (hotkeyCam.visible)
-      {
-        hotkeyCam.visible = false;
-      }
-      else
-      {
-        FunkinSound.playOnce(Paths.sound('cancelMenu'));
-
-        // Scripted characters overwrite the suffixes when
-        // they're shown. So we want to manually reset them!
-        PauseSubState.musicSuffix = '';
-        GameOverSubState.musicSuffix = '';
-        GameOverSubState.blueBallSuffix = '';
-
-        WindowUtil.setWindowTitle('Friday Night Funkin\'');
-        ModuleHandler.callEvent(new ScriptEvent(FS_EXITED_SUBSTATE));
-        close();
-      }
-    }
-
-    if (!hotkeyCam.visible)
-    {
-      if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT)
-      {
-        changeCharacter(FlxG.keys.justPressed.LEFT ? -1 : 1);
-      }
-
-      leftDifficultyArrow.animation.play(FlxG.keys.pressed.LEFT ? 'press' : 'idle');
-      rightDifficultyArrow.animation.play(FlxG.keys.pressed.RIGHT ? 'press' : 'idle');
-
-      if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E)
-      {
-        pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
-        charIndex = 0;
-        updateFilteredKeys();
-        if (!saveData.preferences.potatoMode) buildCharacterWheel();
-        changeCharacter();
-        updateCharInfo();
-      }
-
-      // Mouse scrolling:
-      // Up = Left
-      // Down = Right
-      if (FlxG.mouse.wheel < 0)
-      {
-        changeCharacter(1);
-      }
-      else if (FlxG.mouse.wheel > 0)
-      {
-        changeCharacter(-1);
-      }
-
-      if (FlxG.keys.justPressed.J)
-      {
-        if (saveData.preferences.preferredSFX == "charSelect")
-        {
-          FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
-        }
-        else
-        {
-          FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
-        }
-        jumpToCurSelected();
-      }
-
-      if (FlxG.keys.justPressed.F)
-      {
-        var shouldPlaySound:Bool = false;
-        if (saveData.characterIDs.bf != 'default')
-        {
-          saveData.characterIDs.bf = 'default';
-          shouldPlaySound = true;
-        }
-        if (saveData.characterIDs.dad != 'default')
-        {
-          saveData.characterIDs.dad = 'default';
-          shouldPlaySound = true;
-        }
-        if (saveData.characterIDs.gf != 'default')
-        {
-          saveData.characterIDs.gf = 'default';
-          shouldPlaySound = true;
-        }
-        if (shouldPlaySound)
-        {
-          FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
-          selected.visible = selectedTextVisibility();
-          Save.instance.modOptions.set("FunkerSelector", saveData);
-          Save.instance.flush();
-
-          // Updating the array with the latest changes
-          characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
-        }
-      }
-
-      if (FlxG.keys.justPressed.D)
-      {
-        hotkeyCam.visible = true;
-      }
-
-      if (FlxG.keys.justPressed.ENTER)
-      {
-        var shouldConfirm:Bool = false;
-        if (curCharID != characterIDsArray[pageIndex])
-        {
-          if (!lockedCharMap.exists(curCharID))
-          {
-            switch (pageIndex)
-            {
-              case 0:
-                if (saveData.characterIDs.bf != curCharID)
-                {
-                  saveData.characterIDs.bf = curCharID;
-                  shouldConfirm = true;
-                }
-              case 1:
-                if (saveData.characterIDs.dad != curCharID)
-                {
-                  saveData.characterIDs.dad = curCharID;
-                  shouldConfirm = true;
-                }
-              case 2:
-                if (saveData.characterIDs.gf != curCharID)
-                {
-                  saveData.characterIDs.gf = curCharID;
-                  shouldConfirm = true;
-                }
-            }
-          }
-        }
-        if (shouldConfirm)
-        {
-          confirmThing();
-          selected.visible = selectedTextVisibility();
-          newGraphic.visible = false;
-          Save.instance.modOptions.set("FunkerSelector", saveData);
-          Save.instance.flush();
-
-          // Updating the array with the latest changes
-          characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
-        }
-        else
-        {
-          if (saveData.preferences.preferredSFX == "charSelect")
-          {
-            FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
-          }
-          else
-          {
-            FunkinSound.playOnce(Paths.sound('cancelMenu'));
-          }
-          flashScreen(0xFFFF0000, 0.03, 0.1);
-          if (!saveData.preferences.potatoMode)
-          {
-            for (index in 0...characterWheel.members.length)
-            {
-              var item = characterWheel.members[index];
-              if (index == charIndex - 1 && item is FunkinSprite) item.animation.play('denied', true);
-            }
-          }
-          else
-          {
-            if (lockedChill != null) lockedChill.playAnimation("clicked", true);
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Jumps to the currently selected character.
-   */
-  function jumpToCurSelected():Void
-  {
-    // In the event that the saved character ID no longer exists, we fallback to default.
-    if (!characterMap.exists(characterIDsArray[pageIndex]) && characterIDsArray[pageIndex] != 'default')
-    {
-      trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
-      switch (pageIndex)
-      {
-        case 0:
-          saveData.characterIDs.bf = 'default';
-        case 1:
-          saveData.characterIDs.dad = 'default';
-        case 2:
-          saveData.characterIDs.gf = 'default';
-      }
-      // Save everything
-      Save.instance.modOptions.set("FunkerSelector", saveData);
-      Save.instance.flush();
-
-      // Updating the array with the latest changes
-      characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
-    }
-    charIndex = filteredKeys.indexOf(characterIDsArray[pageIndex]);
-    curCharID = characterIDsArray[pageIndex];
-    changeCharacter();
-    updateCharInfo();
-  }
-
-  function confirmThing():Void
-  {
-    if (saveData.preferences.preferredSFX == "charSelect")
-    {
-      FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
-    }
-    else
-    {
-      FunkinSound.playOnce(Paths.sound('confirmMenu'));
-    }
-    if (!saveData.preferences.potatoMode)
-    {
-      characterData = jsonCharacterCache.get(curCharID) != null ? jsonCharacterCache.get(curCharID)[0] : null;
-      animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
-      var item:Dynamic = characterWheel.members[charIndex - 1];
-      if (item != null && item is BaseCharacter) item.playAnimation(animation, true, true);
-    }
-    if (charIcon.hasAnimation('winning'))
-    {
-      // Play the winning animation if it's available.
-      charIcon.playAnimation('winning');
-
-      // I wanted this really cool effect where the icons in the icon grid would also
-      // play the winning animation!
-      // But let's not play that if "Simplify UI" is turned on.
-      if (!saveData.preferences.potatoMode && iconGrid != null)
-      {
-        for (i in 0...iconGrid.length)
-        {
-          var icon = iconGrid[i];
-          new FlxTimer().start(0.01 * i, function() {
-            icon.playAnimation('winning');
-          });
-        }
-        new FlxTimer().start(0.3, function() {
-          for (i in 0...iconGrid.length)
-          {
-            var icon = iconGrid[i];
-            new FlxTimer().start(0.01 * i, function() {
-              icon.playAnimation('idle');
-            });
-          }
-        });
-      }
-    }
-
-    flashScreen(0xFFFFFFFF, 0.03, 0.1);
-  }
-
-  function selectedTextVisibility():Bool
-  {
-    switch (pageIndex)
-    {
-      case 0:
-        return curCharID == saveData.characterIDs.bf;
-      case 1:
-        return curCharID == saveData.characterIDs.dad;
-      case 2:
-        return curCharID == saveData.characterIDs.gf;
-      default:
-        return false;
-    }
-  }
-
-  /**
-   * Helper function for configuring an FlxText
-   * @param object The FlxText object
-   * @param text The text itself
-   * @param offsets The offsets as an array
-   * @param size The size of the text
-   * @param font The font
-   * @return A FlxText object
-   */
-  function configureText(object:FlxText, ?text:String = "", ?offsets:Array<Int>, ?size:Int = 38, ?font:String = null):FlxText
-  {
-    if (text == null) text = "";
-    if (offsets == null) offsets = [0, 0];
-    if (size == null) size = 35;
-    if (object == null) object = new FlxText(0, 0, 0, "PLACEHOLDER");
-
-    object.text = text;
-    object.x += offsets[0];
-    object.y += offsets[1];
-    if (font != null) object.setFormat(font, size, null, 'center');
-
-    return object;
-  }
-
-  /**
-   * Does a really fucking cool unlock animation.
-   */
-  function doUnlockAnimation():Void
-  {
-    if (!saveData.preferences.potatoMode)
-    {
-      for (index in 0...characterWheel.members.length)
-      {
-        var item = characterWheel.members[index];
-        if (index == charIndex - 1 && item is FunkinSprite)
-        {
-          lockedChill = item;
-          break;
-        }
-      }
-    }
-    busy = true;
-    if (FlxG.sound.music != null) FlxG.sound.music.fadeOut();
-
-    if (!saveData.preferences.potatoMode)
-    {
-      lockedChill.offset.set();
-      lockedChill.animation.play('idle', true);
-    }
-    else
-    {
-      lockedChill.playAnimation('idle', true);
-    }
-    FlxTween.tween(uiCam, {alpha: 0}, 1,
-      {
-        ease: FlxEase.quartOut,
-        onComplete: function(twn:FlxTween) {
-          unlockSound.play(true);
-          new FlxTimer().start(1.45, function() {
-            if (!saveData.preferences.potatoMode)
-            {
-              lockedChill.offset.set(170, 220);
-              lockedChill.animation.play('death');
-              lockedChill.animation.callback = function(name, frame) {
-                if (name == 'death' && frame == 36)
-                {
-                  flashScreen(0xFFFFFFFF, 0.05, 1);
-                  new FlxTimer().start(0.025, function() {
-                    updateCharInfo();
-                    if (selected.visible) selected.visible = false;
-                    newGraphic.visible = true;
-                    uiCam.shake(0.01, 0.2);
-                    spriteCam.shake(0.01, 0.2);
-                    FlxG.state.subState.funnyCam.shake(0.01, 0.2);
-                  });
-
-                  var characterSprite:BaseCharacter = CharacterDataParser.fetchCharacter(curCharID);
-                  characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
-                  characterWheel.replace(lockedChill, characterSprite);
-                  characterSprite.camera = spriteCam;
-                  configureChar(characterSprite, characterData?.characterMenu);
-
-                  busy = false;
-                  uiCam.alpha = 1;
-                  if (FlxG.sound.music != null) FlxG.sound.music.fadeIn();
-                }
-              }
-            }
-            else
-            {
-              lockedChill.playAnimation('unlock');
-              lockedChill.onAnimationFrame.add(function(name, frame) {
-                if (name == 'unlock' && frame == 36)
-                {
-                  flashScreen(0xFFFFFFFF, 0.05, 1);
-                  new FlxTimer().start(0.025, function() {
-                    updateCharInfo();
-                    if (selected.visible) selected.visible = false;
-                    newGraphic.visible = true;
-                    lockedChill.playAnimation('idle', true);
-                    uiCam.shake(0.01, 0.2);
-                    spriteCam.shake(0.01, 0.2);
-                    FlxG.state.subState.funnyCam.shake(0.01, 0.2);
-                  });
-                  busy = false;
-                  uiCam.alpha = 1;
-                  if (FlxG.sound.music != null) FlxG.sound.music.fadeIn();
-                }
-              });
-            }
-          });
-        }
-      });
-  }
-
-  /**
-   * Update character information.
-   */
-  function updateCharInfo():Void
-  {
-    if (charDesc != null) remove(charDesc);
-
-    selectText.text = topText[pageIndex];
-    selectText.color = topTextColor[pageIndex];
-    selectText.screenCenter(0x01);
-    selected.visible = selectedTextVisibility();
-
-    newGraphic.visible = false;
-
-    charDesc = new FlxText(250, 510, 0, "PLACEHOLDER");
-    charDesc.wordWrap = true;
-    charDesc.fieldWidth = 800;
-    charDesc.camera = uiCam;
-
-    var descText:String;
-
-    if (curCharID != 'default')
-    {
-      characterInfo = characterMap.get(curCharID);
-      ownerJSONname = characterInfo[0];
-      characterData = jsonCharacterCache.get(ownerJSONname)[0];
-      charIconData = (curCharID != 'default') ? jsonCharacterCache.get(ownerJSONname)[1] : null;
-    }
-
-    switch (curCharID)
-    {
-      case 'default':
-        charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-        charName.text = "DEFAULT";
-        descText = "This is the Default character defined by the song.";
-        configureText(charDesc, "", [-20, 0], 45, Paths.font("PhantomMuff.ttf"));
-      default:
-        if (lockedCharMap.exists(curCharID))
-        {
-          charName.text = "LOCKED";
-
-          var unlockHint = characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: " + characterData.description.unlockCondition : "";
-
-          descText = "This character is locked! I wonder who it could be..." + unlockHint;
-
-          configureText(charDesc, "", null, null, Paths.font("PhantomMuff.ttf"));
-        }
-        else
-        {
-          charName.text = charIconData?.name;
-          charIcon.configure(charIconData?.healthIcon);
-          charIcon.size.set(1, 1);
-          charIcon.setPosition(270, 380);
-
-          // TODO: Move this somewhere else in the menu.
-          descText = characterData.description?.text != null ? characterData.description.text : "No description was specified in the JSON file.";
-          var offsets:Array<Int> = [
-            characterData.description?.offsets != null ? characterData.description?.offsets[0] : 0,
-            characterData.description?.offsets != null ? characterData.description?.offsets[1] : 0
-          ];
-
-          configureText(charDesc, "", offsets, characterData.description?.size, Paths.font("PhantomMuff.ttf"));
-        }
-    }
-
-    if (typewriterTimer != null) typewriterTimer.cancel();
-
-    typewriterIndex = 0;
-
-    typewriterTimer = new FlxTimer();
-    typewriterTimer.start(0.01, function(timer:FlxTimer) {
-      if (typewriterIndex < descText.length)
-      {
-        charDesc.text = descText.substring(0, typewriterIndex + 1);
-        typewriterIndex++;
-      }
-      else
-      {
-        timer.cancel();
-        typewriterIndex = 0;
-      }
-    }, descText.length + 1);
-
-    // Making it not look so awkward when "Simplify UI" is turned on.
-    if (saveData.preferences.potatoMode || curCharID == 'default')
-    {
-      charIcon.setPosition(500, 230);
-      charIcon.size.set(1.7, 1.7);
-    }
-
-    if (!saveData.preferences.potatoMode)
-    {
-      for (icon in iconGrid)
-      {
-        if (curCharID == 'default' || lockedCharMap.exists(curCharID))
-        {
-          icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-        }
-        else if (icon.characterId != charIconData?.healthIcon.id)
-        {
-          icon.configure(charIconData?.healthIcon);
-        }
-      }
-    }
-
-    if (lockedCharMap.exists(curCharID))
-    {
-      if (charIcon != null) charIcon.visible = false;
-      if (saveData.preferences.potatoMode) lockedChill.visible = true;
-    }
-    else
-    {
-      if (charIcon != null) charIcon.visible = true;
-      if (saveData.preferences.potatoMode) lockedChill.visible = false;
-    }
-
-    charName.screenCenter(0x01);
-    // TODO: Move this somewhere else in the menu.
-    selected.y = charDesc.y - 60;
-
-    add(charDesc);
-
-    // Do the unlock animation if we haven't seen it yet.
-    if (lockedCharMap.exists(curCharID)
-      && ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [curCharID, characterData.unlockMethod]))
-    {
-      if (saveData.seenUnlocks.indexOf(curCharID) == -1)
-      {
-        lockedCharMap.remove(curCharID);
-        saveData.seenUnlocks.push(curCharID);
-        ModuleHandler.getModule("CharacterHandler").scriptSet('saveData', saveData);
-        Save.instance.modOptions.set("FunkerSelector", saveData);
-        Save.instance.flush();
-        ModuleHandler.getModule("CharacterHandler").scriptSet('lockedCharMap', lockedCharMap);
-        doUnlockAnimation();
-      }
-    }
-  }
+class CharacterSelectSubState extends MusicBeatSubState {
+	var charName:FlxText;
+	var charDesc:FlxText;
+	var selected:FlxText;
+	var numberThing:FlxText;
+
+	var leftDifficultyArrow:FunkinSprite;
+	var rightDifficultyArrow:FunkinSprite;
+	var keyBox:FunkinSprite;
+	var descBox:FunkinSprite;
+	var newGraphic:FunkinSprite;
+
+	// NOTE: This is either a `FunkinSprite`, or a `Lock`
+	// depending on if "Simplify UI" is enabled or not.
+	var lockedChill:Null;
+
+	var unlockSound:FunkinSound;
+
+	var hotkeyCam:FunkinCamera;
+	var uiCam:FunkinCamera;
+	var spriteCam:FunkinCamera;
+
+	/**
+	 * A map containing every character.
+	 */
+	var characterMap:StringMap<String, Array<String, String>> = ModuleHandler.getModule("CharacterHandler").scriptGet('characterMap');
+
+	/**
+	 * A filtered character array for the current page.
+	 * We still use this array since `CharacterMenu` is built around Arrays.
+	 */
+	var filteredKeys:Array<String> = [];
+
+	/**
+	 * The save data for Funker Selector.
+	 */
+	var saveData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptGet('saveData');
+
+	// NOTE: For writing, access characterIDs directly. This is only for reading.
+	var characterIDsArray:Array<String> = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
+
+	/**
+	 * A map of all the locked characters.
+	 */
+	var lockedCharMap:StringMap<String> = ModuleHandler.getModule("CharacterHandler").scriptGet('lockedCharMap');
+
+	/**
+	 * The JSON character cache, which is retrieved from `charHandler`.
+	 */
+	var jsonCharacterCache:StringMap<String, Dynamic> = ModuleHandler.getModule("CharacterHandler").scriptGet('jsonCharacterCache');
+
+	// For the top text in the menu.
+	var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "SPEAKER CHARACTERS"];
+	var topTextColor = [0xFF2DB2D2, 0xFFAF66CE, 0xFFA7004C];
+
+	/**
+	 * Pages.
+	 * 
+	 * This is just an array, their index is used to control a lot of things in the menu.
+	 */
+	var pages:Array<String> = ['bf', 'dad', 'gf'];
+
+	var charIcon:HealthIcon;
+	var iconGrid:Array<HealthIcon> = [];
+
+	var charIndex:Int = 0;
+	var pageIndex:Int = 0;
+
+	var characterWheel:FlxTypedGroup<BaseCharacter> = new FlxTypedGroup();
+
+	/**
+	 * The current song BPM in Freeplay.
+	 */
+	var songBPM:Float = ModuleHandler.getModule("CharacterHandler").scriptGet('freeplayBPM');
+
+	/**
+	 * The current character ID.
+	 */
+	var curCharID:String = 'default';
+
+	/**
+	 * If enabled, the menu will stop responding to inputs.
+	 * This is used for the unlock animation
+	 */
+	var busy:Bool = false;
+
+	/**
+	 * Script Event called when this SubState is closed.
+	 */
+	var FS_EXITED_SUBSTATE:String = "FS_EXITED_SUBSTATE";
+
+	/**
+	 * The base scroll speed for the icon grid.
+	 */
+	var ICON_SCROLL_SPEED:Float = 0.3;
+
+	var typewriterTimer:FlxTimer = null;
+
+	var typewriterIndex:Int = 0;
+
+	public function new() {
+		super();
+	}
+
+	public override function create():Void {
+		super.create();
+
+		setupUIStuff();
+		updateFilteredKeys();
+		if (!saveData.preferences.potatoMode)
+			buildCharacterWheel();
+		jumpToCurSelected();
+	}
+
+	public override function update(elapsed:Float):Void {
+		super.update(elapsed);
+
+		conductorInUse.update();
+
+		if (!busy)
+			handleKeyShit();
+
+		for (icon in iconGrid) {
+			// Speed is capped at 300 BPM, I don't want motion sickness.
+			icon.x -= ICON_SCROLL_SPEED * (Math.min(songBPM, 300) / 60);
+			icon.y += (ICON_SCROLL_SPEED * (Math.min(songBPM, 300) / 60)) / 2; // Vertical speed is halved.
+
+			if (icon.x < -icon.width) {
+				icon.x += (FlxG.width + icon.width) + 70;
+			}
+
+			if (icon.y > FlxG.height) {
+				icon.y -= (FlxG.height + icon.height) + 30;
+			}
+		}
+
+		if (!saveData.preferences.potatoMode) {
+			for (index in 0...characterWheel.members.length) {
+				var item:Dynamic = characterWheel.members[index];
+				if (item != null) {
+					if (item is BaseCharacter) {
+						// TODO: Maybe *don't* do this every frame????
+						characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [item.characterId]);
+					} else { // Assume the object is `lockedChill`
+						characterData = {
+							characterMenu: {
+								position: [200, 0]
+							}
+						};
+					}
+				}
+
+				var xOffset:Float = characterData?.characterMenu != null ? characterData.characterMenu.position[0] : 0;
+
+				item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.25);
+			}
+		}
+
+		if (uiCam != null && spriteCam != null) {
+			uiCam.zoom = MathUtil.smoothLerp(uiCam.zoom, 1, FlxG.elapsed, 0.45);
+			spriteCam.zoom = MathUtil.smoothLerp(spriteCam.zoom, 1, FlxG.elapsed, 0.45);
+		}
+	}
+
+	function buildCharacterWheel():Void {
+		characterWheel.clear();
+
+		for (characterIndex in 0...filteredKeys.length) {
+			var characterID:String = filteredKeys[characterIndex];
+			var characterSprite:BaseCharacter = (characterID != 'default' ? CharacterDataParser.fetchCharacter(characterID) : null);
+			var lockedChill:FunkinSprite;
+
+			if (characterID != 'default') {
+				characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [characterID]);
+			}
+
+			if (characterSprite != null) {
+				characterSprite.camera = spriteCam;
+				if (lockedCharMap.exists(characterID)) {
+					lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
+					lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
+					lockedChill.animation.addByPrefix('denied', 'cannot select0', 24, false);
+					lockedChill.animation.addByPrefix('death', 'locked man explodes0', 24, false);
+					lockedChill.animation.play('idle');
+					lockedChill.animation.finishCallback = function(_) {
+						lockedChill.offset.set();
+						lockedChill.animation.play('idle');
+					};
+					lockedChill.scale.set(1.2, 1.2);
+					lockedChill.camera = spriteCam;
+					characterWheel.add(lockedChill);
+				} else {
+					configureChar(characterSprite, characterData?.characterMenu);
+					characterWheel.add(characterSprite);
+				}
+			} else {
+				characterWheel.add(null);
+			}
+		}
+
+		changeCharacter();
+	}
+
+	/**
+	 * Stolen from `StoryMenuState.hx` LOL
+	 * 
+	 * Changes the selected character.
+	 * @param change +1 (right), -1 (left)
+	 */
+	function changeCharacter(change:Int = 0):Void {
+		var prevIndex:Int = charIndex;
+		charIndex = (prevIndex + (change + filteredKeys.length)) % filteredKeys.length;
+
+		// Wrap around
+		if (charIndex < 0)
+			charIndex = filteredKeys.length - 1;
+		if (charIndex >= filteredKeys.length)
+			charIndex = 0;
+
+		curCharID = filteredKeys[charIndex];
+
+		if (!saveData.preferences.potatoMode) {
+			for (index in 0...characterWheel.members.length) {
+				var item:Dynamic = characterWheel.members[index];
+
+				if (index == charIndex - 1) {
+					item.alpha = 1.0;
+				} else {
+					item.alpha = 0.5;
+				}
+			}
+		}
+
+		if (charIndex != prevIndex) {
+			if (saveData.preferences.preferredSFX == "charSelect") {
+				FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
+			} else {
+				FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+			}
+		}
+
+		updateCharInfo();
+
+		numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
+		numberThing.screenCenter(0x01);
+	}
+
+	function beatHit():Void {
+		bopDaThing();
+		if (!saveData.preferences.potatoMode) {
+			for (index in 0...characterWheel.members.length) {
+				var item:Dynamic = characterWheel.members[index];
+				if (index == charIndex - 1 && item is BaseCharacter)
+					item.dance();
+			}
+		}
+
+		if (conductorInUse.currentBeat % 4 == 0) {
+			if (uiCam != null && spriteCam != null) {
+				uiCam.zoom = 1.02;
+				spriteCam.zoom = 1.02;
+			}
+		}
+	}
+
+	/**
+	 * Updates the `filteredKeys` array based on the current `pageIndex`.
+	 */
+	function updateFilteredKeys():Void {
+		trace('[Funker Selector] Sorting the Character Map...');
+		filteredKeys = ['default']; // Ensures 'default' is always the first thing.
+
+		tempArray = [];
+
+		for (key in characterMap.keys()) {
+			tempArray.push(key);
+		}
+
+		iHateMyLife = tempArray.filter(function(shit) {
+			characterType = characterMap.get(shit)[1];
+			switch (pageIndex) {
+				case 0:
+					if (characterType is Array)
+						return characterType.indexOf('bf') != -1 || characterType.indexOf('player') != -1;
+					else
+						return characterType == 'bf' || characterType == 'player';
+				case 1:
+					if (characterType is Array)
+						return characterType.indexOf('dad') != -1 || characterType.indexOf('opponent') != -1;
+					else
+						return characterType == 'dad' || characterType == 'opponent';
+				case 2:
+					if (characterType is Array)
+						return characterType.indexOf('gf') != -1 || characterType.indexOf('speaker') != -1;
+					else
+						return characterType == 'gf' || characterType == 'speaker';
+			}
+		});
+
+		iHateMyLife.sort(function(a:String, b:String):Int {
+			characterOwnerA = characterMap.get(a)[0];
+			characterOwnerB = characterMap.get(b)[0];
+			characterA = jsonCharacterCache.get(characterOwnerA);
+			characterB = jsonCharacterCache.get(characterOwnerB);
+
+			characterDataA = characterA[1];
+			characterDataB = characterB[1];
+
+			nameA = characterDataA.name.toUpperCase();
+			nameB = characterDataB.name.toUpperCase();
+
+			if (nameA < nameB) {
+				return -1;
+			} else if (nameA > nameB) {
+				return 1;
+			} else {
+				return 0;
+			}
+		});
+
+		filteredKeys = filteredKeys.concat(iHateMyLife);
+	}
+
+	/**
+	 * Make a super awesome cool icon grid!
+	 * @param spacing The spacing of the icons, I guess.
+	 * 
+	 * This is disabled if "Simplify UI" is turned on in the Options Menu.
+	 */
+	function createIconGrid(spacing:Int, ?alpha:Float = null):Void {
+		var charIconData = curCharID != 'default' ? jsonCharacterCache.get(curCharID)[1] : null;
+		var columns = Math.ceil(FlxG.width / (spacing * 2));
+		var rows = Math.ceil(FlxG.height / (spacing * 2));
+		var xStart = (FlxG.width - columns * spacing * 2) / 2;
+		var yStart = (FlxG.height - rows * spacing * 2) / 2;
+
+		for (i in 0...rows) {
+			for (j in 0...columns) {
+				for (k in 0...2) {
+					for (l in 0...2) {
+						var icon = new HealthIcon('dad', 0);
+						icon.x = xStart + (j * 2 + k) * spacing;
+						icon.y = yStart + (i * 2 + l) * spacing;
+						icon.alpha = (alpha != null ? alpha : 0.2);
+
+						if (charIconData != null) {
+							icon.configure(charIconData.healthIcon);
+						} else {
+							icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+						}
+
+						add(icon);
+						iconGrid.push(icon);
+						icon.camera = spriteCam;
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Check if the JSON file in `data/characters/` ACTUALLY exists.
+	 * 
+	 * I wrote this function because OpenFL Assets is case-insensitive
+	 * on Windows and macOS. This is for an edge case where the JSON filename
+	 * in data/characters/ has different capitalization than the Character ID
+	 * specified in the Funker Selector JSON. Because OpenFL is case insensitive, it will
+	 * always return true, which confuses Funker Selector!
+	 * 
+	 * This was reported in issue [#1](https://github.com/AbnormalPoof/FunkerSelector/issues/1)!
+	 * 
+	 * This should hopefully solve any and all issues like that one.
+	 * 
+	 * @param string The character ID we're comparing.
+	 * @return Returns a true or false if the file exists.
+	 */
+	function charJSONCheck(string:String):Bool {
+		if (Assets.exists(Paths.json('characters/' + string))) {
+			var characterFiles = DataAssets.listDataFilesInPath('characters/');
+			return characterFiles.indexOf(string) != -1;
+		}
+		return false;
+	}
+
+	/**
+	 * Configuring the JSON character, setting up position, scale, flipping, etc.
+	 */
+	function configureChar(characterSprite:BaseCharacter, data:Null):BaseCharacter {
+		if (data == null)
+			return;
+		var position = data.position != null ? data.position : [0, 0];
+		var scale = data.scale != null ? (data.isPixel ? data.scale * 6 : data.scale) : (data.isPixel ? 6.0 : 1.0);
+		characterSprite.y += position[1];
+		characterSprite.flipX = data.flipX != null ? data.flipX : false;
+		characterSprite.scale.set(scale, scale);
+		characterSprite.antialiasing = data.isPixel != null ? !data.isPixel : true;
+		characterSprite.pixelPerfectRender = data?.isPixel;
+
+		return characterSprite;
+	}
+
+	/**
+	 * Set up UI stuff like the BG and text.
+	 */
+	function setupUIStuff():Void {
+		spriteCam = new FunkinCamera('SpriteCam');
+		FlxG.cameras.add(spriteCam, false);
+		spriteCam.bgColor = 0x0;
+
+		uiCam = new FunkinCamera('UIElements');
+		FlxG.cameras.add(uiCam, false);
+		uiCam.bgColor = 0x0;
+
+		hotkeyCam = new FunkinCamera('HotkeyMenu');
+		FlxG.cameras.add(hotkeyCam, false);
+		hotkeyCam.bgColor = 0x0;
+		hotkeyCam.visible = false;
+
+		bg = new FunkinSprite(0, 0);
+		bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
+		bg.alpha = 0;
+		bg.camera = spriteCam;
+
+		selectText = configureText(null, null, [170, 10], 50, Paths.font("PhantomMuff.ttf"));
+		selectText.screenCenter(0x01);
+		selectText.camera = uiCam;
+
+		numberThing = configureText(null, null, [170, 60], 45, Paths.font("PhantomMuff.ttf"));
+		numberThing.color = 0xFFE3E1E1;
+		numberThing.camera = uiCam;
+
+		selected = configureText(null, '(SELECTED)', [720, 220], 50, Paths.font("PhantomMuff.ttf"));
+		selected.color = 0xFF53FF38;
+		selected.visible = false;
+		selected.camera = uiCam;
+
+		hotkeyText = configureText(null, 'D - Hotkeys', [990, 15], 45, Paths.font("PhantomMuff.ttf"));
+		hotkeyText.color = 0xFFE3E1E1;
+		hotkeyText.camera = uiCam;
+
+		hotkeys = configureText(null,
+			'F - Reset everything to default.\n\nJ - Jump to the currently selected character.\n\nQ - Switch to the previous page.\n\nE - Switch to the next page.\n\nESC - Close this.',
+			[350, 80], 40, Paths.font("PhantomMuff.ttf"));
+		hotkeys.camera = hotkeyCam;
+		hotkeys.wordWrap = true;
+		hotkeys.fieldWidth = 600;
+
+		charName = configureText(null, null, [170, 110], 70, Paths.font("PhantomMuff.ttf"));
+		charName.camera = uiCam;
+
+		leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
+		leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
+		leftDifficultyArrow.animation.addByPrefix('press', 'leftConfirm0');
+		leftDifficultyArrow.animation.play('idle');
+		leftDifficultyArrow.scale.set(1.5, 1.5);
+		leftDifficultyArrow.camera = uiCam;
+
+		rightDifficultyArrow = FunkinSprite.createSparrow(1200, leftDifficultyArrow.y, 'storymenu/ui/arrows');
+		rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
+		rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
+		rightDifficultyArrow.animation.play('idle');
+		rightDifficultyArrow.scale.set(1.5, 1.5);
+		rightDifficultyArrow.camera = uiCam;
+
+		if (saveData.preferences.potatoMode) {
+			lockedChill = new Lock(300, 270, FlxG.random.int(1, 9));
+			lockedChill.onAnimationComplete.add(function(_) {
+				lockedChill.playAnimation('idle');
+			});
+			lockedChill.playAnimation('idle');
+			lockedChill.scale.set(2, 2);
+			lockedChill.camera = spriteCam;
+			lockedChill.visible = false;
+		}
+
+		newGraphic = FunkinSprite.createSparrow(840, 460, 'freeplay/freeplayCapsule/new');
+		newGraphic.animation.addByPrefix('new', 'NEW notif', 24);
+		newGraphic.animation.play('new');
+		newGraphic.camera = uiCam;
+		newGraphic.scale.set(1.8, 1.8);
+		newGraphic.visible = false;
+
+		keyBox = new FunkinSprite(0, 0);
+		keyBox.makeSolidColor(600, 600, 0xFF000000);
+		keyBox.camera = hotkeyCam;
+		keyBox.alpha = 0.8;
+		keyBox.screenCenter();
+
+		// TODO: Find a way to keep the text within the confines of this
+		descBox = new FunkinSprite(0, 500);
+		descBox.makeSolidColor(850, 200, 0xFF000000);
+		descBox.camera = uiCam;
+		descBox.alpha = 0.6;
+		descBox.screenCenter(0x01);
+
+		charIcon = new HealthIcon('dad', 0);
+		charIcon.camera = uiCam;
+
+		unlockSound = new FunkinSound();
+		unlockSound.loadEmbedded(Paths.sound('funkerSelector/charUnlock'));
+		unlockSound.volume = 1;
+
+		add(bg);
+		if (!saveData.preferences.potatoMode)
+			createIconGrid(150, 0.2);
+		add(leftDifficultyArrow);
+		add(rightDifficultyArrow);
+		if (!saveData.preferences.potatoMode)
+			add(characterWheel);
+		add(selectText);
+		add(numberThing);
+		add(selected);
+		add(hotkeyText);
+		add(charIcon);
+		add(charName);
+		if (saveData.preferences.potatoMode)
+			add(lockedChill);
+		add(keyBox);
+		add(hotkeys);
+		add(newGraphic);
+		add(descBox);
+
+		WindowUtil.setWindowTitle('Friday Night Funkin\' - Funker Selector Menu');
+
+		FlxTween.tween(bg, {alpha: 0.5}, 0.5, {ease: FlxEase.quartOut});
+
+		trace('[Funker Selector] UI has been set up.');
+
+		conductorInUse.forceBPM(songBPM);
+	}
+
+	/**
+	 * Bopping the icons, because why not?
+	 */
+	function bopDaThing():Void {
+		if (charIcon != null) {
+			if (charIcon.width > charIcon.height) {
+				charIcon.setGraphicSize(Std.int(charIcon.width + (150 * charIcon.size.x * 0.2)), 0);
+			} else {
+				charIcon.setGraphicSize(0, Std.int(charIcon.height + (150 * charIcon.size.y * 0.2)));
+			}
+
+			charIcon.angle += 1;
+
+			charIcon.updateHitbox();
+			charIcon.updatePosition();
+		}
+	}
+
+	/**
+	 * Flash the screen with a specific color.
+	 */
+	function flashScreen(color:FlxColor, duration:Float, ?alpha:Float = 1) {
+		var duration:Float = duration;
+		var alpha:Float = alpha;
+
+		var white = new FunkinSprite(0, 0);
+		white.makeSolidColor(FlxG.width, FlxG.height, color);
+		white.alpha = 0;
+		white.camera = uiCam;
+		this.add(white);
+
+		FlxTween.tween(white, {alpha: alpha}, duration, {
+			ease: FlxEase.quadOut,
+			onComplete: function(twn:FlxTween) {
+				FlxTween.tween(white, {alpha: alpha}, duration, {
+					ease: FlxEase.quadOut,
+					onComplete: function(twn:FlxTween) {
+						this.remove(white);
+					}
+				});
+			}
+		});
+	}
+
+	/**
+	 * Reponsible for handling inputs in the menu.
+	 */
+	function handleKeyShit():Void {
+		if (FlxG.keys.justPressed.ESCAPE) {
+			if (hotkeyCam.visible) {
+				hotkeyCam.visible = false;
+			} else {
+				FunkinSound.playOnce(Paths.sound('cancelMenu'));
+
+				// Scripted characters overwrite the suffixes when
+				// they're shown. So we want to manually reset them!
+				PauseSubState.musicSuffix = '';
+				GameOverSubState.musicSuffix = '';
+				GameOverSubState.blueBallSuffix = '';
+
+				WindowUtil.setWindowTitle('Friday Night Funkin\'');
+				ModuleHandler.callEvent(new ScriptEvent(FS_EXITED_SUBSTATE));
+				close();
+			}
+		}
+
+		if (!hotkeyCam.visible) {
+			if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT) {
+				changeCharacter(FlxG.keys.justPressed.LEFT ? -1 : 1);
+			}
+
+			leftDifficultyArrow.animation.play(FlxG.keys.pressed.LEFT ? 'press' : 'idle');
+			rightDifficultyArrow.animation.play(FlxG.keys.pressed.RIGHT ? 'press' : 'idle');
+
+			if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E) {
+				pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
+				charIndex = 0;
+				updateFilteredKeys();
+				if (!saveData.preferences.potatoMode)
+					buildCharacterWheel();
+				changeCharacter();
+				updateCharInfo();
+			}
+
+			// Mouse scrolling:
+			// Up = Left
+			// Down = Right
+			if (FlxG.mouse.wheel < 0) {
+				changeCharacter(1);
+			} else if (FlxG.mouse.wheel > 0) {
+				changeCharacter(-1);
+			}
+
+			if (FlxG.keys.justPressed.J) {
+				if (saveData.preferences.preferredSFX == "charSelect") {
+					FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
+				} else {
+					FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+				}
+				jumpToCurSelected();
+			}
+
+			if (FlxG.keys.justPressed.F) {
+				var shouldPlaySound:Bool = false;
+				if (saveData.characterIDs.bf != 'default') {
+					saveData.characterIDs.bf = 'default';
+					shouldPlaySound = true;
+				}
+				if (saveData.characterIDs.dad != 'default') {
+					saveData.characterIDs.dad = 'default';
+					shouldPlaySound = true;
+				}
+				if (saveData.characterIDs.gf != 'default') {
+					saveData.characterIDs.gf = 'default';
+					shouldPlaySound = true;
+				}
+				if (shouldPlaySound) {
+					FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
+					selected.visible = selectedTextVisibility();
+					Save.instance.modOptions.set("FunkerSelector", saveData);
+					Save.instance.flush();
+
+					// Updating the array with the latest changes
+					characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
+				}
+			}
+
+			if (FlxG.keys.justPressed.D) {
+				hotkeyCam.visible = true;
+			}
+
+			if (FlxG.keys.justPressed.ENTER) {
+				var shouldConfirm:Bool = false;
+				if (curCharID != characterIDsArray[pageIndex]) {
+					if (!lockedCharMap.exists(curCharID)) {
+						switch (pageIndex) {
+							case 0:
+								if (saveData.characterIDs.bf != curCharID) {
+									saveData.characterIDs.bf = curCharID;
+									shouldConfirm = true;
+								}
+							case 1:
+								if (saveData.characterIDs.dad != curCharID) {
+									saveData.characterIDs.dad = curCharID;
+									shouldConfirm = true;
+								}
+							case 2:
+								if (saveData.characterIDs.gf != curCharID) {
+									saveData.characterIDs.gf = curCharID;
+									shouldConfirm = true;
+								}
+						}
+					}
+				}
+				if (shouldConfirm) {
+					confirmThing();
+					selected.visible = selectedTextVisibility();
+					newGraphic.visible = false;
+					Save.instance.modOptions.set("FunkerSelector", saveData);
+					Save.instance.flush();
+
+					// Updating the array with the latest changes
+					characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
+				} else {
+					if (saveData.preferences.preferredSFX == "charSelect") {
+						FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
+					} else {
+						FunkinSound.playOnce(Paths.sound('cancelMenu'));
+					}
+					flashScreen(0xFFFF0000, 0.03, 0.1);
+					if (!saveData.preferences.potatoMode) {
+						for (index in 0...characterWheel.members.length) {
+							var item = characterWheel.members[index];
+							if (index == charIndex - 1 && item is FunkinSprite)
+								item.animation.play('denied', true);
+						}
+					} else {
+						if (lockedChill != null)
+							lockedChill.playAnimation("clicked", true);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Jumps to the currently selected character.
+	 */
+	function jumpToCurSelected():Void {
+		// In the event that the saved character ID no longer exists, we fallback to default.
+		if (!characterMap.exists(characterIDsArray[pageIndex]) && characterIDsArray[pageIndex] != 'default') {
+			trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
+			switch (pageIndex) {
+				case 0:
+					saveData.characterIDs.bf = 'default';
+				case 1:
+					saveData.characterIDs.dad = 'default';
+				case 2:
+					saveData.characterIDs.gf = 'default';
+			}
+			// Save everything
+			Save.instance.modOptions.set("FunkerSelector", saveData);
+			Save.instance.flush();
+
+			// Updating the array with the latest changes
+			characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
+		}
+		charIndex = filteredKeys.indexOf(characterIDsArray[pageIndex]);
+		curCharID = characterIDsArray[pageIndex];
+		changeCharacter();
+		updateCharInfo();
+	}
+
+	function confirmThing():Void {
+		if (saveData.preferences.preferredSFX == "charSelect") {
+			FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
+		} else {
+			FunkinSound.playOnce(Paths.sound('confirmMenu'));
+		}
+		if (!saveData.preferences.potatoMode) {
+			characterData = jsonCharacterCache.get(curCharID) != null ? jsonCharacterCache.get(curCharID)[0] : null;
+			animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
+			var item:Dynamic = characterWheel.members[charIndex - 1];
+			if (item != null && item is BaseCharacter)
+				item.playAnimation(animation, true, true);
+		}
+		if (charIcon.hasAnimation('winning')) {
+			// Play the winning animation if it's available.
+			charIcon.playAnimation('winning');
+
+			// I wanted this really cool effect where the icons in the icon grid would also
+			// play the winning animation!
+			// But let's not play that if "Simplify UI" is turned on.
+			if (!saveData.preferences.potatoMode && iconGrid != null) {
+				for (i in 0...iconGrid.length) {
+					var icon = iconGrid[i];
+					new FlxTimer().start(0.01 * i, function() {
+						icon.playAnimation('winning');
+					});
+				}
+				new FlxTimer().start(0.3, function() {
+					for (i in 0...iconGrid.length) {
+						var icon = iconGrid[i];
+						new FlxTimer().start(0.01 * i, function() {
+							icon.playAnimation('idle');
+						});
+					}
+				});
+			}
+		}
+
+		flashScreen(0xFFFFFFFF, 0.03, 0.1);
+	}
+
+	function selectedTextVisibility():Bool {
+		switch (pageIndex) {
+			case 0:
+				return curCharID == saveData.characterIDs.bf;
+			case 1:
+				return curCharID == saveData.characterIDs.dad;
+			case 2:
+				return curCharID == saveData.characterIDs.gf;
+			default:
+				return false;
+		}
+	}
+
+	/**
+	 * Helper function for configuring an FlxText
+	 * @param object The FlxText object
+	 * @param text The text itself
+	 * @param offsets The offsets as an array
+	 * @param size The size of the text
+	 * @param font The font
+	 * @return A FlxText object
+	 */
+	function configureText(object:FlxText, ?text:String = "", ?offsets:Array<Int>, ?size:Int = 38, ?font:String = null):FlxText {
+		if (text == null)
+			text = "";
+		if (offsets == null)
+			offsets = [0, 0];
+		if (size == null)
+			size = 35;
+		if (object == null)
+			object = new FlxText(0, 0, 0, "PLACEHOLDER");
+
+		object.text = text;
+		object.x += offsets[0];
+		object.y += offsets[1];
+		if (font != null)
+			object.setFormat(font, size, null, 'center');
+
+		return object;
+	}
+
+	/**
+	 * Does a really fucking cool unlock animation.
+	 */
+	function doUnlockAnimation():Void {
+		if (!saveData.preferences.potatoMode) {
+			for (index in 0...characterWheel.members.length) {
+				var item = characterWheel.members[index];
+				if (index == charIndex - 1 && item is FunkinSprite) {
+					lockedChill = item;
+					break;
+				}
+			}
+		}
+		busy = true;
+		if (FlxG.sound.music != null)
+			FlxG.sound.music.fadeOut();
+
+		if (!saveData.preferences.potatoMode) {
+			lockedChill.offset.set();
+			lockedChill.animation.play('idle', true);
+		} else {
+			lockedChill.playAnimation('idle', true);
+		}
+		FlxTween.tween(uiCam, {alpha: 0}, 1, {
+			ease: FlxEase.quartOut,
+			onComplete: function(twn:FlxTween) {
+				unlockSound.play(true);
+				new FlxTimer().start(1.45, function() {
+					if (!saveData.preferences.potatoMode) {
+						lockedChill.offset.set(170, 220);
+						lockedChill.animation.play('death');
+						lockedChill.animation.callback = function(name, frame) {
+							if (name == 'death' && frame == 36) {
+								flashScreen(0xFFFFFFFF, 0.05, 1);
+								new FlxTimer().start(0.025, function() {
+									updateCharInfo();
+									if (selected.visible)
+										selected.visible = false;
+									newGraphic.visible = true;
+									uiCam.shake(0.01, 0.2);
+									spriteCam.shake(0.01, 0.2);
+									FlxG.state.subState.funnyCam.shake(0.01, 0.2);
+								});
+
+								var characterSprite:BaseCharacter = CharacterDataParser.fetchCharacter(curCharID);
+								characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
+								characterWheel.replace(lockedChill, characterSprite);
+								characterSprite.camera = spriteCam;
+								configureChar(characterSprite, characterData?.characterMenu);
+
+								busy = false;
+								uiCam.alpha = 1;
+								if (FlxG.sound.music != null)
+									FlxG.sound.music.fadeIn();
+							}
+						}
+					} else {
+						lockedChill.playAnimation('unlock');
+						lockedChill.onAnimationFrame.add(function(name, frame) {
+							if (name == 'unlock' && frame == 36) {
+								flashScreen(0xFFFFFFFF, 0.05, 1);
+								new FlxTimer().start(0.025, function() {
+									updateCharInfo();
+									if (selected.visible)
+										selected.visible = false;
+									newGraphic.visible = true;
+									lockedChill.playAnimation('idle', true);
+									uiCam.shake(0.01, 0.2);
+									spriteCam.shake(0.01, 0.2);
+									FlxG.state.subState.funnyCam.shake(0.01, 0.2);
+								});
+								busy = false;
+								uiCam.alpha = 1;
+								if (FlxG.sound.music != null)
+									FlxG.sound.music.fadeIn();
+							}
+						});
+					}
+				});
+			}
+		});
+	}
+
+	/**
+	 * Update character information.
+	 */
+	function updateCharInfo():Void {
+		if (charDesc != null)
+			remove(charDesc);
+
+		selectText.text = topText[pageIndex];
+		selectText.color = topTextColor[pageIndex];
+		selectText.screenCenter(0x01);
+		selected.visible = selectedTextVisibility();
+
+		newGraphic.visible = false;
+
+		charDesc = new FlxText(250, 510, 0, "PLACEHOLDER");
+		charDesc.wordWrap = true;
+		charDesc.fieldWidth = 800;
+		charDesc.camera = uiCam;
+
+		var descText:String;
+
+		if (curCharID != 'default') {
+			characterInfo = characterMap.get(curCharID);
+			ownerJSONname = characterInfo[0];
+			characterData = jsonCharacterCache.get(ownerJSONname)[0];
+			charIconData = (curCharID != 'default') ? jsonCharacterCache.get(ownerJSONname)[1] : null;
+		}
+
+		switch (curCharID) {
+			case 'default':
+				charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+				charName.text = "DEFAULT";
+				descText = "This is the Default character defined by the song.";
+				configureText(charDesc, "", [-20, 0], 45, Paths.font("PhantomMuff.ttf"));
+			default:
+				if (lockedCharMap.exists(curCharID)) {
+					charName.text = "LOCKED";
+
+					var unlockHint = characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: "
+						+ characterData.description.unlockCondition : "";
+
+					descText = "This character is locked! I wonder who it could be..." + unlockHint;
+
+					configureText(charDesc, "", null, null, Paths.font("PhantomMuff.ttf"));
+				} else {
+					charName.text = charIconData?.name;
+					charIcon.configure(charIconData?.healthIcon);
+					charIcon.size.set(1, 1);
+					charIcon.setPosition(270, 380);
+
+					// TODO: Move this somewhere else in the menu.
+					descText = characterData.description?.text != null ? characterData.description.text : "No description was specified in the JSON file.";
+					var offsets:Array<Int> = [
+						characterData.description?.offsets != null ? characterData.description?.offsets[0] : 0,
+						characterData.description?.offsets != null ? characterData.description?.offsets[1] : 0
+					];
+
+					configureText(charDesc, "", offsets, characterData.description?.size, Paths.font("PhantomMuff.ttf"));
+				}
+		}
+
+		if (typewriterTimer != null)
+			typewriterTimer.cancel();
+
+		typewriterIndex = 0;
+
+		typewriterTimer = new FlxTimer();
+		typewriterTimer.start(0.01, function(timer:FlxTimer) {
+			if (typewriterIndex < descText.length) {
+				charDesc.text = descText.substring(0, typewriterIndex + 1);
+				typewriterIndex++;
+			} else {
+				timer.cancel();
+				typewriterIndex = 0;
+			}
+		}, descText.length + 1);
+
+		// Making it not look so awkward when "Simplify UI" is turned on.
+		if (saveData.preferences.potatoMode || curCharID == 'default') {
+			charIcon.setPosition(500, 230);
+			charIcon.size.set(1.7, 1.7);
+		}
+
+		if (!saveData.preferences.potatoMode) {
+			for (icon in iconGrid) {
+				if (curCharID == 'default' || lockedCharMap.exists(curCharID)) {
+					icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+				} else if (icon.characterId != charIconData?.healthIcon.id) {
+					icon.configure(charIconData?.healthIcon);
+				}
+			}
+		}
+
+		if (lockedCharMap.exists(curCharID)) {
+			if (charIcon != null)
+				charIcon.visible = false;
+			if (saveData.preferences.potatoMode)
+				lockedChill.visible = true;
+		} else {
+			if (charIcon != null)
+				charIcon.visible = true;
+			if (saveData.preferences.potatoMode)
+				lockedChill.visible = false;
+		}
+
+		charName.screenCenter(0x01);
+		// TODO: Move this somewhere else in the menu.
+		selected.y = charDesc.y - 60;
+
+		add(charDesc);
+
+		// Do the unlock animation if we haven't seen it yet.
+		if (lockedCharMap.exists(curCharID)
+			&& ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [curCharID, characterData.unlockMethod])) {
+			if (saveData.seenUnlocks.indexOf(curCharID) == -1) {
+				lockedCharMap.remove(curCharID);
+				saveData.seenUnlocks.push(curCharID);
+				ModuleHandler.getModule("CharacterHandler").scriptSet('saveData', saveData);
+				Save.instance.modOptions.set("FunkerSelector", saveData);
+				Save.instance.flush();
+				ModuleHandler.getModule("CharacterHandler").scriptSet('lockedCharMap', lockedCharMap);
+				doUnlockAnimation();
+			}
+		}
+	}
 }

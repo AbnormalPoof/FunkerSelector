@@ -41,8 +41,7 @@ import String;
  * Module that handles the Character Select button in
  * Freeplay, along with character replacement.
  */
-class CharacterHandler extends Module
-{
+class CharacterHandler extends Module {
   /**
    * The save data for Funker Selector.
    * This holds Character IDs, Preferences and some other stuff.
@@ -107,15 +106,13 @@ class CharacterHandler extends Module
   var charText:AtlasText;
   var charSelectIcon:FunkinSprite;
 
-  function new()
-  {
+  function new() {
     super("CharacterHandler");
 
     // The FIRST thing we check is the game version.
     // We use `lime.app.Application` instead of `Constants.VERSION` because the latter
     // has added suffixes depending on if the game is a debug build or not.
-    if (!VersionUtil.validateVersionStr(Application.current.meta.get('version'), supportedVersionRule))
-    {
+    if (!VersionUtil.validateVersionStr(Application.current.meta.get('version'), supportedVersionRule)) {
       PolymodErrorHandler.showAlert("Funker Selector Error",
         "Funker Selector is not supported on Friday Night Funkin' v" + Application.current.meta.get('version') + ".");
       this.active = false;
@@ -133,28 +130,23 @@ class CharacterHandler extends Module
    * Retrieves the Funker Selector save data.
    * @return The saved data as a dynamic object.
    */
-  function initializeSaveData():Dynamic
-  {
-    var defaultSaveData:Dynamic =
-      {
-        characterIDs:
-          {
-            bf: 'default',
-            gf: 'default',
-            dad: 'default'
-          },
-        preferences:
-          {
-            potatoMode: false,
-            preloadSprites: true,
-            preferredSFX: "funkin",
-            djSwapping: true
-          },
-        seenUnlocks: []
-      };
+  function initializeSaveData():Dynamic {
+    var defaultSaveData:Dynamic = {
+      characterIDs: {
+        bf: 'default',
+        gf: 'default',
+        dad: 'default'
+      },
+      preferences: {
+        potatoMode: false,
+        preloadSprites: true,
+        preferredSFX: "funkin",
+        djSwapping: true
+      },
+      seenUnlocks: []
+    };
 
-    if (Save.instance.modOptions.get("FunkerSelector") == null)
-    {
+    if (Save.instance.modOptions.get("FunkerSelector") == null) {
       Save.instance.modOptions.set("FunkerSelector", defaultSaveData);
       Save.instance.flush();
       saveData = defaultSaveData;
@@ -176,13 +168,11 @@ class CharacterHandler extends Module
         + '\n\n---Seen Unlock Animations---\n\n'
         + saveData.seenUnlocks);
     }
-    else
-    {
+    else {
       saveData = Save.instance.modOptions.get("FunkerSelector");
 
       // Check if save data uses the old system.
-      if (saveData.characterIDs == null && saveData.preferences == null && saveData.seenUnlocks == null)
-      {
+      if (saveData.characterIDs == null && saveData.preferences == null && saveData.seenUnlocks == null) {
         trace('[Funker Selector] Save data needs migration!');
         saveData = migrateSaveData();
       }
@@ -213,31 +203,27 @@ class CharacterHandler extends Module
    * @param oldSave The old save data to use.
    * @return The migrated save file.
    */
-  function migrateSaveData():Dynamic
-  {
+  function migrateSaveData():Dynamic {
     trace('[Funker Selector] Migrating save data...');
 
     var oldCharacterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
     var oldPrefs:Dynamic = Save.instance.modOptions.get("FunkerSelectorSettings");
     var oldSeenUnlocks:Array = Save.instance.modOptions.get("FunkerSelector-SeenChars");
 
-    var migratedSave:Dynamic =
-      {
-        characterIDs:
-          {
-            bf: oldCharacterIDs?.bf != null ? oldCharacterIDs.bf : 'default',
-            gf: oldCharacterIDs?.gf != null ? oldCharacterIDs.gf : 'default',
-            dad: oldCharacterIDs?.dad != null ? oldCharacterIDs.dad : 'default'
-          },
-        preferences:
-          {
-            potatoMode: oldPrefs?.potatoMode != null ? oldPrefs.potatoMode : false,
-            preloadSprites: oldPrefs?.preloadSprites != null ? oldPrefs.preloadSprites : false,
-            preferredSFX: oldPrefs?.preferredSFX != null ? oldPrefs.preferredSFX : 'funkin',
-            djSwapping: oldPrefs?.djSwapping != null ? oldPrefs.djSwapping : true
-          },
-        seenUnlocks: oldSeenUnlocks != null ? oldSeenUnlocks : []
-      };
+    var migratedSave:Dynamic = {
+      characterIDs: {
+        bf: oldCharacterIDs?.bf != null ? oldCharacterIDs.bf : 'default',
+        gf: oldCharacterIDs?.gf != null ? oldCharacterIDs.gf : 'default',
+        dad: oldCharacterIDs?.dad != null ? oldCharacterIDs.dad : 'default'
+      },
+      preferences: {
+        potatoMode: oldPrefs?.potatoMode != null ? oldPrefs.potatoMode : false,
+        preloadSprites: oldPrefs?.preloadSprites != null ? oldPrefs.preloadSprites : false,
+        preferredSFX: oldPrefs?.preferredSFX != null ? oldPrefs.preferredSFX : 'funkin',
+        djSwapping: oldPrefs?.djSwapping != null ? oldPrefs.djSwapping : true
+      },
+      seenUnlocks: oldSeenUnlocks != null ? oldSeenUnlocks : []
+    };
 
     // Clear out the old save data.
     Save.instance.modOptions.remove("FunkerSelector");
@@ -251,8 +237,7 @@ class CharacterHandler extends Module
     return migratedSave;
   }
 
-  function onCreate(event)
-  {
+  function onCreate(event) {
     super.onCreate(event);
 
     // Cache the sprites for JSON characters.
@@ -260,17 +245,12 @@ class CharacterHandler extends Module
     if (saveData.preferences.preloadSprites && !saveData.preferences.potatoMode) cacheJSONSparrows();
   }
 
-  function onUpdate(event)
-  {
+  function onUpdate(event) {
     super.onUpdate(event);
-    if (FlxG.state.subState is FreeplayState)
-    {
-      // Open the CharacterMenu substate.
+    if (FlxG.state.subState is FreeplayState) { // Open the CharacterMenu substate.
       // We need to make a new one everytime since it gets destroyed when it's closed.
-      if (FlxG.keys.justPressed.G && charText.visible && !FlxG.state.subState.busy)
-      {
-        if (charSelect == null)
-        {
+      if (FlxG.keys.justPressed.G && charText.visible && !FlxG.state.subState.busy) {
+        if (charSelect == null) {
           freeplayBPM = getFreeplayCapsuleBPM((FlxG.state.subState));
           charSelect = ScriptedMusicBeatSubState.init("CharacterSelectSubState");
           charSelect.camera = FlxG.state.subState.funnyCam;
@@ -278,15 +258,13 @@ class CharacterHandler extends Module
           trace("[Funker Selector] Opening the Character Select SubState...");
           FlxG.state.subState.openSubState(charSelect);
         }
-        else
-        {
+        else {
           trace("[Funker Selector] The Character Select SubState is already open!");
         }
       }
     }
 
-    if (FlxG.keys.justPressed.F6 && wipeSaveHotkey)
-    {
+    if (FlxG.keys.justPressed.F6 && wipeSaveHotkey) {
       trace("[Funker Selector] DEBUG: Wiping save data...");
       Save.instance.modOptions.remove("FunkerSelector");
       Save.instance.flush();
@@ -300,13 +278,11 @@ class CharacterHandler extends Module
    * @param freeplay The Freeplay SubState to use as a dynamic object.
    * @return The BPM.
    */
-  function getFreeplayCapsuleBPM(freeplay:Dynamic):Float
-  {
+  function getFreeplayCapsuleBPM(freeplay:Dynamic):Float {
     var daSongCapsule = freeplay.grpCapsules.members[freeplay.curSelected];
     var songBPM = daSongCapsule?.freeplayData?.songStartingBpm;
     if (songBPM == null) songBPM = 120;
-    if (daSongCapsule.songText.text == 'Random')
-    {
+    if (daSongCapsule.songText.text == 'Random') {
       var songMusicData:Null<SongMusicData> = SongRegistry.instance.parseMusicData('freeplayRandom');
       songBPM = songMusicData.timeChanges[0].bpm;
     }
@@ -317,21 +293,17 @@ class CharacterHandler extends Module
   /**
    * Stuff for Results and Freeplay.
    */
-  function onSubStateOpenEnd(event)
-  {
+  function onSubStateOpenEnd(event) {
     super.onSubStateOpenEnd(event);
     var state = event.targetState;
     // Set up the Character Select button.
-    if (state is FreeplayState)
-    {
-      if (saveData.preferences.djSwapping)
-      {
+    if (state is FreeplayState) {
+      if (saveData.preferences.djSwapping) {
         trace("[Funker Selector] Switching out DJ...");
         ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, true]);
       }
 
-      if (charSelect != null)
-      {
+      if (charSelect != null) {
         trace("[Funker Selector] Character SubState still exists! Resetting...");
         charSelect = null;
       }
@@ -367,9 +339,7 @@ class CharacterHandler extends Module
     }
 
     // Results screen bullshit.
-    if (state is ResultState)
-    {
-      // More playable character shit
+    if (state is ResultState) { // More playable character shit
       // The results anim will still play, it's just Freeplay won't bug out when we do this.
       // If the original player is part of a Playable Character, we don't do this.
 
@@ -385,11 +355,9 @@ class CharacterHandler extends Module
    * We put this in `onStateChangeBegin();` instead of `onStateChangeEnd();`, otherwise,
    * scripted characters will have their suffixes overridden!
    */
-  override function onStateChangeBegin(event)
-  {
+  override function onStateChangeBegin(event) {
     super.onStateChangeBegin(event);
-    if (event.targetState is PlayState)
-    {
+    if (event.targetState is PlayState) {
       PauseSubState.musicSuffix = '';
       GameOverSubState.musicSuffix = '';
       GameOverSubState.blueBallSuffix = '';
@@ -401,16 +369,13 @@ class CharacterHandler extends Module
     }
   }
 
-  override function onStateChangeEnd(event)
-  {
+  override function onStateChangeEnd(event) {
     super.onStateChangeEnd(event);
 
     // Options Menu stuff
-    if (event.targetState is OptionsState)
-    {
+    if (event.targetState is OptionsState) {
       var prefs = event.targetState.pages.get("preferences");
-      if (prefs != null)
-      {
+      if (prefs != null) {
         prefs.add(prefs.items.createItem(120, 120 * prefs.items.length + 30, "-- FUNKER SELECTOR --", "bold", () -> {})).fireInstantly = true;
 
         prefs.createPrefItemCheckbox("Simplify UI", "Simplifies the UI and disables character sprite caching.", (value) -> {
@@ -424,15 +389,11 @@ class CharacterHandler extends Module
             saveData.preferences.preloadSprites = value;
             Save.instance.modOptions.set("FunkerSelector", saveData);
             Save.instance.flush();
-            if (value)
-            {
+            if (value) {
               cacheJSONSparrows();
             }
-            else
-            {
-              // Remove the JSON Characters from memory when the user disables the option.
-              for (jsonChar in cachedJSONSparrows.keys())
-              {
+            else { // Remove the JSON Characters from memory when the user disables the option.
+              for (jsonChar in cachedJSONSparrows.keys()) {
                 var char = cachedJSONSparrows.get(jsonChar);
                 if (char == null) continue;
                 FlxG.bitmap.remove(char);
@@ -450,12 +411,10 @@ class CharacterHandler extends Module
             saveData.preferences.preferredSFX = value;
             Save.instance.modOptions.set("FunkerSelector", saveData);
             Save.instance.flush();
-            if (value == "charSelect")
-            {
+            if (value == "charSelect") {
               FunkinSound.playOnce(Paths.sound('CS_confirm'));
             }
-            else
-            {
+            else {
               FunkinSound.playOnce(Paths.sound('confirmMenu'));
             }
           }, saveData.preferences.preferredSFX);
@@ -477,12 +436,10 @@ class CharacterHandler extends Module
    * @param characterID The character ID to use.
    * @return The JSON data as a Json object.
    */
-  function parseJSONData(characterID:String = 'default'):Dynamic
-  {
+  function parseJSONData(characterID:String = 'default'):Dynamic {
     var filePath = Paths.json('funkerSelector/' + characterID);
 
-    if (Assets.exists(filePath))
-    {
+    if (Assets.exists(filePath)) {
       var result = SerializerUtil.fromJSON(Assets.getText(filePath));
       if (result == null) trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(filePath) + "! Returning null...");
       return result;
@@ -491,13 +448,10 @@ class CharacterHandler extends Module
     return null;
   }
 
-  function onScriptEvent(event)
-  {
-    if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState)
-    {
+  function onScriptEvent(event) {
+    if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
       charSelect = null;
-      if (saveData.preferences.djSwapping)
-      {
+      if (saveData.preferences.djSwapping) {
         trace("[Funker Selector] Switching out DJ...");
         ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState]);
       }
@@ -515,36 +469,29 @@ class CharacterHandler extends Module
    * - song: Checks if the song has been beaten on the specified difficulty list.
    * - storyWeek: Checks if the week has been beaten on the specified difficulty list.
    */
-  function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool
-  {
+  function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool {
     if (unlockMethod == null) return false;
     trace("[Funker Selector] Checking unlock methods for ID " + characterID + " ...");
-    switch (unlockMethod.type)
-    {
+    switch (unlockMethod.type) {
       case 'playableCharacter':
-        if (PlayerRegistry.instance.isCharacterOwned(characterID))
-        {
+        if (PlayerRegistry.instance.isCharacterOwned(characterID)) {
           var ownerID:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
           var playableCharacter:PlayableCharacter = PlayerRegistry.instance.fetchEntry(ownerID);
-          if (playableCharacter != null && playableCharacter.isUnlocked())
-          {
+          if (playableCharacter != null && playableCharacter.isUnlocked()) {
             trace("[Funker Selector] Playable character is unlocked with ID " + ownerID);
             return true;
           }
-          else
-          {
+          else {
             trace("[Funker Selector] Playable character is not unlocked with ID " + ownerID);
             return false;
           }
         }
       case "song":
-        if (Save.instance.hasBeatenSong(unlockMethod.songID, unlockMethod.difficultyList))
-        {
+        if (Save.instance.hasBeatenSong(unlockMethod.songID, unlockMethod.difficultyList)) {
           trace("[Funker Selector] Song ID " + unlockMethod.songID + " was beaten with difficulty list " + unlockMethod.difficultyList);
           return true;
         }
-        else
-        {
+        else {
           trace("[Funker Selector] Song ID "
             + unlockMethod.songID
             + " has not been beaten with difficulty list "
@@ -552,13 +499,11 @@ class CharacterHandler extends Module
           return false;
         }
       case 'storyWeek':
-        if (Save.instance.hasBeatenLevel(unlockMethod.levelID, unlockMethod.difficultyList))
-        {
+        if (Save.instance.hasBeatenLevel(unlockMethod.levelID, unlockMethod.difficultyList)) {
           trace("[Funker Selector] Level ID " + unlockMethod.levelID + " was beaten with difficulty list " + unlockMethod.difficultyList);
           return true;
         }
-        else
-        {
+        else {
           trace("[Funker Selector] Level ID "
             + unlockMethod.levelID
             + " has not been beaten with difficulty list "
@@ -579,34 +524,28 @@ class CharacterHandler extends Module
    * If "Simplify UI" is enabled, the sprites are not
    * cached as they won't show up in the menu.
    */
-  function cacheJSONSparrows():Void
-  {
+  function cacheJSONSparrows():Void {
     var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
-    for (funker in funkerJSONs)
-    {
+    for (funker in funkerJSONs) {
       var funkerData:Dynamic = jsonCharacterCache.get(funker);
       var data:Dynamic = funkerData[0];
       var charData:Dynamic = funkerData[1];
 
       if (data == null) continue;
 
-      if (data.characterID == null)
-      {
+      if (data.characterID == null) {
         trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '! The "characterID" field does not exist.');
         continue;
       }
 
-      if (!charJSONCheck(data.characterID))
-      {
+      if (!charJSONCheck(data.characterID)) {
         trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
         continue;
       }
 
-      switch (charData.renderType)
-      {
+      switch (charData.renderType) {
         case 'multisparrow':
-          for (anim in charData.animations)
-          {
+          for (anim in charData.animations) {
             if (anim.assetPath != null) cacheSprite(Paths.image(anim.assetPath));
           }
         case 'animateatlas':
@@ -629,20 +568,17 @@ class CharacterHandler extends Module
    * to the Boyfriend character list.
    * If no character ID exists in the file (or the character ID is invalid), the character will be skipped.
    */
-  function loadJSONDataCache():Void
-  {
+  function loadJSONDataCache():Void {
     var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
     var data:Dynamic = null;
 
-    for (funker in funkerJSONs)
-    {
+    for (funker in funkerJSONs) {
       trace('[Funker Selector] Parsing JSON data for ' + funker);
 
       data = parseJSONData(funker);
 
       // If the data is null (Caused by an issue when parsing the json file)
-      if (data == null)
-      {
+      if (data == null) {
         PolymodErrorHandler.showAlert("Funker Selector JSON Parsing Error",
           "Something went wrong when parsing the following JSON file:\n\n" + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
           "\n\nPlease check the JSON file for any syntax errors.");
@@ -650,8 +586,7 @@ class CharacterHandler extends Module
       }
 
       // If the "characterID" field was not found.
-      if (data.characterID == null)
-      {
+      if (data.characterID == null) {
         PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
           'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
           '":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
@@ -659,8 +594,7 @@ class CharacterHandler extends Module
       }
 
       // If the Character ID is "default"
-      if (data.characterID == 'default')
-      {
+      if (data.characterID == 'default') {
         PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
           'In "'
           + Assets.getPath(Paths.json('funkerSelector/' + funker))
@@ -672,8 +606,7 @@ class CharacterHandler extends Module
       }
 
       // If the specified Character ID does not exist in data/characters/
-      if (!charJSONCheck(data.characterID))
-      {
+      if (!charJSONCheck(data.characterID)) {
         PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
           'In "'
           + Assets.getPath(Paths.json('funkerSelector/' + funker))
@@ -683,17 +616,13 @@ class CharacterHandler extends Module
         continue;
       }
 
-      if (data.mustUnlock && data.unlockMethod != null)
-      {
-        if (!isCharacterUnlocked(data.characterID, data.unlockMethod))
-        {
+      if (data.mustUnlock && data.unlockMethod != null) {
+        if (!isCharacterUnlocked(data.characterID, data.unlockMethod)) {
           trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
           lockedCharMap.set(data.characterID, data);
         }
-        else
-        {
-          if (saveData.seenUnlocks.indexOf(data.characterID) == -1)
-          {
+        else {
+          if (saveData.seenUnlocks.indexOf(data.characterID) == -1) {
             trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
             lockedCharMap.set(data.characterID, data);
           }
@@ -718,13 +647,11 @@ class CharacterHandler extends Module
    *
    * @param path The file path.
    */
-  function cacheSprite(path:String)
-  {
+  function cacheSprite(path:String) {
     if (cachedJSONSparrows.exists(path)) return;
     trace('[Funker Selector] Caching sprite ' + path);
     var bitmap:BitmapData = Assets.getBitmapData(path);
-    if (bitmap != null)
-    {
+    if (bitmap != null) {
       var texture:RectangleTexture = FlxG.stage.context3D.createRectangleTexture(bitmap.width, bitmap.height, "bgra", true);
       texture.uploadFromBitmapData(bitmap);
       bitmap.image.data = null;
@@ -736,8 +663,7 @@ class CharacterHandler extends Module
       cachedJSONSparrows.set(path, graphic);
       trace('[Funker Selector] Successfully cached graphic: ' + path);
     }
-    else
-    {
+    else {
       trace('[ERROR] Failed to cache graphic: ' + path);
     }
   }
@@ -746,8 +672,7 @@ class CharacterHandler extends Module
    * Reset the voiceList, swap out the characters, and
    * replace vocals if any are found.
    */
-  override function onCountdownStart(event)
-  {
+  override function onCountdownStart(event) {
     super.onCountdownStart(event);
     if (PlayState.instance == null
       || PlayState.instance.currentStage == null
@@ -769,8 +694,7 @@ class CharacterHandler extends Module
     PlayState.instance.currentStage.refresh();
 
     // If at least ONE of them was changed (means a vocal file was found), replace the vocals.
-    if (voiceList[0] != null || voiceList[1] != null)
-    {
+    if (voiceList[0] != null || voiceList[1] != null) {
       trace('[Funker Selector] Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);
       PlayState.instance.vocals.stop();
       PlayState.instance.vocals = replaceVocals(voiceList);
@@ -782,10 +706,8 @@ class CharacterHandler extends Module
    * into loading the Results Screen animations for the currently
    * selected character if they exist.
    */
-  function onSongEnd()
-  {
-    if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf))
-    {
+  function onSongEnd() {
+    if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf)) {
       trace("[Funker Selector] Character ID is owned.");
       PlayState.instance.currentChart.characters.player = saveData.characterIDs.bf;
     }
@@ -801,8 +723,7 @@ class CharacterHandler extends Module
    * @param characterType The character type we're using.
    *
    */
-  function replaceChar(characterID:String = 'bf', characterType:CharacterType = null):Void
-  {
+  function replaceChar(characterID:String = 'bf', characterType:CharacterType = null):Void {
     var characterData:Dynamic = getCharacterData(characterID);
     var oldChar:BaseCharacter = null;
 
@@ -814,20 +735,17 @@ class CharacterHandler extends Module
 
     trace('[Funker Selector] Replacing type ' + characterType + ' with id ' + characterID);
 
-    switch (characterType)
-    {
+    switch (characterType) {
       case CharacterType.BF:
         oldChar = PlayState.instance.currentStage.getBoyfriend();
-        if (Assets.exists(voiceFile))
-        {
+        if (Assets.exists(voiceFile)) {
           voiceList[0] = voiceFile;
         }
       case CharacterType.GF:
         oldChar = PlayState.instance.currentStage.getGirlfriend();
       case CharacterType.DAD:
         oldChar = PlayState.instance.currentStage.getDad();
-        if (Assets.exists(voiceFile))
-        {
+        if (Assets.exists(voiceFile)) {
           voiceList[1] = voiceFile;
         }
       default:
@@ -839,54 +757,42 @@ class CharacterHandler extends Module
     if (oldChar == null) return;
 
     // TODO: Add visual indicator for variations.
-    if (characterData?.characterVariations != null)
-    {
-      for (variation in characterData.characterVariations)
-      {
-        if (variation.songID == null || variation.characterID == null)
-        {
+    if (characterData?.characterVariations != null) {
+      for (variation in characterData.characterVariations) {
+        if (variation.songID == null || variation.characterID == null) {
           continue;
         }
 
         var songMatch:Bool = false;
         var variationMatch:Bool = false;
 
-        if (variation.songID is Array)
-        {
+        if (variation.songID is Array) {
           songMatch = (variation.songID.indexOf(PlayState.instance.currentSong.id) != -1);
         }
-        else if (variation.songID is String)
-        {
+        else if (variation.songID is String) {
           songMatch = (variation.songID == PlayState.instance.currentSong.id);
         }
 
-        if (variation.songVariation != null)
-        {
-          if (variation.songVariation is Array)
-          {
+        if (variation.songVariation != null) {
+          if (variation.songVariation is Array) {
             variationMatch = (variation.songVariation.indexOf(PlayState.instance.currentVariation) != -1);
           }
-          else if (variation.songVariation is String)
-          {
+          else if (variation.songVariation is String) {
             variationMatch = (variation.songVariation == PlayState.instance.currentVariation);
           }
         }
-        else
-        {
+        else {
           variationMatch = true; // Assume true if songVariation does not exist.
         }
 
-        if (songMatch && variationMatch)
-        {
+        if (songMatch && variationMatch) {
           characterData = getCharacterData(variation.characterID) != null ? getCharacterData(variation.characterID) : characterData;
 
-          if (charJSONCheck(variation.characterID))
-          {
+          if (charJSONCheck(variation.characterID)) {
             trace('[Funker Selector] Variation found: ' + variation.characterID);
             characterID = variation.characterID;
           }
-          else
-          {
+          else {
             PolymodErrorHandler.showAlert('Funker Selector Error',
               'The character variation "' + variation.characterID + '" does not exist. The base character ID will be used instead.');
           }
@@ -896,29 +802,24 @@ class CharacterHandler extends Module
     }
 
     // Don't bother replacing the character if both character IDs match.
-    if (oldChar.characterId != characterID)
-    {
+    if (oldChar.characterId != characterID) {
       var charZIndex:Int = oldChar.zIndex;
       var character = CharacterDataParser.fetchCharacter(characterID);
 
-      if (character != null)
-      {
+      if (character != null) {
         oldChar.destroy();
         character.zIndex = charZIndex;
         PlayState.instance.currentStage.addCharacter(character, characterType);
       }
-      else
-      {
+      else {
         PolymodErrorHandler.showAlert('Funker Selector Error', 'Something went wrong replacing the ' + characterType + ' character. How the fuck???');
       }
     }
-    else
-    {
+    else {
       trace('[Funker Selector] ID ' + characterID + ' and ID ' + oldChar.characterId + ' match. Not replacing...');
     }
 
-    if (characterData != null && characterType == CharacterType.BF)
-    {
+    if (characterData != null && characterType == CharacterType.BF) {
       PauseSubState.musicSuffix = (characterData.suffixes?.pauseMusic != null
         && characterData.suffixes.pauseMusic != '') ? characterData.suffixes.pauseMusic : PauseSubState.musicSuffix;
       GameOverSubState.musicSuffix = (characterData.suffixes?.gameOverMusic != null
@@ -934,10 +835,8 @@ class CharacterHandler extends Module
   /**
    * Copy-pasted from CharacterMenu.
    */
-  function charJSONCheck(string:String):Bool
-  {
-    if (Assets.exists(Paths.json('characters/' + string)))
-    {
+  function charJSONCheck(string:String):Bool {
+    if (Assets.exists(Paths.json('characters/' + string))) {
       var characterFiles = DataAssets.listDataFilesInPath('characters/');
       return characterFiles.indexOf(string) != -1;
     }
@@ -949,27 +848,22 @@ class CharacterHandler extends Module
    *
    * @param voiceList The supplied array.
    */
-  function replaceVocals(voiceList:Array<String>):VoicesGroup
-  {
+  function replaceVocals(voiceList:Array<String>):VoicesGroup {
     var currentChart = PlayState.instance.currentChart;
     var result:VoicesGroup = new VoicesGroup();
     var songVoices:Array<String> = currentChart.buildVoiceList();
 
-    if (voiceList[0] != null)
-    {
+    if (voiceList[0] != null) {
       result.addPlayerVoice(FunkinSound.load(voiceList[0]));
     }
-    else
-    {
+    else {
       result.addPlayerVoice(FunkinSound.load(songVoices[0]));
     }
 
-    if (voiceList[1] != null)
-    {
+    if (voiceList[1] != null) {
       result.addOpponentVoice(FunkinSound.load(voiceList[1]));
     }
-    else
-    {
+    else {
       result.addOpponentVoice(FunkinSound.load(songVoices[1]));
     }
 
@@ -984,8 +878,7 @@ class CharacterHandler extends Module
    * @param characterID The character ID we are using.
    * @return The character data as a dynamic object.
    */
-  function getCharacterData(characterID:String):Dynamic
-  {
+  function getCharacterData(characterID:String):Dynamic {
     characterInfo = characterMap.get(characterID);
 
     if (characterInfo == null) return null;

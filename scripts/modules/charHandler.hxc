@@ -184,7 +184,7 @@ class CharacterHandler extends Module
       if (saveData.characterIDs == null && saveData.preferences == null && saveData.seenUnlocks == null)
       {
         trace('[Funker Selector] Save data needs migration!');
-        saveData = migrateSaveData(saveData);
+        saveData = migrateSaveData();
       }
 
       trace('[Funker Selector] Successfully retrieved save data:\n\n---Character IDs---\n\nBoyfriend: '

@@ -225,9 +225,9 @@ class CharacterHandler extends Module
       {
         characterIDs:
           {
-            bf: oldCharacterIDs.bf != null ? oldCharacterIDs.bf : 'default',
-            gf: oldCharacterIDs.gf != null ? oldCharacterIDs.gf : 'default',
-            dad: oldCharacterIDs.dad != null ? oldCharacterIDs.dad : 'default'
+            bf: oldCharacterIDs?.bf != null ? oldCharacterIDs.bf : 'default',
+            gf: oldCharacterIDs?.gf != null ? oldCharacterIDs.gf : 'default',
+            dad: oldCharacterIDs?.dad != null ? oldCharacterIDs.dad : 'default'
           },
         preferences:
           {

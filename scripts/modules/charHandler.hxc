@@ -186,8 +186,7 @@ class CharacterHandler extends Module {
 
       for (key in ReflectUtil.getAnonymousFieldsOf(defaultSettings)) {
         var value = ReflectUtil.getAnonymousField(defaultSettings, key);
-        if (!saveData.preferences.exists(key))
-          saveData.preferences.set(key, value);
+        if (!saveData.preferences.exists(key)) saveData.preferences.set(key, value);
       };
 
       trace('[Funker Selector] Successfully retrieved save data:\n\n---Character IDs---\n\nBoyfriend: '

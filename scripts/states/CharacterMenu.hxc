@@ -148,7 +148,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     setupUIStuff();
     updateFilteredKeys();
-    if (!saveData.preferences.potatoMode) buildCharacterWheel();
+    if (!saveData.preferences.get("potatoMode")) buildCharacterWheel();
     jumpToCurSelected();
     ModuleHandler.callEvent(new ScriptEvent(FS_OPENED_SUBSTATE));
   }
@@ -173,7 +173,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       }
     }
 
-    if (!saveData.preferences.potatoMode) {
+    if (!saveData.preferences.get("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item:Dynamic = characterWheel.members[index];
         if (item != null) {
@@ -200,7 +200,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       spriteCam.zoom = MathUtil.smoothLerp(spriteCam.zoom, 1, FlxG.elapsed, 0.45);
     }
 
-    if (!saveData.preferences.potatoMode) {
+    if (!saveData.preferences.get("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item = characterWheel.members[index];
         if (index == charIndex - 1 && item is FunkinSprite) {
@@ -267,7 +267,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     curCharID = filteredKeys[charIndex];
 
-    if (!saveData.preferences.potatoMode) {
+    if (!saveData.preferences.get("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item:Dynamic = characterWheel.members[index];
 
@@ -281,7 +281,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     }
 
     if (charIndex != prevIndex) {
-      if (saveData.preferences.preferredSFX == "charSelect") {
+      if (saveData.preferences.get("preferredSFX") == "charSelect") {
         FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
       }
       else {
@@ -307,7 +307,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     charIndex = 0;
 
     updateFilteredKeys();
-    if (!saveData.preferences.potatoMode) {
+    if (!saveData.preferences.get("potatoMode")) {
       buildCharacterWheel();
     }
     changeCharacter();
@@ -315,7 +315,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
   function beatHit():Void {
     bopDaThing();
-    if (!saveData.preferences.potatoMode) {
+    if (!saveData.preferences.get("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item:Dynamic = characterWheel.members[index];
         if (index == charIndex - 1 && item is BaseCharacter) item.dance();
@@ -537,7 +537,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     rightDifficultyArrow.scale.set(1.5, 1.5);
     rightDifficultyArrow.camera = uiCam;
 
-    if (saveData.preferences.potatoMode) {
+    if (saveData.preferences.get("potatoMode")) {
       lockedChill = new Lock(300, 270, FlxG.random.int(1, 9));
       lockedChill.onAnimationComplete.add(function(_) {
         lockedChill.playAnimation('idle');
@@ -576,17 +576,17 @@ class CharacterSelectSubState extends MusicBeatSubState {
     unlockSound.volume = 1;
 
     add(bg);
-    if (!saveData.preferences.potatoMode) createIconGrid(150, 0.2);
+    if (!saveData.preferences.get("potatoMode")) createIconGrid(150, 0.2);
     add(leftDifficultyArrow);
     add(rightDifficultyArrow);
-    if (!saveData.preferences.potatoMode) add(characterWheel);
+    if (!saveData.preferences.get("potatoMode")) add(characterWheel);
     add(selectText);
     add(numberThing);
     add(selected);
     add(hotkeyText);
     add(charIcon);
     add(charName);
-    if (saveData.preferences.potatoMode) add(lockedChill);
+    if (saveData.preferences.get("potatoMode")) add(lockedChill);
     add(keyBox);
     add(hotkeys);
     add(newGraphic);
@@ -704,7 +704,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       }
 
       if (controls.FREEPLAY_CHAR_SELECT) {
-        if (saveData.preferences.preferredSFX == "charSelect") {
+        if (saveData.preferences.get("preferredSFX") == "charSelect") {
           FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
         }
         else {
@@ -776,14 +776,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
           characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
         }
         else {
-          if (saveData.preferences.preferredSFX == "charSelect") {
+          if (saveData.preferences.get("preferredSFX") == "charSelect") {
             FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
           }
           else {
             FunkinSound.playOnce(Paths.sound('cancelMenu'));
           }
           flashScreen(0xFFFF0000, 0.03, 0.1);
-          if (!saveData.preferences.potatoMode) {
+          if (!saveData.preferences.get("potatoMode")) {
             for (index in 0...characterWheel.members.length) {
               var item = characterWheel.members[index];
               if (index == charIndex - 1 && item is FunkinSprite) item.animation.play('denied', true);
@@ -825,13 +825,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
   }
 
   function confirmThing():Void {
-    if (saveData.preferences.preferredSFX == "charSelect") {
+    if (saveData.preferences.get("preferredSFX") == "charSelect") {
       FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
     }
     else {
       FunkinSound.playOnce(Paths.sound('confirmMenu'));
     }
-    if (!saveData.preferences.potatoMode) {
+    if (!saveData.preferences.get("potatoMode")) {
       characterData = jsonCharacterCache.get(curCharID) != null ? jsonCharacterCache.get(curCharID)[0] : null;
       animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
       var item:Dynamic = characterWheel.members[charIndex - 1];
@@ -843,7 +843,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       // I wanted this really cool effect where the icons in the icon grid would also
       // play the winning animation!
       // But let's not play that if "Simplify UI" is turned on.
-      if (!saveData.preferences.potatoMode && iconGrid != null) {
+      if (!saveData.preferences.get("potatoMode") && iconGrid != null) {
         for (i in 0...iconGrid.length) {
           var icon = iconGrid[i];
           new FlxTimer().start(0.01 * i, function() {
@@ -904,7 +904,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
    * Does a really fucking cool unlock animation.
    */
   function doUnlockAnimation():Void {
-    if (!saveData.preferences.potatoMode) {
+    if (!saveData.preferences.get("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item = characterWheel.members[index];
         if (index == charIndex - 1 && item is FunkinSprite) {
@@ -916,7 +916,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     busy = true;
     if (FlxG.sound.music != null) FlxG.sound.music.fadeOut();
 
-    if (!saveData.preferences.potatoMode) {
+    if (!saveData.preferences.get("potatoMode")) {
       lockedChill.offset.set();
       lockedChill.animation.play('idle', true);
     }
@@ -928,7 +928,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       onComplete: function(twn:FlxTween) {
         unlockSound.play(true);
         new FlxTimer().start(1.45, function() {
-          if (!saveData.preferences.potatoMode) {
+          if (!saveData.preferences.get("potatoMode")) {
             lockedChill.offset.set(170, 220);
             lockedChill.animation.play('death');
             lockedChill.animation.callback = function(name, frame) {
@@ -1056,12 +1056,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
     }, descText.length + 1);
 
     // Making it not look so awkward when "Simplify UI" is turned on.
-    if (saveData.preferences.potatoMode || curCharID == 'default') {
+    if (saveData.preferences.get("potatoMode") || curCharID == 'default') {
       charIcon.setPosition(500, 230);
       charIcon.size.set(1.7, 1.7);
     }
 
-    if (!saveData.preferences.potatoMode) {
+    if (!saveData.preferences.get("potatoMode")) {
       for (icon in iconGrid) {
         if (curCharID == 'default' || lockedCharMap.exists(curCharID)) {
           icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
@@ -1074,11 +1074,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     if (lockedCharMap.exists(curCharID)) {
       if (charIcon != null) charIcon.visible = false;
-      if (saveData.preferences.potatoMode) lockedChill.visible = true;
+      if (saveData.preferences.get("potatoMode")) lockedChill.visible = true;
     }
     else {
       if (charIcon != null) charIcon.visible = true;
-      if (saveData.preferences.potatoMode) lockedChill.visible = false;
+      if (saveData.preferences.get("potatoMode")) lockedChill.visible = false;
     }
 
     charName.screenCenter(0x01);

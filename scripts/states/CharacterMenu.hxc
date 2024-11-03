@@ -118,6 +118,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
   var busy:Bool = false;
 
   /**
+   * Script Event called when this SubState is opened.
+   */
+  var FS_OPENED_SUBSTATE:String = "FS_OPENED_SUBSTATE";
+
+  /**
    * Script Event called when this SubState is closed.
    */
   var FS_EXITED_SUBSTATE:String = "FS_EXITED_SUBSTATE";
@@ -145,6 +150,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     updateFilteredKeys();
     if (!saveData.preferences.potatoMode) buildCharacterWheel();
     jumpToCurSelected();
+    ModuleHandler.callEvent(new ScriptEvent(FS_OPENED_SUBSTATE));
   }
 
   public override function update(elapsed:Float):Void {

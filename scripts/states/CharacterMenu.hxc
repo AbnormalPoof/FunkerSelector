@@ -200,7 +200,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
       spriteCam.zoom = MathUtil.smoothLerp(spriteCam.zoom, 1, FlxG.elapsed, 0.45);
     }
 
-    // UNTESTED!!
     if (!saveData.preferences.potatoMode) {
       for (index in 0...characterWheel.members.length) {
         var item = characterWheel.members[index];

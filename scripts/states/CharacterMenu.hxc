@@ -131,6 +131,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
   var typewriterIndex:Int = 0;
 
+  var spamTimer:Float = 0;
+  var spamming:Bool = false;
+
   public function new() {
     super();
   }
@@ -483,7 +486,16 @@ class CharacterSelectSubState extends MusicBeatSubState {
     hotkeyText.camera = uiCam;
 
     hotkeys = configureText(null,
-      controls.getDialogueNameFromToken("FREEPLAY_FAVORITE", true) + ' - Reset everything to default.\n\n' + controls.getDialogueNameFromToken("FREEPLAY_CHAR_SELECT", true) + ' - Jump to the currently selected character.\n\n' + controls.getDialogueNameFromToken("FREEPLAY_LEFT", true) + ' - Switch to the previous page.\n\n' + controls.getDialogueNameFromToken("FREEPLAY_RIGHT", true) + ' - Switch to the next page.\n\n' + controls.getDialogueNameFromToken("BACK", true) + ' - Close this.',
+      controls.getDialogueNameFromToken("FREEPLAY_FAVORITE", true)
+      + ' - Reset everything to default.\n\n'
+      + controls.getDialogueNameFromToken("FREEPLAY_CHAR_SELECT", true)
+      + ' - Jump to the currently selected character.\n\n'
+      + controls.getDialogueNameFromToken("FREEPLAY_LEFT", true)
+      + ' - Switch to the previous page.\n\n'
+      + controls.getDialogueNameFromToken("FREEPLAY_RIGHT", true)
+      + ' - Switch to the next page.\n\n'
+      + controls.getDialogueNameFromToken("BACK", true)
+      + ' - Close this.',
       [350, 80], 40, Paths.font("PhantomMuff.ttf"));
     hotkeys.camera = hotkeyCam;
     hotkeys.wordWrap = true;
@@ -639,8 +651,20 @@ class CharacterSelectSubState extends MusicBeatSubState {
     }
 
     if (!hotkeyCam.visible) {
-      if (controls.UI_LEFT_P || controls.UI_RIGHT_P) {
-        changeCharacter(controls.UI_LEFT_P ? -1 : 1);
+      if (controls.UI_LEFT || controls.UI_RIGHT) {
+        if ((spamming && spamTimer >= 0.07) || (!spamming && spamTimer <= 0)) {
+          spamTimer = 0;
+          changeCharacter(controls.UI_LEFT ? -1 : 1);
+        }
+        else if (!spamming && spamTimer >= 0.9) {
+          spamming = true;
+        }
+
+        spamTimer += elapsed;
+      }
+      else {
+        spamming = false;
+        spamTimer = 0;
       }
 
       leftDifficultyArrow.animation.play(controls.UI_LEFT_P ? 'press' : 'idle');

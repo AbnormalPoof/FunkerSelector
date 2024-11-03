@@ -146,7 +146,7 @@ class CharacterHandler extends Module {
       seenUnlocks: []
     };
 
-    if (Save.instance.modOptions.get("FunkerSelector") == null) {
+    if (!Save.instance.modOptions.exists("FunkerSelector")) {
       Save.instance.modOptions.set("FunkerSelector", defaultSaveData);
       Save.instance.flush();
       saveData = defaultSaveData;

@@ -199,6 +199,20 @@ class CharacterSelectSubState extends MusicBeatSubState {
       uiCam.zoom = MathUtil.smoothLerp(uiCam.zoom, 1, FlxG.elapsed, 0.45);
       spriteCam.zoom = MathUtil.smoothLerp(spriteCam.zoom, 1, FlxG.elapsed, 0.45);
     }
+
+    // UNTESTED!!
+    if (!saveData.preferences.potatoMode) {
+      for (index in 0...characterWheel.members.length) {
+        var item = characterWheel.members[index];
+        if (index == charIndex - 1 && item is FunkinSprite) {
+          if (item.animation.curAnim.curFrame < 36 && controls.ACCEPT) {
+            item.animation.pause();
+            item.animation.curAnim.curFrame = 34;
+            item.animation.resume();
+          }
+        }
+      }
+    }
   }
 
   function buildCharacterWheel():Void {

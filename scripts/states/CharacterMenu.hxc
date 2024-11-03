@@ -168,7 +168,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       for (index in 0...characterWheel.members.length) {
         var item:Dynamic = characterWheel.members[index];
         if (item != null) {
-          if (item is BaseCharacter) { // TODO: Maybe *don't* do this every frame????
+          if (item is BaseCharacter) {
             characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [item.characterId]);
           }
           else { // Assume the object is `lockedChill`
@@ -243,10 +243,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
     var prevIndex:Int = charIndex;
     charIndex = (prevIndex + (change + filteredKeys.length)) % filteredKeys.length;
 
-    // Wrap around
-    if (charIndex < 0) charIndex = filteredKeys.length - 1;
-    if (charIndex >= filteredKeys.length) charIndex = 0;
-
     curCharID = filteredKeys[charIndex];
 
     if (!saveData.preferences.potatoMode) {
@@ -275,6 +271,24 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
     numberThing.screenCenter(0x01);
+  }
+
+  /**
+   * Changes the current page.
+   * @param change +1 (right), -1 (left)
+   */
+  function changePage(change:Int = 0):Void {
+    var prevIndex:Int = pageIndex;
+    pageIndex = (prevIndex + (change + pages.length)) % pages.length;
+
+    // Reset charIndex
+    charIndex = 0;
+
+    updateFilteredKeys();
+    if (!saveData.preferences.potatoMode) {
+      buildCharacterWheel();
+    }
+    changeCharacter();
   }
 
   function beatHit():Void {
@@ -603,6 +617,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
   /**
    * Reponsible for handling inputs in the menu.
+   * 
+   * TODO: Rework this to use `PlayerSettings`'s `controls` instead.
    */
   function handleKeyShit():Void {
     if (FlxG.keys.justPressed.ESCAPE) {
@@ -633,12 +649,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       rightDifficultyArrow.animation.play(FlxG.keys.pressed.RIGHT ? 'press' : 'idle');
 
       if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E) {
-        pageIndex = (pageIndex + (FlxG.keys.justPressed.E ? 1 : -1) + pages.length) % pages.length;
-        charIndex = 0;
-        updateFilteredKeys();
-        if (!saveData.preferences.potatoMode) buildCharacterWheel();
-        changeCharacter();
-        updateCharInfo();
+        changePage(FlxG.keys.justPressed.E ? 1 : -1);
       }
 
       // Mouse scrolling:

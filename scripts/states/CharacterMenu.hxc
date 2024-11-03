@@ -667,8 +667,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
         spamTimer = 0;
       }
 
-      leftDifficultyArrow.animation.play(controls.UI_LEFT_P ? 'press' : 'idle');
-      rightDifficultyArrow.animation.play(controls.UI_LEFT_P ? 'press' : 'idle');
+      leftDifficultyArrow.animation.play(controls.UI_LEFT ? 'press' : 'idle');
+      rightDifficultyArrow.animation.play(controls.UI_RIGHT ? 'press' : 'idle');
 
       if (controls.FREEPLAY_LEFT || controls.FREEPLAY_RIGHT) {
         changePage(controls.FREEPLAY_LEFT ? -1 : 1);

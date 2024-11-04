@@ -184,6 +184,7 @@ class CharacterHandler extends Module {
         saveData = migrateSaveData();
       }
 
+      // Add new settings if they don't exist
       for (key in ReflectUtil.getAnonymousFieldsOf(defaultSettings)) {
         var value = ReflectUtil.getAnonymousField(defaultSettings, key);
         if (!saveData.preferences.exists(key)) saveData.preferences.set(key, value);

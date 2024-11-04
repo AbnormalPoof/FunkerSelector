@@ -28,7 +28,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `speaker` can now be used as an alias for the GF character type in the JSON data.
 - `voiceID` can now be used to set a custom ID when using Vocal Replacement.
   - This defaults to the character's ID.
-- 
 
 ## [1.5.2] - 2024-10-23
 ### Fixed

@@ -191,7 +191,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
         var xOffset:Float = characterData?.characterMenu != null ? characterData.characterMenu.position[0] : 0;
 
-        item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.25);
+        item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.20);
       }
     }
 
@@ -735,6 +735,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
           // Updating the array with the latest changes
           characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
+
+          // Jump to default.
+          jumpToCurSelected();
         }
       }
 

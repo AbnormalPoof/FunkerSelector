@@ -243,6 +243,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
           characterWheel.add(lockedChill);
         }
         else {
+          trace("[Funker Selector] Configuring sprite...");
           configureChar(characterSprite, characterData?.characterMenu);
           characterWheel.add(characterSprite);
         }
@@ -453,7 +454,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
    * Configuring the JSON character, setting up position, scale, flipping, etc.
    */
   function configureChar(characterSprite:BaseCharacter, data:Null):BaseCharacter {
-    if (data == null) return;
+    if (data == null) {
+      trace('[Funker Selector] ERROR: Data is null! Can\'t configure characterSprite.');
+      return;
+    }
     var position = data.position != null ? data.position : [0, 0];
     var scale = data.scale != null ? (data.isPixel ? data.scale * 6 : data.scale) : (data.isPixel ? 6.0 : 1.0);
     characterSprite.y += position[1];

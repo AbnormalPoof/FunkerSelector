@@ -539,10 +539,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     if (saveData.preferences.get("potatoMode")) {
       lockedChill = new Lock(300, 270, FlxG.random.int(1, 9));
-      lockedChill.onAnimationComplete.add(function(_) {
-        lockedChill.playAnimation('idle');
+      lockedChill.onAnimationComplete.add(function(name) {
+        if (name != 'selected')
+          lockedChill.playAnimation('selected');
       });
-      lockedChill.playAnimation('idle');
+      lockedChill.playAnimation('selected');
       lockedChill.scale.set(2, 2);
       lockedChill.camera = spriteCam;
       lockedChill.visible = false;

@@ -73,7 +73,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - This is due to functions in the code that do not work on v0.5.0.
     - Please use v0.5.1 instead.
 
-## [1.4.0] - 2024-09-12
+## [1.4.0] - 2024-09-30
 ### Added
 - v0.5.0 support.
 - You can now have multiple song IDs for Character Variations as an Array.

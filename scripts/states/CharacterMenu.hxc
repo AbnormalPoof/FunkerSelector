@@ -1048,7 +1048,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     typewriterTimer = new FlxTimer();
     typewriterTimer.start(0.01, function(timer:FlxTimer) {
-      if (typewriterIndex < descText.length) {
+      if (typewriterIndex <= descText.length) {
         charDesc.text = descText.substring(0, typewriterIndex + 1);
         typewriterIndex++;
       }
@@ -1056,7 +1056,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
         timer.cancel();
         typewriterIndex = 0;
       }
-    }, descText.length * 2);
+    }, descText.length + 1);
 
     // Making it not look so awkward when "Simplify UI" is turned on.
     if (saveData.preferences.get("potatoMode") || curCharID == 'default') {

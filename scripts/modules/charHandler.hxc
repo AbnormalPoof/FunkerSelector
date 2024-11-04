@@ -781,7 +781,7 @@ class CharacterHandler extends Module {
         var variationMatch:Bool = false;
 
         if (variation.songID is Array) {
-          songMatch = (variation.songID.indexOf(PlayState.instance.currentSong.id) != -1);
+          songMatch = (variation.songID.contains(PlayState.instance.currentSong.id));
         }
         else if (variation.songID is String) {
           songMatch = (variation.songID == PlayState.instance.currentSong.id);
@@ -789,7 +789,7 @@ class CharacterHandler extends Module {
 
         if (variation.songVariation != null) {
           if (variation.songVariation is Array) {
-            variationMatch = (variation.songVariation.indexOf(PlayState.instance.currentVariation) != -1);
+            variationMatch = (variation.songVariation.contains(PlayState.instance.currentVariation));
           }
           else if (variation.songVariation is String) {
             variationMatch = (variation.songVariation == PlayState.instance.currentVariation);
@@ -852,7 +852,7 @@ class CharacterHandler extends Module {
   function charJSONCheck(string:String):Bool {
     if (Assets.exists(Paths.json('characters/' + string))) {
       var characterFiles = DataAssets.listDataFilesInPath('characters/');
-      return characterFiles.indexOf(string) != -1;
+      return characterFiles.contains(string);
     }
     return false;
   }

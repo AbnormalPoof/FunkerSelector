@@ -98,11 +98,6 @@ class CharacterHandler extends Module {
    */
   var charSelect:MusicBeatSubState = null;
 
-  /**
-   * DEBUG: Enable the hotkey to wipe save data.
-   */
-  var forceCacheReload:Bool = true;
-
   var charText:AtlasText;
   var charSelectIcon:FunkinSprite;
 
@@ -285,8 +280,9 @@ class CharacterHandler extends Module {
       }
     }
 
-    if (FlxG.keys.justPressed.F6 && forceCacheReload) {
-      trace("[Funker Selector] DEBUG: Force reloading JSON cache...");
+    // Force reload the JSON cache with F6.
+    if (FlxG.keys.justPressed.F6) {
+      trace("[Funker Selector] Force reloading JSON cache...");
       loadJSONDataCache();
     }
   }

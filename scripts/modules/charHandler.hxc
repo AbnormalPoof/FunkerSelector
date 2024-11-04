@@ -636,7 +636,7 @@ class CharacterHandler extends Module {
           lockedCharMap.set(data.characterID, data);
         }
         else {
-          if (saveData.seenUnlocks.indexOf(data.characterID) == -1) {
+          if (!saveData.seenUnlocks.contains(data.characterID)) {
             trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
             lockedCharMap.set(data.characterID, data);
           }

@@ -347,15 +347,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
       characterType = characterMap.get(shit)[1];
       switch (pageIndex) {
         case 0:
-          if (characterType is Array) return characterType.indexOf('bf') != -1 || characterType.indexOf('player') != -1;
+          if (characterType is Array) return characterType.contains('bf') || characterType.contains('player');
           else
             return characterType == 'bf' || characterType == 'player';
         case 1:
-          if (characterType is Array) return characterType.indexOf('dad') != -1 || characterType.indexOf('opponent') != -1;
+          if (characterType is Array) return characterType.contains('dad') || characterType.contains('opponent');
           else
             return characterType == 'dad' || characterType == 'opponent';
         case 2:
-          if (characterType is Array) return characterType.indexOf('gf') != -1 || characterType.indexOf('speaker') != -1;
+          if (characterType is Array) return characterType.contains('gf') || characterType.contains('speaker');
           else
             return characterType == 'gf' || characterType == 'speaker';
       }
@@ -444,7 +444,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
   function charJSONCheck(string:String):Bool {
     if (Assets.exists(Paths.json('characters/' + string))) {
       var characterFiles = DataAssets.listDataFilesInPath('characters/');
-      return characterFiles.indexOf(string) != -1;
+      return characterFiles.contains(string);
     }
     return false;
   }
@@ -1092,7 +1092,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     // Do the unlock animation if we haven't seen it yet.
     if (lockedCharMap.exists(curCharID)
       && ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [curCharID, characterData.unlockMethod])) {
-      if (saveData.seenUnlocks.indexOf(curCharID) == -1) {
+      if (!saveData.seenUnlocks.contains(curCharID)) {
         lockedCharMap.remove(curCharID);
         saveData.seenUnlocks.push(curCharID);
         ModuleHandler.getModule("CharacterHandler").scriptSet('saveData', saveData);

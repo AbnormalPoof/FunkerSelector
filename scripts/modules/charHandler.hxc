@@ -101,7 +101,7 @@ class CharacterHandler extends Module {
   /**
    * DEBUG: Enable the hotkey to wipe save data.
    */
-  var wipeSaveHotkey:Bool = true;
+  var forceCacheReload:Bool = true;
 
   var charText:AtlasText;
   var charSelectIcon:FunkinSprite;
@@ -285,11 +285,8 @@ class CharacterHandler extends Module {
       }
     }
 
-    if (FlxG.keys.justPressed.F6 && wipeSaveHotkey) {
-      trace("[Funker Selector] DEBUG: Wiping save data...");
-      Save.instance.modOptions.remove("FunkerSelector");
-      Save.instance.flush();
-      initializeSaveData();
+    if (FlxG.keys.justPressed.F6 && forceCacheReload) {
+      trace("[Funker Selector] DEBUG: Force reloading JSON cache...");
       loadJSONDataCache();
     }
   }

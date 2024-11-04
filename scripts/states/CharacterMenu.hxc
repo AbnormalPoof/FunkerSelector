@@ -538,7 +538,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     rightDifficultyArrow.camera = uiCam;
 
     if (saveData.preferences.get("potatoMode")) {
-      lockedChill = new Lock(300, 270, FlxG.random.int(1, 9));
+      lockedChill = new Lock(530, 270, FlxG.random.int(1, 9));
       lockedChill.onAnimationComplete.add(function(name) {
         if (name != 'selected') lockedChill.playAnimation('selected');
       });

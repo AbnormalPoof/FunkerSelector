@@ -656,29 +656,24 @@ class CharacterHandler extends Module {
   }
 
   /**
-   * This is taken from Psych Engine, with some modifications.
-   * This is a lot more Memory-efficient compared to using FunkinSprite's cacheSparrow function!
+   * Stolen from FunkinSprite.
    *
    * @param path The file path.
    */
   function cacheSprite(path:String) {
     if (cachedJSONSparrows.exists(path)) return;
     trace('[Funker Selector] Caching sprite ' + path);
-    var bitmap:BitmapData = Assets.getBitmapData(path);
-    if (bitmap != null) {
-      var texture:RectangleTexture = FlxG.stage.context3D.createRectangleTexture(bitmap.width, bitmap.height, "bgra", true);
-      texture.uploadFromBitmapData(bitmap);
-      bitmap.image.data = null;
-      bitmap.dispose();
-      bitmap.disposeImage();
-      bitmap = BitmapData.fromTexture(texture);
-      var graphic:FlxGraphic = FlxGraphic.fromBitmapData(bitmap, false, path);
+
+    var graphic:FlxGraphic = FlxGraphic.fromAssetKey(path, false, null, true);
+    if (graphic == null)
+    {
+      trace('[Funker Selector] Failed to cache graphic: ' + path);
+    }
+    else
+    {
+      trace('[Funker Selector] Successfully cached graphic: ' + path);
       graphic.persist = true;
       cachedJSONSparrows.set(path, graphic);
-      trace('[Funker Selector] Successfully cached graphic: ' + path);
-    }
-    else {
-      trace('[ERROR] Failed to cache graphic: ' + path);
     }
   }
 

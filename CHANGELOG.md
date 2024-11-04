@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 - The Freeplay DJ will now change if your character is associated with a Playable Character (and has valid Freeplay DJ data).
   - You can disable this in the Options Menu.
+  - This also changes the backing text to what you set in the Playable Character data.
+- New custom animations for Boyfriend in Pico mixes.
+- Added 2 new Script Events that fire when you enter/exit the Character Menu SubState.
+- 
 ### Changed
 - Completely reworked the save data system. Internally, everything is now one object instead of multiple.
   - Your save data will be migrated!
@@ -15,13 +19,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Please see the documentation for the new structure.
 - The icon grid in the character menu now scrolls digonally, the scroll speed is relative to the current song's BPM.
   - The speed is capped at 300 BPM.
-- Complete UI makeover:
+- Complete UI makeover and refactor:
   - Characters are now shown next to eachother in a scrollable layout
   - Character descriptions are now shown with a typewriter effect.
   - In addition, you can also now use the scroll wheel to navigate.
   - If the new UI is too much, you can always turn on "Simplify UI" in the Options Menu.
   - **This might cause your description to look awkward if you have custom offsets and size specified in the JSON file!**
+  - The menu now uses your controls as configured in the Options Menu.
 - `speaker` can now be used as an alias for the GF character type in the JSON data.
+- `voiceID` can now be used to set a custom ID when using Vocal Replacement.
+  - This defaults to the character's ID.
+- 
 
 ## [1.5.2] - 2024-10-23
 ### Fixed

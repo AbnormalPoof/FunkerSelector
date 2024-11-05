@@ -407,16 +407,7 @@ class CharacterHandler extends Module {
               cacheJSONSparrows();
             }
             else { // Remove the JSON Characters from memory when the user disables the option.
-              for (jsonChar in cachedJSONSparrows.keys()) {
-                var char = cachedJSONSparrows.get(jsonChar);
-                if (char == null) continue;
-                FlxG.bitmap.remove(char);
-                char.persist = false;
-                char.destroyOnNoUse = true;
-                char.destroy();
-                cachedJSONSparrows.remove(jsonChar);
-              }
-              MemoryUtil.collect(true);
+              purgeJSONCache();
             }
           }, saveData.preferences.get("preloadSprites"));
 
@@ -661,20 +652,41 @@ class CharacterHandler extends Module {
    * @param path The file path.
    */
   function cacheSprite(path:String) {
-    if (cachedJSONSparrows.exists(path)) return;
-    trace('[Funker Selector] Caching sprite ' + path);
+    if (cachedJSONSparrows.exists(path)) {
+      trace('[Funker Selector] Graphic is already cached: ' + path);
+      return cachedJSONSparrows.get(path);
+    }
+    trace('[Funker Selector] Caching sprite: ' + path);
 
     var graphic:FlxGraphic = FlxGraphic.fromAssetKey(path, false, null, true);
-    if (graphic == null)
-    {
+    if (graphic == null) {
       trace('[Funker Selector] Failed to cache graphic: ' + path);
     }
-    else
-    {
+    else {
       trace('[Funker Selector] Successfully cached graphic: ' + path);
       graphic.persist = true;
       cachedJSONSparrows.set(path, graphic);
     }
+  }
+
+  /**
+   * Clear the JSON sparrows from memory.
+   */
+  function purgeJSONCache():Void {
+    for (graphicKey in cachedJSONSparrows.keys()) {
+      trace("[Funker Selector] Clearing from memory: " + graphicKey);
+      var graphic = cachedJSONSparrows.get(graphicKey);
+      if (graphic == null) {
+        trace("[Funker Selector] Graphic is null!!");
+        continue;
+      }
+      FlxG.bitmap.remove(graphic);
+      graphic.persist = false;
+      graphic.destroyOnNoUse = true;
+      graphic.destroy();
+      cachedJSONSparrows.remove(graphicKey);
+    }
+    MemoryUtil.collect(true);
   }
 
   /**

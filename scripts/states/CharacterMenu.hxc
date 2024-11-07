@@ -204,7 +204,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
       for (index in 0...characterWheel.members.length) {
         var item = characterWheel.members[index];
         if (index == charIndex - 1 && item is FunkinSprite) {
-          if (item.animation.curAnim != null && item.animation.curAnim.name == 'death' && item.animation.curAnim.curFrame < 36 && controls.ACCEPT) {
+          if (item.animation.curAnim != null
+            && item.animation.curAnim.name == 'death'
+            && item.animation.curAnim.curFrame < 36
+            && controls.ACCEPT) {
             item.animation.pause();
             item.animation.curAnim.curFrame = 34;
             item.animation.resume();

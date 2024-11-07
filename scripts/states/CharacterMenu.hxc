@@ -1060,7 +1060,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
         timer.cancel();
         typewriterIndex = 0;
       }
-    }, descText.length);
+    }, descText.length * 2);
 
     // Making it not look so awkward when "Simplify UI" is turned on.
     if (saveData.preferences.get("potatoMode") || curCharID == 'default') {

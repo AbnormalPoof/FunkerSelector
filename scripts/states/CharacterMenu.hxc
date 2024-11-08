@@ -389,6 +389,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
     });
 
     filteredKeys = filteredKeys.concat(iHateMyLife);
+
+    trace("[Funker Selector] Updated the character list:\n" + filteredKeys);
   }
 
   /**

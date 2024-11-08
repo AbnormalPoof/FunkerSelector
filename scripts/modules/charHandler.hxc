@@ -295,11 +295,13 @@ class CharacterHandler extends Module {
   function getFreeplayCapsuleBPM(freeplay:Dynamic):Float {
     var daSongCapsule = freeplay.grpCapsules.members[freeplay.curSelected];
     var songBPM = daSongCapsule?.freeplayData?.songStartingBpm;
-    if (songBPM == null) songBPM = 120;
-    if (daSongCapsule.songText.text == 'Random') {
+
+    if (daSongCapsule.songText.text == 'Random' && songBPM == null) {
       var songMusicData:Null<SongMusicData> = SongRegistry.instance.parseMusicData('freeplayRandom');
       songBPM = songMusicData.timeChanges[0].bpm;
     }
+
+    if (songBPM == null) songBPM = 120;
 
     return songBPM;
   }

@@ -730,7 +730,7 @@ class CharacterHandler extends Module {
    * selected character if they exist.
    */
   function onSongEnd() {
-    if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf)) {
+    if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) && !PlayStatePlaylist.isStoryMode) {
       trace("[Funker Selector] Character ID is owned.");
       PlayState.instance.currentChart.characters.player = saveData.characterIDs.bf;
     }

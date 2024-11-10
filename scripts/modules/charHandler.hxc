@@ -313,6 +313,10 @@ class CharacterHandler extends Module {
       + saveData.seenUnlocks);
   }
 
+  function isDebugBuild():Bool {
+    return Constants.versionSuffix == ' PROTOTYPE';
+  }
+
   /**
    * DEBUG: Writes Funker Selector save data to a JSON file.
    */
@@ -350,22 +354,24 @@ class CharacterHandler extends Module {
 
     // DEBUG FEATURES
 
-    // Force reload the JSON cache with F6.
-    if (FlxG.keys.justPressed.F6) {
-      trace("[Funker Selector] Force reloading JSON cache...");
-      loadJSONDataCache();
-    }
+    if (isDebugBuild()) {
+      // Force reload the JSON cache with F6.
+      if (FlxG.keys.justPressed.F6) {
+        trace("[Funker Selector] Force reloading JSON cache...");
+        loadJSONDataCache();
+      }
 
-    // Write the save data to a JSON file.
-    if (FlxG.keys.justPressed.F7) {
-      trace("[Funker Selector] Writing save data to JSON...");
-      debug_dumpSave();
-    }
+      // Write the save data to a JSON file.
+      if (FlxG.keys.justPressed.F7) {
+        trace("[Funker Selector] Writing save data to JSON...");
+        debug_dumpSave();
+      }
 
-    // Load the save data from a JSON file.
-    if (FlxG.keys.justPressed.F8) {
-      trace("[Funker Selector] Loading save data from JSON...");
-      debug_loadSaveFromJSON();
+      // Load the save data from a JSON file.
+      if (FlxG.keys.justPressed.F8) {
+        trace("[Funker Selector] Loading save data from JSON...");
+        debug_loadSaveFromJSON();
+      }
     }
   }
 

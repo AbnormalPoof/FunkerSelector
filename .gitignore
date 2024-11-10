@@ -1,3 +1,4 @@
 # macOS garbage data
 .DS_Store
 __MACOSX/
+data/FS_dumpedSave.json

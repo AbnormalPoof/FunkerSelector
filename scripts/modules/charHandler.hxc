@@ -259,7 +259,6 @@ class CharacterHandler extends Module {
    * DEBUG: Loads save data from a JSON file.
    */
   function debug_loadSaveFromJSON():Void {
-
     if (!Assets.exists(Paths.json("FS_dumpedSave"))) debug_dumpSave();
 
     var parsedData:Dynamic = SerializerUtil.fromJSON(Assets.getText(Paths.json("FS_dumpedSave")));
@@ -321,13 +320,12 @@ class CharacterHandler extends Module {
    * DEBUG: Writes Funker Selector save data to a JSON file.
    */
   function debug_dumpSave():Void {
-    FileUtil.saveFile(Bytes.ofString(SerializerUtil.toJSON(saveData, true)), [FileUtil.FILE_FILTER_JSON], null, null, Assets.getPath(Paths.json("FS_dumpedSave")),
-      'Write save data as JSON...');
+    FileUtil.saveFile(Bytes.ofString(SerializerUtil.toJSON(saveData, true)), [FileUtil.FILE_FILTER_JSON], null, null,
+      Assets.getPath(Paths.json("FS_dumpedSave")), 'Write save data as JSON...');
   }
 
   function onCreate(event) {
     super.onCreate(event);
-
     // Cache the sprites for JSON characters.
     // This is only done once.
     if (saveData.preferences.get("preloadSprites") && !saveData.preferences.get("potatoMode")) cacheJSONSparrows();
@@ -335,7 +333,8 @@ class CharacterHandler extends Module {
 
   function onUpdate(event) {
     super.onUpdate(event);
-    if (FlxG.state.subState is FreeplayState) { // Open the CharacterMenu substate.
+    if (FlxG.state.subState is FreeplayState) {
+      // Open the CharacterMenu substate.
       // We need to make a new one everytime since it gets destroyed when it's closed.
       if (FlxG.keys.justPressed.G && charText.visible && !FlxG.state.subState.busy) {
         if (charSelect == null) {
@@ -443,7 +442,8 @@ class CharacterHandler extends Module {
     }
 
     // Results screen bullshit.
-    if (state is ResultState) { // More playable character shit
+    if (state is ResultState) {
+      // More playable character shit
       // The results anim will still play, it's just Freeplay won't bug out when we do this.
       // If the original player is part of a Playable Character, we don't do this.
 

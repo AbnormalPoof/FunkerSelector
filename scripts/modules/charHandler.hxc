@@ -135,7 +135,8 @@ class CharacterHandler extends Module {
 
     if (isDebugBuild()) {
       trace("[Funker Selector] Game is a debug build.");
-    } else {
+    }
+    else {
       trace("[Funker Selector] Game is a release build.");
     }
   }
@@ -332,6 +333,10 @@ class CharacterHandler extends Module {
       + saveData.seenUnlocks);
   }
 
+  /**
+   * Wether or not the game is a debug build.
+   * @return Bool
+   */
   function isDebugBuild():Bool {
     // Debug builds use a different background color.
     return Application.current.window.context.attributes.background == 0xFFFF00FF;
@@ -887,7 +892,7 @@ class CharacterHandler extends Module {
       // The results anim will still play, it's just Freeplay won't bug out when we do this.
       // If the original player is part of a Playable Character, we don't do this.
 
-      // TODO: Replace the animation directly instead of this weird BS 
+      // TODO: Replace the animation directly instead of this weird BS
       PlayState.instance.currentChart.characters.player = ogCharID;
       state.playerCharacterId = null;
       if (PlayerRegistry.instance.isCharacterOwned(ogCharID)) state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);

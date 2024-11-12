@@ -26,6 +26,7 @@ import flixel.group.FlxTypedGroup;
 import funkin.util.MathUtil;
 import haxe.Json;
 import haxe.ds.StringMap;
+import lime.app.Application;
 import Std;
 
 /**
@@ -158,6 +159,17 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     conductorInUse.update();
 
+    // Adding some useful stuff to the variable watch window.
+    if (isDebugBuild()) {
+      FlxG.watch.addQuick("pageIndex", pageIndex);
+      FlxG.watch.addQuick("charIndex", charIndex);
+      FlxG.watch.addQuick("curCharID", curCharID);
+      FlxG.watch.addQuick("filteredKeys", filteredKeys);
+      FlxG.watch.addQuick("bf", saveData.characterIDs.bf);
+      FlxG.watch.addQuick("gf", saveData.characterIDs.gf);
+      FlxG.watch.addQuick("dad", saveData.characterIDs.dad);
+    }
+
     if (!busy) handleKeyShit();
 
     for (icon in iconGrid) { // Speed is capped at 300 BPM, I don't want motion sickness.
@@ -180,7 +192,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
           if (item is BaseCharacter) {
             characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [item.characterId]);
           }
-          else { // Assume the object is `lockedChill`
+          else {
+            // Assume the object is `lockedChill`
             characterData = {
               characterMenu: {
                 position: [200, 0]
@@ -910,6 +923,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
     if (font != null) object.setFormat(font, size, null, 'center');
 
     return object;
+  }
+
+  /**
+   * Copypasted from charHandler.
+   */
+  function isDebugBuild():Bool {
+    // Debug builds use a different background color.
+    return Application.current.window.context.attributes.background == 0xFFFF00FF;
   }
 
   /**

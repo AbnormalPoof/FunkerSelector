@@ -24,6 +24,7 @@ import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
 import funkin.util.FileUtil;
+import funkin.util.FileWriteMode;
 import funkin.util.MemoryUtil;
 import funkin.util.ReflectUtil;
 import funkin.util.SerializerUtil;
@@ -259,7 +260,10 @@ class CharacterHandler extends Module {
    * DEBUG: Loads save data from a JSON file.
    */
   function debug_loadSaveFromJSON():Void {
-    if (!Assets.exists(Paths.json("FS_dumpedSave"))) debug_dumpSave();
+    if (!Assets.exists(Paths.json("FS_dumpedSave"))) {
+      trace("[Funker Selector] DEBUG: No JSON save data found!");
+      return;
+    }
 
     var parsedData:Dynamic = SerializerUtil.fromJSON(Assets.getText(Paths.json("FS_dumpedSave")));
 
@@ -320,8 +324,7 @@ class CharacterHandler extends Module {
    * DEBUG: Writes Funker Selector save data to a JSON file.
    */
   function debug_dumpSave():Void {
-    FileUtil.saveFile(Bytes.ofString(SerializerUtil.toJSON(saveData, true)), [FileUtil.FILE_FILTER_JSON], null, null,
-      Assets.getPath(Paths.json("FS_dumpedSave")), 'Write save data as JSON...');
+    FileUtil.writeStringToPath(Assets.getPath(Paths.json("FS_dumpedSave")), SerializerUtil.toJSON(saveData, true), FileWriteMode.Force);
   }
 
   function onCreate(event) {
@@ -496,7 +499,8 @@ class CharacterHandler extends Module {
             if (value) {
               cacheJSONSparrows();
             }
-            else { // Remove the JSON Characters from memory when the user disables the option.
+            else {
+              // Remove the JSON Characters from memory when the user disables the option.
               purgeJSONCache();
             }
           }, saveData.preferences.get("preloadSprites"));

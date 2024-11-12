@@ -10,7 +10,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - This also changes the backing text to what you set in the Playable Character data.
 - New custom animations for Boyfriend in Pico mixes.
 - Added 2 new Script Events that fire when you enter/exit the Character Menu SubState.
-- F6 can now be used to forcefully reload the JSON cache.
 ### Changed
 - Completely reworked the save data system. Internally, everything is now one object instead of multiple.
   - Your save data will be migrated!

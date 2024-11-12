@@ -334,7 +334,7 @@ class CharacterHandler extends Module {
   }
 
   /**
-   * Wether or not the game is a debug build.
+   * Whether or not the game is a debug build.
    * @return Bool
    */
   function isDebugBuild():Bool {
@@ -386,7 +386,7 @@ class CharacterHandler extends Module {
   }
 
   /**
-   * Wether or not the character should be shown.
+   * Whether or not the character should be shown.
    * @param characterID The character ID we're using.
    * @param unlockType The method we're using to determine if this character is unlocked.
    * @return Bool
@@ -934,7 +934,7 @@ class CharacterHandler extends Module {
         }, saveData.preferences.get("potatoMode"));
 
         prefs.createPrefItemCheckbox("Preload Sprites",
-          "Wether to preload the character sprites or not. Will cause lag on the Character Selection Menu if off!", (value) -> {
+          "Whether to preload the character sprites or not. Will cause lag on the Character Selection Menu if off!", (value) -> {
             saveData.preferences.set("preloadSprites", value);
             Save.instance.modOptions.set("FunkerSelector", saveData);
             Save.instance.flush();

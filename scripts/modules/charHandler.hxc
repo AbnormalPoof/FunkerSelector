@@ -101,9 +101,19 @@ class CharacterHandler extends Module {
    */
   var charSelect:MusicBeatSubState = null;
 
+  /**
+   * An `AtlasText` object, used for the Character Select button.
+   */
   var charText:AtlasText;
+
+  /**
+   * The Icon as a `FunkinSprite`.
+   */
   var charSelectIcon:FunkinSprite;
 
+  /**
+   * Check the game version, initialize save data, and build the JSON character cache.
+   */
   function new() {
     super("CharacterHandler");
 
@@ -327,56 +337,6 @@ class CharacterHandler extends Module {
     FileUtil.writeStringToPath("mods/[V-Slice] Funker Selector/data/FS_dumpedSave.json"), SerializerUtil.toJSON(saveData, true), FileWriteMode.Force);
   }
 
-  function onCreate(event) {
-    super.onCreate(event);
-    // Cache the sprites for JSON characters.
-    // This is only done once.
-    if (saveData.preferences.get("preloadSprites") && !saveData.preferences.get("potatoMode")) cacheJSONSparrows();
-  }
-
-  function onUpdate(event) {
-    super.onUpdate(event);
-    if (FlxG.state.subState is FreeplayState) {
-      // Open the CharacterMenu substate.
-      // We need to make a new one everytime since it gets destroyed when it's closed.
-      if (FlxG.keys.justPressed.G && charText.visible && !FlxG.state.subState.busy) {
-        if (charSelect == null) {
-          freeplayBPM = getFreeplayCapsuleBPM((FlxG.state.subState));
-          charSelect = ScriptedMusicBeatSubState.init("CharacterSelectSubState");
-          charSelect.camera = FlxG.state.subState.funnyCam;
-          FlxG.state.subState.persistentUpdate = false;
-          trace("[Funker Selector] Opening the Character Select SubState...");
-          FlxG.state.subState.openSubState(charSelect);
-        }
-        else {
-          trace("[Funker Selector] The Character Select SubState is already open!");
-        }
-      }
-    }
-
-    // DEBUG FEATURES
-
-    if (isDebugBuild()) {
-      // Force reload the JSON cache with F6.
-      if (FlxG.keys.justPressed.F6) {
-        trace("[Funker Selector] Force reloading JSON cache...");
-        loadJSONDataCache();
-      }
-
-      // Write the save data to a JSON file.
-      if (FlxG.keys.justPressed.F7) {
-        trace("[Funker Selector] Writing save data to JSON...");
-        debug_dumpSave();
-      }
-
-      // Load the save data from a JSON file.
-      if (FlxG.keys.justPressed.F8) {
-        trace("[Funker Selector] Loading save data from JSON...");
-        debug_loadSaveFromJSON();
-      }
-    }
-  }
-
   /**
    * Gets the BPM of the currently selected song in Freeplay.
    * @param freeplay The Freeplay SubState to use as a dynamic object.
@@ -397,140 +357,6 @@ class CharacterHandler extends Module {
   }
 
   /**
-   * Stuff for Results and Freeplay.
-   */
-  function onSubStateOpenEnd(event) {
-    super.onSubStateOpenEnd(event);
-    var state = event.targetState;
-    // Set up the Character Select button.
-    if (state is FreeplayState) {
-      if (saveData.preferences.get("djSwapping")) {
-        trace("[Funker Selector] Switching out DJ...");
-        ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, true]);
-      }
-
-      if (charSelect != null) {
-        trace("[Funker Selector] Character SubState still exists! Resetting...");
-        charSelect = null;
-      }
-
-      charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
-      charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
-      charSelectIcon.animation.addByPrefix('idle', 'idle', 24, true);
-      charSelectIcon.zIndex = 1000;
-      charSelectIcon.scale.set(0.7, 0.7);
-      charSelectIcon.camera = state.funnyCam;
-      charSelectIcon.visible = false;
-
-      charText = new AtlasText(170, 270, 'G', 'bold');
-      charText.visible = false;
-      charText.zIndex = 1001;
-      charText.camera = state.funnyCam;
-
-      state.add(charSelectIcon);
-      state.add(charText);
-
-      // TODO, remake the icon and add a new unlock indicator
-      state.dj.onIntroDone.add(function() {
-        charSelectIcon.visible = true;
-        charSelectIcon.animation.play('intro');
-        charSelectIcon.animation.finishCallback = function(_) {
-          charSelectIcon.animation.play('idle');
-          charText.visible = true;
-          if (charSelectIcon.animation.curAnim.name == 'idle') charSelectIcon.offset.set(-15, 14);
-          else
-            charSelectIcon.offset.set();
-        };
-      });
-    }
-
-    // Results screen bullshit.
-    if (state is ResultState) {
-      // More playable character shit
-      // The results anim will still play, it's just Freeplay won't bug out when we do this.
-      // If the original player is part of a Playable Character, we don't do this.
-
-      // TODO: Get this bullshit out of here
-      PlayState.instance.currentChart.characters.player = ogCharID;
-      state.playerCharacterId = null;
-      if (PlayerRegistry.instance.isCharacterOwned(ogCharID)) state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);
-    }
-  }
-
-  /**
-   * Resetting Game Over and Pause Menu suffixes.
-   * We put this in `onStateChangeBegin();` instead of `onStateChangeEnd();`, otherwise,
-   * scripted characters will have their suffixes overridden!
-   */
-  override function onStateChangeBegin(event) {
-    super.onStateChangeBegin(event);
-    if (event.targetState is PlayState) {
-      PauseSubState.musicSuffix = '';
-      GameOverSubState.musicSuffix = '';
-      GameOverSubState.blueBallSuffix = '';
-
-      // Reload the song entries since `PlayState.instance.currentChart.characters.player`
-      // doesn't reset properly when we change it.
-      // TODO: Find the root cause and fix this in Funkin's source code.
-      SongRegistry.instance.loadEntries();
-    }
-  }
-
-  override function onStateChangeEnd(event) {
-    super.onStateChangeEnd(event);
-
-    // Options Menu stuff
-    if (event.targetState is OptionsState) {
-      var prefs = event.targetState.pages.get("preferences");
-      if (prefs != null) {
-        prefs.add(prefs.items.createItem(120, 120 * prefs.items.length + 30, "-- FUNKER SELECTOR --", "bold", () -> {})).fireInstantly = true;
-
-        prefs.createPrefItemCheckbox("Simplify UI", "Simplifies the UI and disables character sprite caching.", (value) -> {
-          saveData.preferences.set("potatoMode", value);
-          Save.instance.modOptions.set("FunkerSelector", saveData);
-          Save.instance.flush();
-        }, saveData.preferences.get("potatoMode"));
-
-        prefs.createPrefItemCheckbox("Preload Sprites",
-          "Wether to preload the character sprites or not. Will cause lag on the Character Selection Menu if off!", (value) -> {
-            saveData.preferences.set("preloadSprites", value);
-            Save.instance.modOptions.set("FunkerSelector", saveData);
-            Save.instance.flush();
-            if (value) {
-              cacheJSONSparrows();
-            }
-            else {
-              // Remove the JSON Characters from memory when the user disables the option.
-              purgeJSONCache();
-            }
-          }, saveData.preferences.get("preloadSprites"));
-
-        prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
-          ["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
-            saveData.preferences.set("preferredSFX", value);
-            Save.instance.modOptions.set("FunkerSelector", saveData);
-            Save.instance.flush();
-            if (value == "charSelect") {
-              FunkinSound.playOnce(Paths.sound('CS_confirm'));
-            }
-            else {
-              FunkinSound.playOnce(Paths.sound('confirmMenu'));
-            }
-          }, saveData.preferences.get("preferredSFX"));
-
-        prefs.createPrefItemCheckbox("DJ Replacement", "When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.",
-          (value) -> {
-            saveData.preferences.set("djSwapping", value);
-            Save.instance.modOptions.set("FunkerSelector", saveData);
-            Save.instance.flush();
-          }, saveData.preferences.get("djSwapping"));
-
-        prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold", () -> {})).fireInstantly = true;
-      }
-    }
-  }
-
-  /**
    * Parse a Funker Selector JSON file and return the data.
    * @param characterID The character ID to use.
    * @return The JSON data as a Json object.
@@ -545,16 +371,6 @@ class CharacterHandler extends Module {
     }
 
     return null;
-  }
-
-  function onScriptEvent(event) {
-    if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
-      charSelect = null;
-      if (saveData.preferences.get("djSwapping")) {
-        trace("[Funker Selector] Switching out DJ...");
-        ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState]);
-      }
-    }
   }
 
   /**
@@ -784,51 +600,6 @@ class CharacterHandler extends Module {
   }
 
   /**
-   * Reset the voiceList, swap out the characters, and
-   * replace vocals if any are found.
-   */
-  override function onCountdownStart(event) {
-    super.onCountdownStart(event);
-    if (PlayState.instance == null
-      || PlayState.instance.currentStage == null
-      || PlayStatePlaylist.isStoryMode
-      || PlayState.instance.isMinimalMode
-      || PlayState.instance.isChartingMode) return;
-
-    // Setting voiceList to null in order to reset the voices,
-    // since module variables persist between state changes.
-    voiceList = [null, null];
-
-    // Saving the original character ID.
-    ogCharID = PlayState.instance.currentChart.characters.player;
-
-    // Replace and swap out the characters.
-    replaceChar(saveData.characterIDs.bf, CharacterType.BF);
-    replaceChar(saveData.characterIDs.gf, CharacterType.GF);
-    replaceChar(saveData.characterIDs.dad, CharacterType.DAD);
-    PlayState.instance.currentStage.refresh();
-
-    // If at least ONE of them was changed (means a vocal file was found), replace the vocals.
-    if (voiceList[0] != null || voiceList[1] != null) {
-      trace('[Funker Selector] Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);
-      PlayState.instance.vocals.stop();
-      PlayState.instance.vocals = replaceVocals(voiceList);
-    }
-  }
-
-  /**
-   * Changing `player` in `currentChart` to trick the Results Screen
-   * into loading the Results Screen animations for the currently
-   * selected character if they exist.
-   */
-  function onSongEnd() {
-    if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) && !PlayStatePlaylist.isStoryMode) {
-      trace("[Funker Selector] Character ID is owned.");
-      PlayState.instance.currentChart.characters.player = saveData.characterIDs.bf;
-    }
-  }
-
-  /**
    * The actual logic for character replacement.
    * For Boyfriend and Dad, it checks to see if a vocal
    * file of the current song exists for the specified character,
@@ -1003,5 +774,246 @@ class CharacterHandler extends Module {
 
     if (characterData == null) return null;
     return characterData;
+  }
+
+  override function onCreate(event) {
+    super.onCreate(event);
+    // Cache the sprites for JSON characters.
+    // This is only done once.
+    if (saveData.preferences.get("preloadSprites") && !saveData.preferences.get("potatoMode")) cacheJSONSparrows();
+  }
+
+  override function onUpdate(event) {
+    super.onUpdate(event);
+    if (FlxG.state.subState is FreeplayState) {
+      // Open the CharacterMenu substate.
+      // We need to make a new one everytime since it gets destroyed when it's closed.
+      if (FlxG.keys.justPressed.G && charText.visible && !FlxG.state.subState.busy) {
+        if (charSelect == null) {
+          freeplayBPM = getFreeplayCapsuleBPM((FlxG.state.subState));
+          charSelect = ScriptedMusicBeatSubState.init("CharacterSelectSubState");
+          charSelect.camera = FlxG.state.subState.funnyCam;
+          FlxG.state.subState.persistentUpdate = false;
+          trace("[Funker Selector] Opening the Character Select SubState...");
+          FlxG.state.subState.openSubState(charSelect);
+        }
+        else {
+          trace("[Funker Selector] The Character Select SubState is already open!");
+        }
+      }
+    }
+
+    // DEBUG FEATURES
+
+    if (isDebugBuild()) {
+      // Force reload the JSON cache with F6.
+      if (FlxG.keys.justPressed.F6) {
+        trace("[Funker Selector] Force reloading JSON cache...");
+        loadJSONDataCache();
+      }
+
+      // Write the save data to a JSON file.
+      if (FlxG.keys.justPressed.F7) {
+        trace("[Funker Selector] Writing save data to JSON...");
+        debug_dumpSave();
+      }
+
+      // Load the save data from a JSON file.
+      if (FlxG.keys.justPressed.F8) {
+        trace("[Funker Selector] Loading save data from JSON...");
+        debug_loadSaveFromJSON();
+      }
+    }
+  }
+
+  /**
+   * Stuff for Results and Freeplay.
+   */
+  override function onSubStateOpenEnd(event) {
+    super.onSubStateOpenEnd(event);
+    var state = event.targetState;
+    // Set up the Character Select button.
+    if (state is FreeplayState) {
+      if (saveData.preferences.get("djSwapping")) {
+        trace("[Funker Selector] Switching out DJ...");
+        ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, true]);
+      }
+
+      if (charSelect != null) {
+        trace("[Funker Selector] Character SubState still exists! Resetting...");
+        charSelect = null;
+      }
+
+      charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
+      charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
+      charSelectIcon.animation.addByPrefix('idle', 'idle', 24, true);
+      charSelectIcon.zIndex = 1000;
+      charSelectIcon.scale.set(0.7, 0.7);
+      charSelectIcon.camera = state.funnyCam;
+      charSelectIcon.visible = false;
+
+      charText = new AtlasText(170, 270, 'G', 'bold');
+      charText.visible = false;
+      charText.zIndex = 1001;
+      charText.camera = state.funnyCam;
+
+      state.add(charSelectIcon);
+      state.add(charText);
+
+      // TODO, remake the icon and add a new unlock indicator
+      state.dj.onIntroDone.add(function() {
+        charSelectIcon.visible = true;
+        charSelectIcon.animation.play('intro');
+        charSelectIcon.animation.finishCallback = function(_) {
+          charSelectIcon.animation.play('idle');
+          charText.visible = true;
+          if (charSelectIcon.animation.curAnim.name == 'idle') charSelectIcon.offset.set(-15, 14);
+          else
+            charSelectIcon.offset.set();
+        };
+      });
+    }
+
+    // Results screen bullshit.
+    if (state is ResultState) {
+      // More playable character shit
+      // The results anim will still play, it's just Freeplay won't bug out when we do this.
+      // If the original player is part of a Playable Character, we don't do this.
+
+      // TODO: Replace the animation directly instead of this weird BS 
+      PlayState.instance.currentChart.characters.player = ogCharID;
+      state.playerCharacterId = null;
+      if (PlayerRegistry.instance.isCharacterOwned(ogCharID)) state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);
+    }
+  }
+
+  /**
+   * Resetting Game Over and Pause Menu suffixes.
+   * We put this in `onStateChangeBegin();` instead of `onStateChangeEnd();`, otherwise,
+   * scripted characters will have their suffixes overridden!
+   */
+  override function onStateChangeBegin(event) {
+    super.onStateChangeBegin(event);
+    if (event.targetState is PlayState) {
+      PauseSubState.musicSuffix = '';
+      GameOverSubState.musicSuffix = '';
+      GameOverSubState.blueBallSuffix = '';
+
+      // Reload the song entries since `PlayState.instance.currentChart.characters.player`
+      // doesn't reset properly when we change it.
+      // TODO: Find the root cause and fix this in Funkin's source code.
+      SongRegistry.instance.loadEntries();
+    }
+  }
+
+  override function onStateChangeEnd(event) {
+    super.onStateChangeEnd(event);
+
+    // Options Menu stuff
+    if (event.targetState is OptionsState) {
+      var prefs = event.targetState.pages.get("preferences");
+      if (prefs != null) {
+        prefs.add(prefs.items.createItem(120, 120 * prefs.items.length + 30, "-- FUNKER SELECTOR --", "bold", () -> {})).fireInstantly = true;
+
+        prefs.createPrefItemCheckbox("Simplify UI", "Simplifies the UI and disables character sprite caching.", (value) -> {
+          saveData.preferences.set("potatoMode", value);
+          Save.instance.modOptions.set("FunkerSelector", saveData);
+          Save.instance.flush();
+        }, saveData.preferences.get("potatoMode"));
+
+        prefs.createPrefItemCheckbox("Preload Sprites",
+          "Wether to preload the character sprites or not. Will cause lag on the Character Selection Menu if off!", (value) -> {
+            saveData.preferences.set("preloadSprites", value);
+            Save.instance.modOptions.set("FunkerSelector", saveData);
+            Save.instance.flush();
+            if (value) {
+              cacheJSONSparrows();
+            }
+            else {
+              // Remove the JSON Characters from memory when the user disables the option.
+              purgeJSONCache();
+            }
+          }, saveData.preferences.get("preloadSprites"));
+
+        prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
+          ["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
+            saveData.preferences.set("preferredSFX", value);
+            Save.instance.modOptions.set("FunkerSelector", saveData);
+            Save.instance.flush();
+            if (value == "charSelect") {
+              FunkinSound.playOnce(Paths.sound('CS_confirm'));
+            }
+            else {
+              FunkinSound.playOnce(Paths.sound('confirmMenu'));
+            }
+          }, saveData.preferences.get("preferredSFX"));
+
+        prefs.createPrefItemCheckbox("DJ Replacement", "When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.",
+          (value) -> {
+            saveData.preferences.set("djSwapping", value);
+            Save.instance.modOptions.set("FunkerSelector", saveData);
+            Save.instance.flush();
+          }, saveData.preferences.get("djSwapping"));
+
+        prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold", () -> {})).fireInstantly = true;
+      }
+    }
+  }
+
+  override function onScriptEvent(event) {
+    super.onScriptEvent(event);
+    if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
+      charSelect = null;
+      if (saveData.preferences.get("djSwapping")) {
+        trace("[Funker Selector] Switching out DJ...");
+        ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState]);
+      }
+    }
+  }
+
+  /**
+   * Reset the voiceList, swap out the characters, and
+   * replace vocals if any are found.
+   */
+  override function onCountdownStart(event) {
+    super.onCountdownStart(event);
+    if (PlayState.instance == null
+      || PlayState.instance.currentStage == null
+      || PlayStatePlaylist.isStoryMode
+      || PlayState.instance.isMinimalMode
+      || PlayState.instance.isChartingMode) return;
+
+    // Setting voiceList to null in order to reset the voices,
+    // since module variables persist between state changes.
+    voiceList = [null, null];
+
+    // Saving the original character ID.
+    ogCharID = PlayState.instance.currentChart.characters.player;
+
+    // Replace and swap out the characters.
+    replaceChar(saveData.characterIDs.bf, CharacterType.BF);
+    replaceChar(saveData.characterIDs.gf, CharacterType.GF);
+    replaceChar(saveData.characterIDs.dad, CharacterType.DAD);
+    PlayState.instance.currentStage.refresh();
+
+    // If at least ONE of them was changed (means a vocal file was found), replace the vocals.
+    if (voiceList[0] != null || voiceList[1] != null) {
+      trace('[Funker Selector] Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);
+      PlayState.instance.vocals.stop();
+      PlayState.instance.vocals = replaceVocals(voiceList);
+    }
+  }
+
+  /**
+   * Changing `player` in `currentChart` to trick the Results Screen
+   * into loading the Results Screen animations for the currently
+   * selected character if they exist.
+   */
+  override function onSongEnd() {
+    super.onSongEnd();
+    if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) && !PlayStatePlaylist.isStoryMode) {
+      trace("[Funker Selector] Character ID is owned.");
+      PlayState.instance.currentChart.characters.player = saveData.characterIDs.bf;
+    }
   }
 }

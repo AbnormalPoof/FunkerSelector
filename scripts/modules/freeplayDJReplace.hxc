@@ -50,6 +50,9 @@ class DJReplace extends Module {
     }
   }
 
+  /**
+   * Replaces the Freeplay DJ.
+   */
   function replaceDJNoIntro():Void {
     var freeplayDJ = FlxG.state.subState.dj;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
@@ -86,6 +89,10 @@ class DJReplace extends Module {
     }
   }
 
+  /**
+   * A modified version of replaceDJNoIntro() that replaces the DJ quicker.
+   * This is used when *entering* Freeplay.
+   */
   function replaceDJIntro():Void {
     var freeplayDJ = FlxG.state.subState.dj;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;

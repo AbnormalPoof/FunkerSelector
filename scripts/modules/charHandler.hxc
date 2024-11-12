@@ -132,6 +132,12 @@ class CharacterHandler extends Module {
 
     // Parses and caches JSON character data.
     loadJSONDataCache();
+
+    if (isDebugBuild()) {
+      trace("[Funker Selector] Game is a debug build.");
+    } else {
+      trace("[Funker Selector] Game is a release build.");
+    }
   }
 
   /**
@@ -327,7 +333,8 @@ class CharacterHandler extends Module {
   }
 
   function isDebugBuild():Bool {
-    return Constants.versionSuffix == ' PROTOTYPE';
+    // Debug builds use a different background color.
+    return Application.current.window.context.attributes.background == 0xFFFF00FF;
   }
 
   /**

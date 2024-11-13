@@ -89,7 +89,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
   /**
    * Pages.
-   * 
+   *
    * This is just an array, their index is used to control a lot of things in the menu.
    */
   var pages:Array<String> = ['bf', 'dad', 'gf'];
@@ -151,6 +151,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     updateFilteredKeys();
     if (!saveData.preferences.get("potatoMode")) buildCharacterWheel();
     jumpToCurSelected();
+
     ModuleHandler.callEvent(new ScriptEvent(FS_OPENED_SUBSTATE));
   }
 
@@ -274,7 +275,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
   /**
    * Stolen from `StoryMenuState.hx` LOL
-   * 
+   *
    * Changes the selected character.
    * @param change +1 (right), -1 (left)
    */
@@ -409,7 +410,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
   /**
    * Make a super awesome cool icon grid!
    * @param spacing The spacing of the icons, I guess.
-   * 
+   *
    * This is disabled if "Simplify UI" is turned on in the Options Menu.
    */
   function createIconGrid(spacing:Int, ?alpha:Float = null):Void {
@@ -446,17 +447,17 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
   /**
    * Check if the JSON file in `data/characters/` ACTUALLY exists.
-   * 
+   *
    * I wrote this function because OpenFL Assets is case-insensitive
    * on Windows and macOS. This is for an edge case where the JSON filename
    * in data/characters/ has different capitalization than the Character ID
    * specified in the Funker Selector JSON. Because OpenFL is case insensitive, it will
    * always return true, which confuses Funker Selector!
-   * 
+   *
    * This was reported in issue [#1](https://github.com/AbnormalPoof/FunkerSelector/issues/1)!
-   * 
+   *
    * This should hopefully solve any and all issues like that one.
-   * 
+   *
    * @param string The character ID we're comparing.
    * @return Returns a true or false if the file exists.
    */

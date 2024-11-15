@@ -350,8 +350,7 @@ class CharacterHandler extends Module {
     var fileString:String = PlatformUtil.isMacOS() ? "../../../../../../../" : "../../../../";
     var filePath:String = fileString + "example_mods/[V-Slice] Funker Selector/data/FS_dumpedSave.json";
 
-    FileUtil.writeStringToPath(filePath, SerializerUtil.toJSON(saveData, true),
-      FileWriteMode.Force);
+    FileUtil.writeStringToPath(filePath, SerializerUtil.toJSON(saveData, true), FileWriteMode.Force);
 
     trace("[Funker Selector] DEBUG: Wrote save data to " + filePath);
   }

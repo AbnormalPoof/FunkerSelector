@@ -26,6 +26,7 @@ import funkin.util.Constants;
 import funkin.util.FileUtil;
 import funkin.util.FileWriteMode;
 import funkin.util.MemoryUtil;
+import funkin.util.PlatformUtil;
 import funkin.util.ReflectUtil;
 import funkin.util.SerializerUtil;
 import funkin.util.VersionUtil;
@@ -346,11 +347,13 @@ class CharacterHandler extends Module {
    * DEBUG: Writes Funker Selector save data to a JSON file.
    */
   function debug_dumpSave():Void {
-    var filePath:String = (if (PlatformUtil.isMacOS()) "../../../../../../../" else "../../../../")
-      + "example_mods/[V-Slice] Funker Selector/data/FS_dumpedSave.json";
+    var fileString:String = PlatformUtil.isMacOS() ? "../../../../../../../" : "../../../../";
+    var filePath:String = fileString + "example_mods/[V-Slice] Funker Selector/data/FS_dumpedSave.json";
 
     FileUtil.writeStringToPath(filePath, SerializerUtil.toJSON(saveData, true),
       FileWriteMode.Force);
+
+    trace("[Funker Selector] DEBUG: Wrote save data to " + filePath);
   }
 
   /**

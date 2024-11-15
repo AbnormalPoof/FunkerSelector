@@ -854,7 +854,7 @@ class CharacterHandler extends Module {
     if (state is FreeplayState) {
       if (saveData.preferences.get("djSwapping")) {
         trace("[Funker Selector] Switching out DJ...");
-        ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, true]);
+        ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, saveData, true]);
       }
 
       if (charSelect != null) {
@@ -984,7 +984,7 @@ class CharacterHandler extends Module {
       charSelect = null;
       if (saveData.preferences.get("djSwapping")) {
         trace("[Funker Selector] Switching out DJ...");
-        ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState]);
+        ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, saveData]);
       }
     }
   }

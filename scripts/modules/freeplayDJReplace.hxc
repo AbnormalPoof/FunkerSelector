@@ -14,7 +14,7 @@ import haxe.Timer;
  * Separate module for replacing the Freeplay DJ to prevent messy code in CharacterHandler.
  */
 class DJReplace extends Module {
-  public var saveData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptGet('saveData');
+  public var saveData:Dynamic;
 
   public function new() {
     super('DJReplace');
@@ -22,9 +22,12 @@ class DJReplace extends Module {
 
   /**
    * Swap out the Freeplay DJ.
-   * @param freeplay The Freeplay SubState we're using. 
+   * @param freeplay The Freeplay SubState we're using.
    */
-  function transitionToNewDJ(freeplay:FreeplayState, ?inIntro:Bool = false):Void {
+  function transitionToNewDJ(freeplay:FreeplayState, FS_saveData:Dynamic, ?inIntro:Bool = false):Void {
+
+    saveData = FS_saveData;
+
     var freeplayDJ = freeplay.dj;
     var playableCharData = freeplayDJ.playableCharData;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : freeplay.currentCharacterId;

@@ -346,7 +346,11 @@ class CharacterHandler extends Module {
    * DEBUG: Writes Funker Selector save data to a JSON file.
    */
   function debug_dumpSave():Void {
-    FileUtil.writeStringToPath("../../../../../../../example_mods/[V-Slice] Funker Selector/data/FS_dumpedSave.json", SerializerUtil.toJSON(saveData, true), FileWriteMode.Force);
+    var filePath:String = (if (PlatformUtil.isMacOS()) "../../../../../../../" else "../../../../")
+      + "example_mods/[V-Slice] Funker Selector/data/FS_dumpedSave.json";
+
+    FileUtil.writeStringToPath(filePath, SerializerUtil.toJSON(saveData, true),
+      FileWriteMode.Force);
   }
 
   /**

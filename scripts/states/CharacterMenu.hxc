@@ -173,7 +173,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     if (!busy) handleKeyShit();
 
-    for (icon in iconGrid) { // Speed is capped at 300 BPM, I don't want motion sickness.
+    for (icon in iconGrid) {
+      // Speed is capped at 300 BPM, I don't want motion sickness.
       icon.x -= ICON_SCROLL_SPEED * (Math.min(songBPM, 300) / 60);
       icon.y += (ICON_SCROLL_SPEED * (Math.min(songBPM, 300) / 60)) / 2; // Vertical speed is halved.
 

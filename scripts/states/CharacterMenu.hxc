@@ -1045,9 +1045,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
    * @param charDesc The `charDesc` FlxText object.
    */
   function adjustFontSize(charDesc:FlxText):Void {
-    if (charDesc == null) return;
-
-    var currentFontSize = charDesc.size;
+    var currentFontSize = charDesc?.size;
     var maxHeight = descBox.height - 10;
     if (charDesc.fieldHeight > maxHeight) {
       currentFontSize--;

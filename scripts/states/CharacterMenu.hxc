@@ -1048,12 +1048,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
     var currentFontSize = charDesc.size;
     var maxHeight = descBox.height - 10;
     if (charDesc.fieldHeight > maxHeight) {
-        currentFontSize--;
+      currentFontSize--;
 
-        charDesc.size = currentFontSize;
-        charDesc.letterSpacing -= 0.16 * (currentFontSize / 10);
+      charDesc.size = currentFontSize;
+      charDesc.letterSpacing -= 0.16 * (currentFontSize / 10);
 
-        if (currentFontSize <= 8) return;
+      if (currentFontSize <= 8) return;
     }
   }
 

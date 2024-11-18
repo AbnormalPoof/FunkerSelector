@@ -25,7 +25,6 @@ class DJReplace extends Module {
    * @param freeplay The Freeplay SubState we're using.
    */
   function transitionToNewDJ(freeplay:FreeplayState, FS_saveData:Dynamic, ?inIntro:Bool = false):Void {
-
     saveData = FS_saveData;
 
     var freeplayDJ = freeplay.dj;

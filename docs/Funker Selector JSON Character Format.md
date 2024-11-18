@@ -12,9 +12,7 @@ The mod queries `data/funkerSelector/` at runtime and parses the JSON files in t
   "characterID": "bf",
   "characterType": "bf",
   "description": {
-    "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand...",
-    "size": 35,
-    "offsets": [0, 0]
+    "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand..."
   },
   "characterMenu":
   {
@@ -163,32 +161,20 @@ For example, Boyfriend (Pixel) uses `-pixel`, while Pico (Playable) uses `-pico`
 
 ```json
 "description": {
-  "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand...",
-  "size": 35,
-  "offsets": [0, 0]
+  "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand..."
 }
 ```
 This is a short description of the character, with a few properties:
 
 ```json
 "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand..."
-``` 
+```
 The text itself.
 
 ```json
 "unlockCondition": "Beat WeekEnd 1 to unlock."
-``` 
+```
 The unlock condition that's shown if the character is locked. This overrides the description text!
-
-```json
-"size": 35
-```
-The font size.
-
-```json
-"offsets": [0, 0]
-```
-The offsets for the description. These are ***not*** the actual X and Y coordinates of the text, this is mainly for adjustment.
 
 ---
 

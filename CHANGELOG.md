@@ -21,9 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Complete UI makeover and refactor:
   - Characters are now shown next to eachother in a scrollable layout
   - Character descriptions are now shown with a typewriter effect.
+    - In addition, the description text is resized dynamically to fit the text box.
+      - Text might be a bit unreadable the longer it is, so be careful!
   - You can also now use the scroll wheel to navigate.
   - If the new UI is too much, you can always turn on "Simplify UI" in the Options Menu.
-  - **This might cause your description to look awkward if you have custom offsets and size specified in the JSON file!**
   - **Your characters might be positioned weird, please update your character positions in the JSON data.**
   - **The menu will take a while to load if "Preload Sprites" is disabled!!**
   - The menu now uses your controls as configured in the Options Menu.
@@ -38,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Fixed a bug where the Character Menu SubState can be re-opened if it was already open.
 ### Removed
 - All the Boyfriend / Pico variants have been moved to a separate mod.
+- Removed the `size` and `offsets` properties from the JSON data as the description text is now dynamically resized.
 
 ## [1.5.2] - 2024-10-23
 ### Fixed
@@ -56,7 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 - The characters now bop to the BPM of the currently selected song in Freeplay.
 - A brand new unlock system. You can assign an unlock condition for your character.
-  - Please see the documentation on how to do this. 
+  - Please see the documentation on how to do this.
   - In addition: Pico (Playable), Pico (Christmas), Daddy Dearest and all the Boyfriend variants are now locked, requiring you to complete their specified requirements to unlock them.
     - You'll probably be seeing the unlock animation a LOT if you already completed them. This is only done once!
 - The window title will now change if you're in the Character Menu.
@@ -120,7 +122,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Optimized a few spots in the `charSelect` module and `CharacterMenu` substate.
 - Refactored vocal replacement. `PlayState.instance.voices` is now replaced properly instead of the hacky way of setting `PlayState.instance.currentChart.characters.player` and basically running with it.
 - Use a more memory-efficient method for "Preload Sprites".
-### Fixed 
+### Fixed
 - Fixed "Preload Sprites" doing the opposite of what it was supposed to do.
   - In addition, disabling the option will now remove the sprites from memory.
 - Fixed a random Null Object Reference from occuring when "Default" was selected.
@@ -134,7 +136,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added a count to the UI which shows the current character, and the total amount of characters for the current page.
 ### Changed
 - Gave the entire UI a fresh coat of paint. If the current character is a JSON Character, they will have their sprites displayed, along with a neat little description about them!
-  - The UI now uses PhantomMuff by Cracsthor! Allows for text resizing, making the UI less cluttered in general. 
+  - The UI now uses PhantomMuff by Cracsthor! Allows for text resizing, making the UI less cluttered in general.
   - With this UI overhaul comes some new options related to it:
     - Simplify UI: Simplifies the UI if it's too much.
     - Preload Sprites: Wether to preload the character sprites or not.

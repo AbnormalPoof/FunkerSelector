@@ -569,7 +569,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
     keyBox.alpha = 0.8;
     keyBox.screenCenter();
 
-    // TODO: Find a way to keep the text within the confines of this
     descBox = new FunkinSprite(0, 500);
     descBox.makeSolidColor(850, 200, 0xFF000000);
     descBox.camera = uiCam;
@@ -1042,6 +1041,23 @@ class CharacterSelectSubState extends MusicBeatSubState {
   }
 
   /**
+   * Adjusts the description size relative to the description text box.
+   * @param charDesc The `charDesc` FlxText object.
+   */
+  function adjustFontSize(charDesc:FlxText):Void {
+    var currentFontSize = charDesc.size;
+    var maxHeight = descBox.height - 10;
+    if (charDesc.fieldHeight > maxHeight) {
+        currentFontSize--;
+
+        charDesc.size = currentFontSize;
+        charDesc.letterSpacing -= 0.16 * (currentFontSize / 10);
+
+        if (currentFontSize <= 8) return;
+    }
+  }
+
+  /**
    * Update character information.
    */
   function updateCharInfo():Void {
@@ -1071,7 +1087,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
         charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         charName.text = "DEFAULT";
         descText = "This is the Default character defined by the song.";
-        configureText(charDesc, "", [-20, 0], 45, Paths.font("PhantomMuff.ttf"));
+        configureText(charDesc, "", null, null, Paths.font("PhantomMuff.ttf"));
       default:
         if (lockedCharMap.exists(curCharID)) {
           charName.text = "LOCKED";
@@ -1089,12 +1105,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
           charIcon.setPosition(270, 380);
 
           descText = characterData.description?.text != null ? characterData.description.text : "No description was specified in the JSON file.";
-          var offsets:Array<Int> = [
-            characterData.description?.offsets != null ? characterData.description?.offsets[0] : 0,
-            characterData.description?.offsets != null ? characterData.description?.offsets[1] : 0
-          ];
 
-          configureText(charDesc, "", offsets, characterData.description?.size, Paths.font("PhantomMuff.ttf"));
+          configureText(charDesc, "", null, null, Paths.font("PhantomMuff.ttf"));
         }
     }
 
@@ -1106,6 +1118,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     typewriterTimer.start(0.01, function(timer:FlxTimer) {
       if ((typewriterIndex + 1) <= descText.length) {
         charDesc.text = descText.substring(0, typewriterIndex + 1);
+        adjustFontSize(charDesc);
         typewriterIndex++;
       }
       else {

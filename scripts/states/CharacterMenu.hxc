@@ -672,6 +672,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
         WindowUtil.setWindowTitle('Friday Night Funkin\'');
         ModuleHandler.callEvent(new ScriptEvent(FS_EXITED_SUBSTATE));
+
+        if (typewriterTimer != null) typewriterTimer.cancel();
         close();
       }
     }
@@ -1045,7 +1047,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
    * @param charDesc The `charDesc` FlxText object.
    */
   function adjustFontSize(charDesc:FlxText):Void {
-    var currentFontSize = charDesc?.size;
+    var currentFontSize = charDesc.size;
     var maxHeight = descBox.height - 10;
     if (charDesc.fieldHeight > maxHeight) {
       currentFontSize--;

@@ -953,7 +953,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       return;
     }
 
-    if (FlxG.sound.music != null && !skip) FlxG.sound.music.fadeOut();
+    if (FlxG.sound.music != null) FlxG.sound.music.fadeOut();
 
     if (!saveData.preferences.get("potatoMode")) {
       lockedChill.offset.set();
@@ -1062,10 +1062,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
     var descText:String;
 
     if (curCharID != 'default') {
-      characterInfo = characterMap.get(curCharID);
-      ownerJSONname = characterInfo[0];
-      characterData = jsonCharacterCache.get(ownerJSONname)[0];
-      charIconData = (curCharID != 'default') ? jsonCharacterCache.get(ownerJSONname)[1] : null;
+      characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
+      charIconData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID, true]);
     }
 
     switch (curCharID) {

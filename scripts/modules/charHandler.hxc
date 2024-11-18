@@ -780,15 +780,16 @@ class CharacterHandler extends Module {
   /**
    * Fetches the Character Data from the cache.
    * @param characterID The character ID we are using.
+   * @param funkinCharData Whether to get the character data from `data/characters/` instead of `data/funkerSelector/`
    * @return The character data as a dynamic object.
    */
-  function getCharacterData(characterID:String):Dynamic {
+  function getCharacterData(characterID:String, ?funkinCharData:Bool = false):Dynamic {
     characterInfo = characterMap.get(characterID);
 
     if (characterInfo == null) return null;
 
     ownerJSONname = characterInfo[0];
-    characterData = jsonCharacterCache.get(ownerJSONname)[0];
+    characterData = jsonCharacterCache.get(ownerJSONname)[funkinCharData ? 1 : 0];
 
     if (characterData == null) return null;
     return characterData;

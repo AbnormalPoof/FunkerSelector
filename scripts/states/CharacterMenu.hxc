@@ -503,6 +503,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
     numberThing.color = 0xFFE3E1E1;
     numberThing.camera = uiCam;
 
+    charDesc = configureText(null, "PLACEHOLDER", [250, 510], null, Paths.font("PhantomMuff.ttf"));
+    charDesc.wordWrap = true;
+    charDesc.fieldWidth = 800;
+    charDesc.camera = uiCam;
+
     selected = configureText(null, '(SELECTED)', [720, 220], 50, Paths.font("PhantomMuff.ttf"));
     selected.color = 0xFF53FF38;
     selected.visible = false;
@@ -598,6 +603,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     add(hotkeys);
     add(newGraphic);
     add(descBox);
+    add(charDesc);
 
     WindowUtil.setWindowTitle('Friday Night Funkin\' - Funker Selector Menu');
 
@@ -1063,19 +1069,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
    * Update character information.
    */
   function updateCharInfo():Void {
-    if (charDesc != null) remove(charDesc);
-
     selectText.text = topText[pageIndex];
     selectText.color = topTextColor[pageIndex];
     selectText.screenCenter(0x01);
     selected.visible = selectedTextVisibility();
 
     newGraphic.visible = false;
-
-    charDesc = configureText(null, "PLACEHOLDER", [250, 510], null, Paths.font("PhantomMuff.ttf"));
-    charDesc.wordWrap = true;
-    charDesc.fieldWidth = 800;
-    charDesc.camera = uiCam;
 
     var descText:String;
 
@@ -1152,8 +1151,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     charName.screenCenter(0x01);
     selected.y = charDesc.y - 60;
-
-    add(charDesc);
 
     // Do the unlock animation if we haven't seen it yet.
     if (lockedCharMap.exists(curCharID)

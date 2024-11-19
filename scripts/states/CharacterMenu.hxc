@@ -818,7 +818,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
   /**
    * Jumps to the currently selected character.
    */
-  function jumpToCurSelected():Void { // In the event that the saved character ID no longer exists, we fallback to default.
+  function jumpToCurSelected():Void {
+    // In the event that the saved character ID no longer exists, we fallback to default.
     if (!characterMap.exists(characterIDsArray[pageIndex]) && characterIDsArray[pageIndex] != 'default') {
       trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
       switch (pageIndex) {
@@ -855,7 +856,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
       var item:Dynamic = characterWheel.members[charIndex - 1];
       if (item != null && item is BaseCharacter) item.playAnimation(animation, true, true);
     }
-    if (charIcon.hasAnimation('winning')) { // Play the winning animation if it's available.
+    if (charIcon.hasAnimation('winning')) {
+      // Play the winning animation if it's available.
       charIcon.playAnimation('winning');
 
       // I wanted this really cool effect where the icons in the icon grid would also

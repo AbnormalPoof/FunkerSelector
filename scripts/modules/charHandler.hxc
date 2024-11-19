@@ -628,10 +628,10 @@ class CharacterHandler extends Module {
    *
    */
   function replaceChar(characterID:String = 'bf', characterType:CharacterType = null):Void {
-    var characterData:Dynamic = getCharacterData(characterID);
+    var fs_characterData:Dynamic = getCharacterData(characterID);
     var oldChar:BaseCharacter = null;
 
-    var voiceID:String = characterData?.voiceID != null ? characterData.voiceID : characterID;
+    var voiceID:String = fs_characterData?.voiceID != null ? fs_characterData.voiceID : characterID;
     var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
     var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + voiceID + variationSuffix);
 
@@ -661,8 +661,8 @@ class CharacterHandler extends Module {
     if (oldChar == null) return;
 
     // TODO: Add visual indicator for variations.
-    if (characterData?.characterVariations != null) {
-      for (variation in characterData.characterVariations) {
+    if (fs_characterData?.characterVariations != null) {
+      for (variation in fs_characterData.characterVariations) {
         if (variation.songID == null || variation.characterID == null) {
           continue;
         }
@@ -690,7 +690,7 @@ class CharacterHandler extends Module {
         }
 
         if (songMatch && variationMatch) {
-          characterData = getCharacterData(variation.characterID) != null ? getCharacterData(variation.characterID) : characterData;
+          fs_characterData = getCharacterData(variation.characterID) != null ? getCharacterData(variation.characterID) : fs_characterData;
 
           if (charJSONCheck(variation.characterID)) {
             trace('[Funker Selector] Variation found: ' + variation.characterID);
@@ -723,13 +723,13 @@ class CharacterHandler extends Module {
       trace('[Funker Selector] ID ' + characterID + ' and ID ' + oldChar.characterId + ' match. Not replacing...');
     }
 
-    if (characterData != null && characterType == CharacterType.BF) {
-      PauseSubState.musicSuffix = (characterData.suffixes?.pauseMusic != null
-        && characterData.suffixes.pauseMusic != '') ? characterData.suffixes.pauseMusic : PauseSubState.musicSuffix;
-      GameOverSubState.musicSuffix = (characterData.suffixes?.gameOverMusic != null
-        && characterData.suffixes.gameOverMusic != '') ? characterData.suffixes.gameOverMusic : GameOverSubState.musicSuffix;
-      GameOverSubState.blueBallSuffix = (characterData.suffixes?.blueBall != null
-        && characterData.suffixes.blueBall != '') ? characterData.suffixes.blueBall : GameOverSubState.blueBallSuffix;
+    if (fs_characterData != null && characterType == CharacterType.BF) {
+      PauseSubState.musicSuffix = (fs_characterData.suffixes?.pauseMusic != null
+        && fs_characterData.suffixes.pauseMusic != '') ? fs_characterData.suffixes.pauseMusic : PauseSubState.musicSuffix;
+      GameOverSubState.musicSuffix = (fs_characterData.suffixes?.gameOverMusic != null
+        && fs_characterData.suffixes.gameOverMusic != '') ? fs_characterData.suffixes.gameOverMusic : GameOverSubState.musicSuffix;
+      GameOverSubState.blueBallSuffix = (fs_characterData.suffixes?.blueBall != null
+        && fs_characterData.suffixes.blueBall != '') ? fs_characterData.suffixes.blueBall : GameOverSubState.blueBallSuffix;
     }
 
     trace('[Funker Selector] Suffixes\n\nPause Music: ' + PauseSubState.musicSuffix + '\nGame Over Music: ' + GameOverSubState.musicSuffix

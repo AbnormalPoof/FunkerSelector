@@ -58,9 +58,11 @@ class DJReplace extends Module {
   function replaceDJNoIntro():Void {
     var freeplayDJ = FlxG.state.subState.dj;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
-    var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
-    var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
-    var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
+    var fs_characterData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
+    var playableCharId:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+    var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(playableCharId);
+    var playableCharData:Dynamic = playableChar != null ? playableChar.getFreeplayDJData() : null;
+    var introFrame:Int = fs_characterData?.introSwapFrame != null ? fs_characterData.introSwapFrame : 3;
 
     var startTime = Timer.stamp();
 
@@ -77,9 +79,9 @@ class DJReplace extends Module {
       freeplayDJ.playableCharData = playableCharData;
 
       freeplayDJ.currentState = FreeplayDJState.Intro;
+
       var animPrefix = playableCharData.getAnimationPrefix('intro');
-      // TODO: Make the frame a variable.
-      freeplayDJ.playFlashAnimation(animPrefix, true, false, false, 3);
+      freeplayDJ.playFlashAnimation(animPrefix, true, false, false, introSwapFrame);
 
       if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1),
         playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3));

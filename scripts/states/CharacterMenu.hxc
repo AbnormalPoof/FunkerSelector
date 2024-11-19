@@ -192,11 +192,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
         var item:Dynamic = characterWheel.members[index];
         if (item != null) {
           if (item is BaseCharacter) {
-            characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [item.characterId]);
+            fs_characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [item.characterId]);
           }
           else {
             // Assume the object is `lockedChill`
-            characterData = {
+            fs_characterData = {
               characterMenu: {
                 position: [200, 0]
               }
@@ -204,7 +204,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
           }
         }
 
-        var xOffset:Float = characterData?.characterMenu != null ? characterData.characterMenu.position[0] : 0;
+        var xOffset:Float = fs_characterData?.characterMenu != null ? fs_characterData.characterMenu.position[0] : 0;
 
         item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.20);
       }
@@ -225,7 +225,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       var lockedChill:FunkinSprite;
 
       if (characterID != 'default') {
-        characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [characterID]);
+        fs_characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [characterID]);
       }
 
       if (characterSprite != null) {
@@ -246,7 +246,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
         }
         else {
           trace("[Funker Selector] Configuring sprite...");
-          configureChar(characterSprite, characterData?.characterMenu);
+          configureChar(characterSprite, fs_characterData?.characterMenu);
           characterWheel.add(characterSprite);
         }
       }
@@ -399,7 +399,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
    * This is disabled if "Simplify UI" is turned on in the Options Menu.
    */
   function createIconGrid(spacing:Int, ?alpha:Float = null):Void {
-    var charIconData = curCharID != 'default' ? jsonCharacterCache.get(curCharID)[1] : null;
+    var characterData = curCharID != 'default' ? jsonCharacterCache.get(curCharID)[1] : null;
     var columns = Math.ceil(FlxG.width / (spacing * 2));
     var rows = Math.ceil(FlxG.height / (spacing * 2));
     var xStart = (FlxG.width - columns * spacing * 2) / 2;
@@ -414,8 +414,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
             icon.y = yStart + (i * 2 + l) * spacing;
             icon.alpha = (alpha != null ? alpha : 0.2);
 
-            if (charIconData != null) {
-              icon.configure(charIconData.healthIcon);
+            if (characterData != null) {
+              icon.configure(characterData.healthIcon);
             }
             else {
               icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
@@ -851,8 +851,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
       FunkinSound.playOnce(Paths.sound('confirmMenu'));
     }
     if (!saveData.preferences.get("potatoMode")) {
-      characterData = jsonCharacterCache.get(curCharID) != null ? jsonCharacterCache.get(curCharID)[0] : null;
-      animation = characterData?.characterMenu?.selectedAnim != null ? characterData.characterMenu.selectedAnim : 'hey';
+      fs_characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
+      animation = fs_characterData?.characterMenu?.selectedAnim != null ? fs_characterData.characterMenu.selectedAnim : 'hey';
       var item:Dynamic = characterWheel.members[charIndex - 1];
       if (item != null && item is BaseCharacter) item.playAnimation(animation, true, true);
     }
@@ -1005,10 +1005,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     if (!simplifyUI) {
       var characterSprite:BaseCharacter = CharacterDataParser.fetchCharacter(curCharID);
-      characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
+      fs_characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
       characterWheel.replace(lockedChill, characterSprite);
       characterSprite.camera = spriteCam;
-      configureChar(characterSprite, characterData?.characterMenu);
+      configureChar(characterSprite, fs_characterData?.characterMenu);
     }
 
     busy = false;
@@ -1081,8 +1081,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
     var descText:String;
 
     if (curCharID != 'default') {
-      characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
-      charIconData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID, true]);
+      fs_characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
+      characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID, true]);
     }
 
     switch (curCharID) {
@@ -1094,17 +1094,17 @@ class CharacterSelectSubState extends MusicBeatSubState {
         if (lockedCharMap.exists(curCharID)) {
           charName.text = "LOCKED";
 
-          var unlockHint = characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: " + characterData.description.unlockCondition : "";
+          var unlockHint = fs_characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: " + fs_characterData.description.unlockCondition : "";
 
           descText = "This character is locked! I wonder who it could be..." + unlockHint;
         }
         else {
-          charName.text = charIconData?.name;
-          charIcon.configure(charIconData?.healthIcon);
+          charName.text = characterData?.name;
+          charIcon.configure(characterData?.healthIcon);
           charIcon.size.set(1, 1);
           charIcon.setPosition(270, 380);
 
-          descText = characterData.description?.text != null ? characterData.description.text : "No description was specified in the JSON file.";
+          descText = fs_characterData.description?.text != null ? fs_characterData.description.text : "No description was specified in the JSON file.";
         }
     }
 
@@ -1136,8 +1136,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
         if (curCharID == 'default' || lockedCharMap.exists(curCharID)) {
           icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         }
-        else if (icon.characterId != charIconData?.healthIcon.id) {
-          icon.configure(charIconData?.healthIcon);
+        else if (icon.characterId != characterData?.healthIcon.id) {
+          icon.configure(characterData?.healthIcon);
         }
       }
     }
@@ -1156,7 +1156,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     // Do the unlock animation if we haven't seen it yet.
     if (lockedCharMap.exists(curCharID)
-      && ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [curCharID, characterData.unlockMethod])) {
+      && ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [curCharID, fs_characterData.unlockMethod])) {
       if (!saveData.seenUnlocks.contains(curCharID)) {
         lockedCharMap.remove(curCharID);
         saveData.seenUnlocks.push(curCharID);

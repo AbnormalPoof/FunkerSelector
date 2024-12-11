@@ -24,7 +24,9 @@ class ResultsHandler extends Module {
    */
   function onUpdate(event) {
     if (FlxG.state.subState is ResultState) {
-      if (shouldReplace && (FlxG.state.subState.characterAtlasAnimations.length > 0 || FlxG.state.subState.characterSparrowAnimations.length > 0) && replaced) {
+      if (shouldReplace
+        && (FlxG.state.subState.characterAtlasAnimations.length > 0 || FlxG.state.subState.characterSparrowAnimations.length > 0)
+        && replaced) {
         FlxG.state.subState.playerCharacterId = originalPlayerID;
         shouldReplace = false;
         replaced = false;
@@ -62,7 +64,8 @@ class ResultsHandler extends Module {
           replaced = true;
           event.targetState.params.characterId = PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf);
           trace('[Funker Selector] Using character ID ' + event.targetState.params.characterId);
-        } else {
+        }
+        else {
           trace('[Funker Selector] Not replacing results!');
         }
       }

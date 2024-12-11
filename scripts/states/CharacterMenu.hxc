@@ -1098,7 +1098,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
         if (lockedCharMap.exists(curCharID)) {
           charName.text = "LOCKED";
 
-          var unlockHint = fs_characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: " + fs_characterData.description.unlockCondition : "";
+          var unlockHint = fs_characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: "
+            + fs_characterData.description.unlockCondition : "";
 
           descText = "This character is locked! I wonder who it could be..." + unlockHint;
         }
@@ -1128,6 +1129,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
         typewriterIndex++;
       }
       else {
+        // Forcibly set the text if for some reason the text cuts off.
+        if (charDesc.text != descText) {
+          trace("[Funker Selector] Description text doesn't match up!");
+          trace(charDesc.text);
+          trace(descText);
+          charDesc.text = descText;
+        }
         timer.cancel();
         typewriterIndex = 0;
       }

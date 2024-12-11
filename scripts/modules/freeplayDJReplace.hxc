@@ -58,7 +58,7 @@ class DJReplace extends Module {
   function replaceDJNoIntro():Void {
     var freeplayDJ = FlxG.state.subState.dj;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
-    var fs_characterData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
+    var fs_characterData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [saveData.characterIDs.bf]);
     var playableCharId:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
     var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(playableCharId);
     var playableCharData:Dynamic = playableChar != null ? playableChar.getFreeplayDJData() : null;
@@ -81,7 +81,7 @@ class DJReplace extends Module {
       freeplayDJ.currentState = FreeplayDJState.Intro;
 
       var animPrefix = playableCharData.getAnimationPrefix('intro');
-      freeplayDJ.playFlashAnimation(animPrefix, true, false, false, introSwapFrame);
+      freeplayDJ.playFlashAnimation(animPrefix, true, false, false, introFrame);
 
       if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1),
         playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3));

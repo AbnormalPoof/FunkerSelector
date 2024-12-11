@@ -28,6 +28,7 @@ class ResultsHandler extends Module {
         FlxG.state.subState.playerCharacterId = originalPlayerID;
         shouldReplace = false;
         replaced = false;
+        trace("[Funker Selector] Reverting ResultState character ID back to original: " + FlxG.state.subState.playerCharacterId);
       }
     }
   }
@@ -42,13 +43,14 @@ class ResultsHandler extends Module {
       shouldReplace = false;
       replaced = false;
 
-      if (PlayState.instance.currentStage?.getBoyfriend() != null) return;
+      if (PlayState.instance.currentStage?.getBoyfriend() == null) return;
 
       var saveData:Dynamic = charHandler.scriptGet('saveData');
       var currentCharacterID:String = PlayState.instance.currentStage.getBoyfriend().characterId;
 
       // Save the original ID.
-      originalPlayerID = event.targetState.params.characterId;
+      originalPlayerID = PlayerRegistry.instance.getCharacterOwnerId(event.targetState.params.characterId);
+      trace("[Funker Selector] Original character ID: " + originalPlayerID);
 
       // Check if the saved character is owned, then check if we're ACTUALLY playing as them.
       if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf)) {

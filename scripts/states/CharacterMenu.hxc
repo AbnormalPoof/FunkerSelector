@@ -140,12 +140,16 @@ class CharacterSelectSubState extends MusicBeatSubState {
   var spamTimer:Float = 0;
   var spamming:Bool = false;
 
+  var characterHandler:Module;
+
   public function new() {
     super();
   }
 
   public override function create():Void {
     super.create();
+
+    characterHandler = ModuleHandler.getModule("CharacterHandler");
 
     setupUIStuff();
     updateFilteredKeys();
@@ -192,7 +196,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
         var item:Dynamic = characterWheel.members[index];
         if (item != null) {
           if (item is BaseCharacter) {
-            fs_characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [item.characterId]);
+            fs_characterData = characterHandler.scriptCall('getCharacterData', [item.characterId]);
           }
           else {
             // Assume the object is `lockedChill`
@@ -225,7 +229,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       var lockedChill:FunkinSprite;
 
       if (characterID != 'default') {
-        fs_characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [characterID]);
+        fs_characterData = characterHandler.scriptCall('getCharacterData', [characterID]);
       }
 
       if (characterSprite != null) {
@@ -851,7 +855,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       FunkinSound.playOnce(Paths.sound('confirmMenu'));
     }
     if (!saveData.preferences.get("potatoMode")) {
-      fs_characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
+      fs_characterData = characterHandler.scriptCall('getCharacterData', [curCharID]);
       animation = fs_characterData?.characterMenu?.selectedAnim != null ? fs_characterData.characterMenu.selectedAnim : 'hey';
       var item:Dynamic = characterWheel.members[charIndex - 1];
       if (item != null && item is BaseCharacter) item.playAnimation(animation, true, true);
@@ -1005,7 +1009,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     if (!simplifyUI) {
       var characterSprite:BaseCharacter = CharacterDataParser.fetchCharacter(curCharID);
-      fs_characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
+      fs_characterData = characterHandler.scriptCall('getCharacterData', [curCharID]);
       characterWheel.replace(lockedChill, characterSprite);
       characterSprite.camera = spriteCam;
       configureChar(characterSprite, fs_characterData?.characterMenu);
@@ -1081,8 +1085,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
     var descText:String;
 
     if (curCharID != 'default') {
-      fs_characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID]);
-      characterData = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [curCharID, true]);
+      fs_characterData = characterHandler.scriptCall('getCharacterData', [curCharID]);
+      characterData = characterHandler.scriptCall('getCharacterData', [curCharID, true]);
     }
 
     switch (curCharID) {
@@ -1156,16 +1160,16 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     // Do the unlock animation if we haven't seen it yet.
     if (lockedCharMap.exists(curCharID)
-      && ModuleHandler.getModule("CharacterHandler").scriptCall('isCharacterUnlocked', [curCharID, fs_characterData.unlockMethod])) {
+      && characterHandler.scriptCall('isCharacterUnlocked', [curCharID, fs_characterData.unlockMethod])) {
       if (!saveData.seenUnlocks.contains(curCharID)) {
         lockedCharMap.remove(curCharID);
         saveData.seenUnlocks.push(curCharID);
 
-        ModuleHandler.getModule("CharacterHandler").scriptSet('saveData', saveData);
+        characterHandler.scriptSet('saveData', saveData);
         Save.instance.modOptions.set("FunkerSelector", saveData);
         Save.instance.flush();
 
-        ModuleHandler.getModule("CharacterHandler").scriptSet('lockedCharMap', lockedCharMap);
+        characterHandler.scriptSet('lockedCharMap', lockedCharMap);
 
         busy = true;
         doUnlockAnimation(FlxG.keys.pressed.SHIFT);

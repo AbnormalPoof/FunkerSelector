@@ -1116,6 +1116,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     typewriterIndex = 0;
 
+    // Reset the description size and letter spacing.
+    charDesc.size = 35;
+    charDesc.letterSpacing = 0;
+
     typewriterTimer = new FlxTimer();
     typewriterTimer.start(0.01, function(timer:FlxTimer) {
       if ((typewriterIndex + 1) <= descText.length) {

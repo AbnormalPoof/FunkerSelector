@@ -49,6 +49,8 @@ class ResultsHandler extends Module {
       var currentCharacterID:String = PlayState.instance.currentStage.getBoyfriend().characterId;
 
       // Save the original ID.
+      // We manually retrieve the owner ID since the character ID specified in `params` is NOT the
+      // playable character ID we want.
       originalPlayerID = PlayerRegistry.instance.getCharacterOwnerId(event.targetState.params.characterId);
       trace("[Funker Selector] Original character ID: " + originalPlayerID);
 

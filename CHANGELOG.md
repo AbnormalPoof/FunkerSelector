@@ -28,18 +28,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - **Your characters might be positioned weird, please update your character positions in the JSON data.**
   - **The menu will take a while to load if "Preload Sprites" is disabled!!**
   - The menu now uses your controls as configured in the Options Menu.
-  - The menu will bop a bit every 4 beats.
-- `speaker` can now be used as an alias for the GF character type in the JSON data.
-- `voiceID` can now be used to set a custom ID when using Vocal Replacement.
-  - This defaults to the character's ID.
-- You can now skip the unlock animation.
+  - The menu will bop every 4 beats.
+- Added several new values in the JSON data:
+  - `speaker`: An alias for the GF character type.
+  - `voiceID`: A custom ID that can be used in place of the character ID when using Vocal Replacement.
+  - `introSwapFrame`: The frame where the turntable stops moving and the character appears in the Freeplay DJ's intro animation.
+    - This is used when swapping out DJs.
+- You can now skip the unlock animation by holding shift before the animation is played.
 - If "Random" is selected, the BPM is now obtained from the song metadata instead of using a hardcoded value.
+- Reworked how the Result Screen animations/music are swapped out.
+  - This should have no effect on the functionality itself, it's simply a code refactor.
 ### Fixed
 - Fixed Pico's results animations not playing if Pico (Playable) was used on Week 2 Erect.
 - Fixed a bug where the Character Menu SubState can be re-opened if it was already open.
 ### Removed
 - All the Boyfriend / Pico variants have been moved to a separate mod.
-- Removed the `size` and `offsets` properties from the JSON data as the description text is now dynamically resized.
+- Removed the `size` and `offsets` properties from the JSON description data as the description text is now dynamically resized.
 
 ## [1.5.2] - 2024-10-23
 ### Fixed

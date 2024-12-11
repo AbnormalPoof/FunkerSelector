@@ -92,11 +92,6 @@ class CharacterHandler extends Module {
   var freeplayBPM:Float = null;
 
   /**
-   * The original character ID from the chart.
-   */
-  var ogCharID:String = null;
-
-  /**
    * The current Character Select SubState.
    * This is set to `null` when not in use.
    */
@@ -116,7 +111,7 @@ class CharacterHandler extends Module {
    * Check the game version, initialize save data, and build the JSON character cache.
    */
   function new() {
-    super("CharacterHandler");
+    super("CharacterHandler", 1);
 
     // The FIRST thing we check is the game version.
     // We use `lime.app.Application` instead of `Constants.VERSION` because the latter
@@ -814,6 +809,7 @@ class CharacterHandler extends Module {
           charSelect.camera = FlxG.state.subState.funnyCam;
           FlxG.state.subState.persistentUpdate = false;
           trace("[Funker Selector] Opening the Character Select SubState...");
+          FlxG.state.subState.busy = true;
           FlxG.state.subState.openSubState(charSelect);
         }
         else {
@@ -892,18 +888,6 @@ class CharacterHandler extends Module {
         };
       });
     }
-
-    // Results screen bullshit.
-    if (state is ResultState) {
-      // More playable character shit
-      // The results anim will still play, it's just Freeplay won't bug out when we do this.
-      // If the original player is part of a Playable Character, we don't do this.
-
-      // TODO: Replace the animation directly instead of this weird BS
-      PlayState.instance.currentChart.characters.player = ogCharID;
-      state.playerCharacterId = null;
-      if (PlayerRegistry.instance.isCharacterOwned(ogCharID)) state.playerCharacterId = PlayerRegistry.instance.getCharacterOwnerId(ogCharID);
-    }
   }
 
   /**
@@ -917,11 +901,6 @@ class CharacterHandler extends Module {
       PauseSubState.musicSuffix = '';
       GameOverSubState.musicSuffix = '';
       GameOverSubState.blueBallSuffix = '';
-
-      // Reload the song entries since `PlayState.instance.currentChart.characters.player`
-      // doesn't reset properly when we change it.
-      // TODO: Find the root cause and fix this in Funkin's source code.
-      SongRegistry.instance.loadEntries();
     }
   }
 
@@ -982,6 +961,7 @@ class CharacterHandler extends Module {
   override function onScriptEvent(event) {
     super.onScriptEvent(event);
     if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
+      FlxG.state.subState.busy = false;
       charSelect = null;
       if (saveData.preferences.get("djSwapping")) {
         trace("[Funker Selector] Switching out DJ...");
@@ -1006,9 +986,6 @@ class CharacterHandler extends Module {
     // since module variables persist between state changes.
     voiceList = [null, null];
 
-    // Saving the original character ID.
-    ogCharID = PlayState.instance.currentChart.characters.player;
-
     // Replace and swap out the characters.
     replaceChar(saveData.characterIDs.bf, CharacterType.BF);
     replaceChar(saveData.characterIDs.gf, CharacterType.GF);
@@ -1020,19 +997,6 @@ class CharacterHandler extends Module {
       trace('[Funker Selector] Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);
       PlayState.instance.vocals.stop();
       PlayState.instance.vocals = replaceVocals(voiceList);
-    }
-  }
-
-  /**
-   * Changing `player` in `currentChart` to trick the Results Screen
-   * into loading the Results Screen animations for the currently
-   * selected character if they exist.
-   */
-  override function onSongEnd() {
-    super.onSongEnd();
-    if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) && !PlayStatePlaylist.isStoryMode) {
-      trace("[Funker Selector] Character ID is owned.");
-      PlayState.instance.currentChart.characters.player = saveData.characterIDs.bf;
     }
   }
 }

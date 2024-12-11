@@ -4,7 +4,6 @@ import funkin.modding.module.ModuleHandler;
 import funkin.play.PlayState;
 import funkin.play.ResultState;
 import funkin.data.freeplay.player.PlayerRegistry;
-import Std;
 
 /**
  * This is a module to help with the Results Screen.

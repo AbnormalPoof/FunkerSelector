@@ -79,7 +79,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
   var lockedCharMap:StringMap<String> = ModuleHandler.getModule("CharacterHandler").scriptGet('lockedCharMap');
 
   /**
-   * The JSON character cache, which is retrieved from `charHandler`.
+   * The JSON character cache, which is retrieved from `CharacterHandler`.
    */
   var jsonCharacterCache:StringMap<String, Dynamic> = ModuleHandler.getModule("CharacterHandler").scriptGet('jsonCharacterCache');
 
@@ -925,7 +925,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
   }
 
   /**
-   * Copypasted from charHandler.
+   * Copypasted from CharacterHandler.
    */
   function isDebugBuild():Bool {
     // Debug builds use a different background color.

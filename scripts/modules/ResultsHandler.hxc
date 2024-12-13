@@ -12,7 +12,7 @@ class ResultsHandler extends Module {
   var originalPlayerID:String;
   var shouldReplace:Bool;
   var replaced:Bool;
-  var charHandler:Module = ModuleHandler.getModule('CharacterHandler');
+  var characterHandler:Module = ModuleHandler.getModule('CharacterHandler');
 
   function new() {
     super('ResultsHandler', 1);
@@ -47,7 +47,7 @@ class ResultsHandler extends Module {
 
       if (PlayState.instance.currentStage?.getBoyfriend() == null) return;
 
-      var saveData:Dynamic = charHandler.scriptGet('saveData');
+      var saveData:Dynamic = characterHandler.scriptGet('saveData');
       var currentCharacterID:String = PlayState.instance.currentStage.getBoyfriend().characterId;
 
       // Save the original ID.
@@ -79,7 +79,7 @@ class ResultsHandler extends Module {
    * @return Bool
    */
   function isVariation(currentID:String, savedID:String):Bool {
-    var fs_characterData:Dynamic = charHandler.scriptCall('getCharacterData', [savedID]);
+    var fs_characterData:Dynamic = characterHandler.scriptCall('getCharacterData', [savedID]);
     if (fs_characterData?.characterVariations != null) {
       for (variation in fs_characterData.characterVariations) {
         if (variation.characterID == currentID) {

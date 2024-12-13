@@ -8,32 +8,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The Freeplay DJ will now change if your character is associated with a Playable Character (and has valid Freeplay DJ data).
   - You can disable this in the Options Menu.
   - This also changes the backing text to what you set in the Playable Character data.
-- New custom animations for Boyfriend in Pico mixes.
 - Added 2 new Script Events that fire when you enter/exit the Character Menu SubState.
 ### Changed
+- **Complete UI makeover and refactor**:
+  - Characters are now shown next to eachother in a scrollable layout
+  - Character descriptions are now shown with a typewriter effect.
+    - In addition, the description text is resized dynamically to fit the text box.
+      - Text might be a bit unreadable the longer it is, so be careful!
+  - You can now use the scroll wheel to navigate.
+  - **Your characters might be positioned weird, please update your character positions in the JSON data.**
+  - **The menu will take a while to load when it's opened for the first time, especially if "Preload Sprites" is disabled!!**
+  - The menu now uses your controls as configured in the Options Menu.
+  - The icon grid now scrolls digonally, the scroll speed is relative to the current song's BPM.
+    - The speed is capped at 300 BPM. I don't want to give you motion sickness.
 - Completely reworked the save data system. Internally, everything is now one object instead of multiple.
   - Your save data will be migrated!
 - Reworked the structure for suffixes in the JSON data.
   - **This is a breaking change for characters which use suffixes!**
   - Please see the documentation for the new structure.
-- The icon grid in the character menu now scrolls digonally, the scroll speed is relative to the current song's BPM.
-  - The speed is capped at 300 BPM. I don't want to give you motion sickness.
-- Complete UI makeover and refactor:
-  - Characters are now shown next to eachother in a scrollable layout
-  - Character descriptions are now shown with a typewriter effect.
-    - In addition, the description text is resized dynamically to fit the text box.
-      - Text might be a bit unreadable the longer it is, so be careful!
-  - You can also now use the scroll wheel to navigate.
-  - If the new UI is too much, you can always turn on "Simplify UI" in the Options Menu.
-  - **Your characters might be positioned weird, please update your character positions in the JSON data.**
-  - **The menu will take a while to load if "Preload Sprites" is disabled!!**
-  - The menu now uses your controls as configured in the Options Menu.
-  - The menu will bop every 4 beats.
 - Added several new values in the JSON data:
   - `speaker`: An alias for the GF character type.
   - `voiceID`: A custom ID that can be used in place of the character ID when using Vocal Replacement.
   - `introSwapFrame`: The frame where the turntable stops moving and the character appears in the Freeplay DJ's intro animation.
-    - This is used when swapping out DJs.
+    - This is used when swapping out DJs, the default value is 3.
 - You can now skip the unlock animation by holding shift before the animation is played.
 - If "Random" is selected, the BPM is now obtained from the song metadata instead of using a hardcoded value.
 - Reworked how the Result Screen animations/music are swapped out.

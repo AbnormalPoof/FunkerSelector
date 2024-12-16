@@ -16,13 +16,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
     - In addition, the description text is resized dynamically to fit the text box.
       - Text might be a bit unreadable the longer it is, so be careful!
   - You can now use the scroll wheel to navigate.
-  - **Your characters might be positioned weird, please update your character positions in the JSON data.**
-  - **The menu will take a while to load when it's opened for the first time, especially if "Preload Sprites" is disabled!!**
   - The menu now uses your controls as configured in the Options Menu.
   - The icon grid now scrolls digonally, the scroll speed is relative to the current song's BPM.
     - The speed is capped at 300 BPM. I don't want to give you motion sickness.
   - There is now a visual indicator for character variations, the menu will tell you how many variations are available if any exist.
     - Press the DEBUG MENU key (look in Options -> Controls to see what it's mapped to) to see the variation and associated songs.
+  - **Your characters might be positioned weird, please update your character positions in the JSON data.**
+  - **The menu might take a while to load when it's opened for the first time, especially if "Preload Sprites" is disabled!!**
 - Completely reworked the save data system. Internally, everything is now one object instead of multiple.
   - Your save data will be migrated!
 - Reworked the structure for suffixes in the JSON data.

@@ -27,9 +27,9 @@ class ResultsHandler extends Module {
       if (shouldReplace
         && (FlxG.state.subState.characterAtlasAnimations.length > 0 || FlxG.state.subState.characterSparrowAnimations.length > 0)
         && replaced) {
-        FlxG.state.subState.playerCharacterId = originalPlayerID;
         shouldReplace = false;
         replaced = false;
+        FlxG.state.subState.playerCharacterId = originalPlayerID;
         trace("[Funker Selector] Reverting ResultState character ID back to original: " + FlxG.state.subState.playerCharacterId);
       }
     }

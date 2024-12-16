@@ -6,6 +6,7 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
 import funkin.audio.FunkinSound;
 import funkin.data.freeplay.player.PlayerRegistry;
+import funkin.data.song.SongRegistry;
 import funkin.graphics.FunkinCamera;
 import funkin.graphics.FunkinSprite;
 import funkin.modding.PolymodErrorHandler;
@@ -34,6 +35,7 @@ import Std;
  */
 class CharacterSelectSubState extends MusicBeatSubState {
   var charName:FlxText;
+  var variationText:FlxText;
   var charDesc:FlxText;
   var selected:FlxText;
   var numberThing:FlxText;
@@ -81,7 +83,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
   /**
    * The JSON character cache, which is retrieved from `CharacterHandler`.
    */
-  var jsonCharacterCache:StringMap<String, Dynamic> = ModuleHandler.getModule("CharacterHandler").scriptGet('jsonCharacterCache');
+  var jsonCharacterCache:StringMap<String, Array<Dynamic, Dynamic>, Array> = ModuleHandler.getModule("CharacterHandler").scriptGet('jsonCharacterCache');
 
   // For the top text in the menu.
   var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "SPEAKER CHARACTERS"];
@@ -94,12 +96,24 @@ class CharacterSelectSubState extends MusicBeatSubState {
    */
   var pages:Array<String> = ['bf', 'dad', 'gf'];
 
+  /**
+   * Stuff related to the icon grid.
+   */
   var charIcon:HealthIcon;
+
   var iconGrid:Array<HealthIcon> = [];
 
-  var charIndex:Int = 0;
-  var pageIndex:Int = 0;
+  /**
+   * Indexes for both the current page and currently selected character.
+   */
+  var currentCharacterIndex:Int = 0;
 
+  var currentPageIndex:Int = 0;
+
+  /**
+   * This is a `FlxTypedGroup` for the character wheel.
+   * This is a bit janky but it works so whatever.
+   */
   var characterWheel:FlxTypedGroup<BaseCharacter> = new FlxTypedGroup();
 
   /**
@@ -133,6 +147,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
    */
   var ICON_SCROLL_SPEED:Float = 0.3;
 
+  /**
+   * Stuff related to the typewriter effect for the character description.
+   */
   var typewriterTimer:FlxTimer = null;
 
   var typewriterIndex:Int = 0;
@@ -166,8 +183,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     // Adding some useful stuff to the variable watch window.
     if (isDebugBuild()) {
-      FlxG.watch.addQuick("pageIndex", pageIndex);
-      FlxG.watch.addQuick("charIndex", charIndex);
+      FlxG.watch.addQuick("currentPageIndex", currentPageIndex);
+      FlxG.watch.addQuick("currentCharacterIndex", currentCharacterIndex);
       FlxG.watch.addQuick("curCharID", curCharID);
       FlxG.watch.addQuick("filteredKeys", filteredKeys);
       FlxG.watch.addQuick("bf", saveData.characterIDs.bf);
@@ -210,7 +227,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
         var xOffset:Float = fs_characterData?.characterMenu != null ? fs_characterData.characterMenu.position[0] : 0;
 
-        item.x = MathUtil.smoothLerp(item.x, ((index - (charIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.20);
+        item.x = MathUtil.smoothLerp(item.x, ((index - (currentCharacterIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.20);
       }
     }
 
@@ -269,16 +286,16 @@ class CharacterSelectSubState extends MusicBeatSubState {
    * @param change +1 (right), -1 (left)
    */
   function changeCharacter(change:Int = 0):Void {
-    var prevIndex:Int = charIndex;
-    charIndex = (prevIndex + (change + filteredKeys.length)) % filteredKeys.length;
+    var prevIndex:Int = currentCharacterIndex;
+    currentCharacterIndex = (prevIndex + (change + filteredKeys.length)) % filteredKeys.length;
 
-    curCharID = filteredKeys[charIndex];
+    curCharID = filteredKeys[currentCharacterIndex];
 
     if (!saveData.preferences.get("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item:Dynamic = characterWheel.members[index];
 
-        if (index == charIndex - 1) {
+        if (index == currentCharacterIndex - 1) {
           item.alpha = 1.0;
         }
         else {
@@ -287,7 +304,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       }
     }
 
-    if (charIndex != prevIndex) {
+    if (currentCharacterIndex != prevIndex) {
       if (saveData.preferences.get("preferredSFX") == "charSelect") {
         FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
       }
@@ -298,7 +315,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     updateCharInfo();
 
-    numberThing.text = "< " + (charIndex + 1) + " / " + filteredKeys.length + " >";
+    numberThing.text = "< " + (currentCharacterIndex + 1) + " / " + filteredKeys.length + " >";
     numberThing.screenCenter(0x01);
   }
 
@@ -307,11 +324,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
    * @param change +1 (right), -1 (left)
    */
   function changePage(change:Int = 0):Void {
-    var prevIndex:Int = pageIndex;
-    pageIndex = (prevIndex + (change + pages.length)) % pages.length;
+    var prevIndex:Int = currentPageIndex;
+    currentPageIndex = (prevIndex + (change + pages.length)) % pages.length;
 
-    // Reset charIndex
-    charIndex = 0;
+    // Reset currentCharacterIndex
+    currentCharacterIndex = 0;
 
     updateFilteredKeys();
     if (!saveData.preferences.get("potatoMode")) {
@@ -325,7 +342,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     if (!saveData.preferences.get("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item:Dynamic = characterWheel.members[index];
-        if (index == charIndex - 1 && item is BaseCharacter) item.dance();
+        if (index == currentCharacterIndex - 1 && item is BaseCharacter) item.dance();
       }
     }
 
@@ -338,7 +355,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
   }
 
   /**
-   * Updates the `filteredKeys` array based on the current `pageIndex`.
+   * Updates the `filteredKeys` array based on the current `currentPageIndex`.
    */
   function updateFilteredKeys():Void {
     trace('[Funker Selector] Sorting the Character Map...');
@@ -352,7 +369,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     iHateMyLife = tempArray.filter(function(shit) {
       characterType = characterMap.get(shit)[1];
-      switch (pageIndex) {
+      switch (currentPageIndex) {
         case 0:
           if (characterType is Array) return characterType.contains('bf') || characterType.contains('player');
           else
@@ -517,6 +534,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
     selected.visible = false;
     selected.camera = uiCam;
 
+    keyBox = new FunkinSprite(0, 0);
+    keyBox.makeSolidColor(600, 600, 0xFF000000);
+    keyBox.camera = hotkeyCam;
+    keyBox.alpha = 0.8;
+    keyBox.screenCenter();
+
     hotkeyText = configureText(null, controls.getDialogueNameFromToken("RESET", true) + ' - Hotkeys', [990, 15], 45, Paths.font("PhantomMuff.ttf"));
     hotkeyText.color = 0xFFE3E1E1;
     hotkeyText.camera = uiCam;
@@ -531,14 +554,20 @@ class CharacterSelectSubState extends MusicBeatSubState {
       + controls.getDialogueNameFromToken("FREEPLAY_RIGHT", true)
       + ' - Switch to the next page.\n\n'
       + controls.getDialogueNameFromToken("BACK", true)
-      + ' - Close this.',
-      [350, 80], 40, Paths.font("PhantomMuff.ttf"));
+      + ' - Close this.\n\n'
+      + controls.getDialogueNameFromToken("DEBUG_MENU", true)
+      + ' - Show available character variations.',
+      [350, 100], 35, Paths.font("PhantomMuff.ttf"));
     hotkeys.camera = hotkeyCam;
     hotkeys.wordWrap = true;
     hotkeys.fieldWidth = 600;
 
     charName = configureText(null, null, [170, 110], 70, Paths.font("PhantomMuff.ttf"));
     charName.camera = uiCam;
+
+    variationText = configureText(null, null, [170, 180], 35, Paths.font("PhantomMuff.ttf"));
+    variationText.color = 0xFFFF8F2E;
+    variationText.camera = uiCam;
 
     leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
     leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
@@ -572,12 +601,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
     newGraphic.scale.set(1.8, 1.8);
     newGraphic.visible = false;
 
-    keyBox = new FunkinSprite(0, 0);
-    keyBox.makeSolidColor(600, 600, 0xFF000000);
-    keyBox.camera = hotkeyCam;
-    keyBox.alpha = 0.8;
-    keyBox.screenCenter();
-
     descBox = new FunkinSprite(0, 500);
     descBox.makeSolidColor(850, 200, 0xFF000000);
     descBox.camera = uiCam;
@@ -602,6 +625,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     add(hotkeyText);
     add(charIcon);
     add(charName);
+    add(variationText);
     if (saveData.preferences.get("potatoMode")) add(lockedChill);
     add(keyBox);
     add(hotkeys);
@@ -764,11 +788,15 @@ class CharacterSelectSubState extends MusicBeatSubState {
         hotkeyCam.visible = true;
       }
 
+      if (controls.DEBUG_MENU) {
+        showVariations(curCharID);
+      }
+
       if (controls.ACCEPT) {
         var shouldConfirm:Bool = false;
-        if (curCharID != characterIDsArray[pageIndex]) {
+        if (curCharID != characterIDsArray[currentPageIndex]) {
           if (!lockedCharMap.exists(curCharID)) {
-            switch (pageIndex) {
+            switch (currentPageIndex) {
               case 0:
                 if (saveData.characterIDs.bf != curCharID) {
                   saveData.characterIDs.bf = curCharID;
@@ -808,7 +836,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
           if (!saveData.preferences.get("potatoMode")) {
             for (index in 0...characterWheel.members.length) {
               var item = characterWheel.members[index];
-              if (index == charIndex - 1 && item is FunkinSprite) item.animation.play('denied', true);
+              if (index == currentCharacterIndex - 1 && item is FunkinSprite) item.animation.play('denied', true);
             }
           }
           else {
@@ -824,9 +852,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
    */
   function jumpToCurSelected():Void {
     // In the event that the saved character ID no longer exists, we fallback to default.
-    if (!characterMap.exists(characterIDsArray[pageIndex]) && characterIDsArray[pageIndex] != 'default') {
+    if (!characterMap.exists(characterIDsArray[currentPageIndex]) && characterIDsArray[currentPageIndex] != 'default') {
       trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
-      switch (pageIndex) {
+      switch (currentPageIndex) {
         case 0:
           saveData.characterIDs.bf = 'default';
         case 1:
@@ -841,8 +869,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
       // Updating the array with the latest changes
       characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
     }
-    charIndex = filteredKeys.indexOf(characterIDsArray[pageIndex]);
-    curCharID = characterIDsArray[pageIndex];
+    currentCharacterIndex = filteredKeys.indexOf(characterIDsArray[currentPageIndex]);
+    curCharID = characterIDsArray[currentPageIndex];
     changeCharacter();
     updateCharInfo();
   }
@@ -857,7 +885,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     if (!saveData.preferences.get("potatoMode")) {
       fs_characterData = characterHandler.scriptCall('getCharacterData', [curCharID]);
       animation = fs_characterData?.characterMenu?.selectedAnim != null ? fs_characterData.characterMenu.selectedAnim : 'hey';
-      var item:Dynamic = characterWheel.members[charIndex - 1];
+      var item:Dynamic = characterWheel.members[currentCharacterIndex - 1];
       if (item != null && item is BaseCharacter) item.playAnimation(animation, true, true);
     }
     if (charIcon.hasAnimation('winning')) {
@@ -889,7 +917,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
   }
 
   function selectedTextVisibility():Bool {
-    switch (pageIndex) {
+    switch (currentPageIndex) {
       case 0:
         return curCharID == saveData.characterIDs.bf;
       case 1:
@@ -925,6 +953,35 @@ class CharacterSelectSubState extends MusicBeatSubState {
   }
 
   /**
+   * Displays the available character variations.
+   * @param characterID The character ID we're using.
+   */
+  function showVariations(characterID:String) {
+    var fs_characterData:Dynamic = characterHandler.scriptCall('getCharacterData', [characterID]);
+    var variationCount:Int = fs_characterData?.characterVariations != null ? fs_characterData.characterVariations.length : 0;
+    var alertBody = "";
+
+    if (variationCount <= 0) return;
+
+    for (variation in fs_characterData.characterVariations) {
+      var characterName = "";
+      var songNames = [];
+
+      for (songID in variation.songID) {
+        var songData = SongRegistry.instance.parseEntryMetadata(songID, variation.songVariation);
+        var characterData = CharacterDataParser.parseCharacterData(variation.characterID);
+        characterName = characterData.name;
+        songNames.push(songData.songName);
+      }
+
+      alertBody += "Name: " + characterName + "\n";
+      alertBody += "Songs: " + songNames.join(", ") + "\n\n";
+    }
+
+    PolymodErrorHandler.showAlert("Available character variations", alertBody);
+  }
+
+  /**
    * Copypasted from CharacterHandler.
    */
   function isDebugBuild():Bool {
@@ -939,7 +996,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     if (!saveData.preferences.get("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item = characterWheel.members[index];
-        if (index == charIndex - 1 && item is FunkinSprite) {
+        if (index == currentCharacterIndex - 1 && item is FunkinSprite) {
           lockedChill = item;
           break;
         }
@@ -1075,18 +1132,20 @@ class CharacterSelectSubState extends MusicBeatSubState {
    * Update character information.
    */
   function updateCharInfo():Void {
-    selectText.text = topText[pageIndex];
-    selectText.color = topTextColor[pageIndex];
+    selectText.text = topText[currentPageIndex];
+    selectText.color = topTextColor[currentPageIndex];
     selectText.screenCenter(0x01);
     selected.visible = selectedTextVisibility();
 
     newGraphic.visible = false;
 
     var descText:String;
+    var variationCount:Int = 0;
 
     if (curCharID != 'default') {
       fs_characterData = characterHandler.scriptCall('getCharacterData', [curCharID]);
-      characterData = characterHandler.scriptCall('getCharacterData', [curCharID, true]);
+      characterData = characterHandler.scriptCall('getCharacterData', [curCharID, 1]);
+      variationCount = characterHandler.scriptCall('getCharacterData', [curCharID, 2]);
     }
 
     switch (curCharID) {
@@ -1168,6 +1227,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
     }
 
     charName.screenCenter(0x01);
+
+    variationText.screenCenter(0x01);
+    variationText.text = "This character has " + variationCount + " available " + (variationCount == 1 ? "variation" : "variations");
+
     selected.y = charDesc.y - 60;
 
     // Do the unlock animation if we haven't seen it yet.
@@ -1186,6 +1249,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
         busy = true;
         doUnlockAnimation(FlxG.keys.pressed.SHIFT);
       }
+    }
+
+    if (variationCount > 0) {
+      trace("[Funker Selector] Variations found for character ID " + curCharID);
+      variationText.visible = true;
+    }
+    else {
+      variationText.visible = false;
     }
   }
 }

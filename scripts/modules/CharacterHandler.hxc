@@ -42,8 +42,12 @@ import Std;
 import String;
 
 /**
- * Module that handles the Character Select button in
- * Freeplay, along with character replacement.
+ * This is a Module that's essentially the "core"
+ * of Funker Selector.
+ *
+ * It initializes the save data, the JSON cache, caches
+ * sparrows, houses the character replacement logic, and
+ * a bunch of other stuff.
  */
 class CharacterHandler extends Module {
   /**
@@ -79,7 +83,7 @@ class CharacterHandler extends Module {
   /**
    * Cache for JSON character data.
    */
-  var jsonCharacterCache:StringMap<String, Array<Dynamic, Dynamic>> = new StringMap();
+  var jsonCharacterCache:StringMap<String, Array<Dynamic, Dynamic>, Array> = new StringMap();
 
   /**
    * A map of all the locked characters.
@@ -563,9 +567,23 @@ class CharacterHandler extends Module {
       // Caching the character data.
       charData = CharacterDataParser.parseCharacterData(data.characterID);
 
+      var variationList:Array = [];
+      var variationNum:Int = 0;
+
+      if (data.characterVariations != null) {
+        for (variation in data.characterVariations) {
+          if (charJSONCheck(variation.characterID)) {
+            variationList.push(variation.characterID);
+          }
+        }
+        variationNum = variationList.length;
+      }
+
       // NOTE: `jsonCharacterCache` and `characterMap` serve 2 different purposes.
-      jsonCharacterCache.set(funker, [data, charData]);
+      jsonCharacterCache.set(funker, [data, charData, variationNum]);
       characterMap.set(data.characterID, [funker, data.characterType]);
+
+      trace("[Funker Selector] " + funker + " has " + variationNum + " available variation(s).");
     }
   }
 
@@ -655,7 +673,6 @@ class CharacterHandler extends Module {
     // Return if the target character does not exist.
     if (oldChar == null) return;
 
-    // TODO: Add visual indicator for variations.
     if (fs_characterData?.characterVariations != null) {
       for (variation in fs_characterData.characterVariations) {
         if (variation.songID == null || variation.characterID == null) {
@@ -775,16 +792,21 @@ class CharacterHandler extends Module {
   /**
    * Fetches the Character Data from the cache.
    * @param characterID The character ID we are using.
-   * @param funkinCharData Whether to get the character data from `data/characters/` instead of `data/funkerSelector/`
+   * @param arrayNum The index specifying what part of the JSON cache to get.
    * @return The character data as a dynamic object.
    */
-  function getCharacterData(characterID:String, ?funkinCharData:Bool = false):Dynamic {
+  function getCharacterData(characterID:String, ?arrayNum:Int = 0):Dynamic {
     characterInfo = characterMap.get(characterID);
 
     if (characterInfo == null) return null;
 
     ownerJSONname = characterInfo[0];
-    characterData = jsonCharacterCache.get(ownerJSONname)[funkinCharData ? 1 : 0];
+    jsonData = jsonCharacterCache.get(ownerJSONname);
+
+    // Checking to see if it's within bounds...
+    if (jsonData == null || arrayNum < 0 || arrayNum >= jsonData.length) return null;
+
+    characterData = jsonData[arrayNum];
 
     if (characterData == null) return null;
     return characterData;
@@ -819,6 +841,8 @@ class CharacterHandler extends Module {
     }
 
     // DEBUG FEATURES
+    // These are functions that are only available
+    // on debug builds.
 
     if (isDebugBuild()) {
       // Force reload the JSON cache with F6.

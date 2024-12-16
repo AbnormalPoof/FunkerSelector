@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2024-??-??
+## [2.0.0] - 2024-12-??
 ### Added
 - The Freeplay DJ will now change if your character is associated with a Playable Character (and has valid Freeplay DJ data).
   - You can disable this in the Options Menu.
@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - The menu now uses your controls as configured in the Options Menu.
   - The icon grid now scrolls digonally, the scroll speed is relative to the current song's BPM.
     - The speed is capped at 300 BPM. I don't want to give you motion sickness.
+  - There is now a visual indicator for character variations, the menu will tell you how many variations are available if any exist.
+    - Press the DEBUG MENU key (look in Options -> Controls to see what it's mapped to) to see the variation and associated songs.
 - Completely reworked the save data system. Internally, everything is now one object instead of multiple.
   - Your save data will be migrated!
 - Reworked the structure for suffixes in the JSON data.

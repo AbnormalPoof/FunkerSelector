@@ -885,7 +885,6 @@ class CharacterHandler extends Module {
       }
 
       charSelectIcon = ScriptedFunkinSprite.init('FunkerSelectorFreeplayIcon');
-      charSelectIcon.scale.set(0.7, 0.7);
       charSelectIcon.camera = state.funnyCam;
       charSelectIcon.visible = false;
 

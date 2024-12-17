@@ -21,6 +21,8 @@ class FunkerSelectorFreeplayIcon extends FunkinSprite {
 
     zIndex = 900;
 
+    scale.set(0.65, 0.65);
+
     loadSparrow('freeplay/char_select');
     active = true;
 

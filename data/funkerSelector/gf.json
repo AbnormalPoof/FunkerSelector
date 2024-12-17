@@ -7,7 +7,7 @@
   },
   "characterMenu":
   {
-    "position": [50, 100],
+    "position": [30, 100],
     "scale": 0.7,
     "selectedAnim": "cheer"
   }

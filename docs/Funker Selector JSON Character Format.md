@@ -12,9 +12,7 @@ The mod queries `data/funkerSelector/` at runtime and parses the JSON files in t
   "characterID": "bf",
   "characterType": "bf",
   "description": {
-    "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand...",
-    "size": 35,
-    "offsets": [0, 0]
+    "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand..."
   },
   "characterMenu":
   {
@@ -61,14 +59,31 @@ The Character ID to use, this is ***needed*** or else the character will not sho
 ```json
 "characterType": "bf"
 ```
-The character type, accepted values are: `bf`, `gf`, `dad`, `player`, and `opponent`.
-(`player` and `opponent` are just aliases for `bf` and `dad` respectively.)
+The character type, accepted values are: `bf`, `gf`, `dad`, `player`, `speaker`, and `opponent`.
+(`player`, `speaker`, and `opponent` are just aliases for `bf`, `gf`, and `dad` respectively.)
+
+---
 
 ```json
 "mustUnlock": false
 ```
 Wether or not you need to unlock the character first in order for them to be playable.
 You'll have to specify an unlock method.
+
+---
+
+```json
+"voiceID": "bf"
+```
+The ID to use for Vocal Replacement, defaults to the character ID.
+
+---
+
+```json
+"introSwapFrame": 4
+```
+The frame where the turntable stops moving and the character appears in the Freeplay DJ's intro animation. This is used for swapping out DJs.
+The default value is 3.
 
 ---
 
@@ -120,25 +135,33 @@ The required difficulties, defaults to `["easy", "normal", "hard"]`.
 
 ---
 
-***(These will be grouped together since they serve basically the same functionality.)***
+#### Suffix data
 
 ```json
-"gameOverMusicSuffix": ""
+"suffixes": {
+  "gameOverMusic": "-pico",
+  "blueBall": "-pico",
+  "pauseMusic": "-pico"
+}
+```
+
+```json
+"gameOverMusic": "-pico"
 ```
 The music suffix used in the Game Over screen.
 
 ```json
-"blueBallSuffix": ""
+"blueBall": "-pico"
 ```
 The blue ball suffix used in the Game Over screen.
 
 ```json
-"pauseMusicSuffix": ""
+"pauseMusic": "-pico"
 ```
 The music suffix used in the Pause Menu.
 
 You can use pretty much any suffix for these three as long as it's valid (exists in the files, either through a mod or the game's assets).
-For example, Boyfriend (Pixel) uses `-pixel`, while Pico (Playable) uses `-pico`!
+For example, Boyfriend (Pixel) uses `-pixel`, while Pico (Playable) uses `-pico`.
 
 ---
 
@@ -146,32 +169,20 @@ For example, Boyfriend (Pixel) uses `-pixel`, while Pico (Playable) uses `-pico`
 
 ```json
 "description": {
-  "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand...",
-  "size": 35,
-  "offsets": [0, 0]
+  "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand..."
 }
 ```
 This is a short description of the character, with a few properties:
 
 ```json
 "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand..."
-``` 
+```
 The text itself.
 
 ```json
 "unlockCondition": "Beat WeekEnd 1 to unlock."
-``` 
+```
 The unlock condition that's shown if the character is locked. This overrides the description text!
-
-```json
-"size": 35
-```
-The font size.
-
-```json
-"offsets": [0, 0]
-```
-The offsets for the description. These are ***not*** the actual X and Y coordinates of the text, this is mainly for adjustment.
 
 ---
 

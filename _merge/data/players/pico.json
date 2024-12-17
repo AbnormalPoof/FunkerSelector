@@ -1,0 +1,4 @@
+[
+  { "op": "replace", "path": "/freeplayDJ/text1", "value": "PICO PICO PICO" },
+  { "op": "replace", "path": "/freeplayDJ/animations/4/offsets", "value": [970, 270] }
+]

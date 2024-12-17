@@ -1,0 +1,91 @@
+import flixel.FlxG;
+import funkin.modding.module.Module;
+import funkin.modding.module.ModuleHandler;
+import funkin.play.PlayState;
+import funkin.play.ResultState;
+import funkin.data.freeplay.player.PlayerRegistry;
+
+/**
+ * This is a module to help with the Results Screen.
+ */
+class ResultsHandler extends Module {
+  var originalPlayerID:String;
+  var shouldReplace:Bool;
+  var replaced:Bool;
+
+  function new() {
+    super('ResultsHandler');
+  }
+
+  /**
+   * Revert the playable character ID to the original after the animations and music are loaded.
+   * @param event
+   */
+  function onUpdate(event) {
+    if (FlxG.state.subState is ResultState) {
+      if (shouldReplace
+        && (FlxG.state.subState.characterAtlasAnimations.length > 0 || FlxG.state.subState.characterSparrowAnimations.length > 0)
+        && replaced) {
+        shouldReplace = false;
+        replaced = false;
+        FlxG.state.subState.playerCharacterId = originalPlayerID;
+        trace("[Funker Selector] Reverting ResultState character ID back to original: " + FlxG.state.subState.playerCharacterId);
+      }
+    }
+  }
+
+  /**
+   * Replace the Playable Character ID to load their results animations/music instead of the default.
+   * NOTE: We modify `params` instead of `playerCharacterID` directly, else it gets set too late.
+   * @param event
+   */
+  override function onSubStateOpenBegin(event) {
+    if (event.targetState is ResultState) {
+      shouldReplace = false;
+      replaced = false;
+
+      if (PlayState.instance.currentStage?.getBoyfriend() == null) return;
+
+      var saveData:Dynamic = ModuleHandler.getModule('CharacterHandler').scriptGet('saveData');
+      var currentCharacterID:String = PlayState.instance.currentStage.getBoyfriend().characterId;
+
+      // Save the original ID.
+      // We manually retrieve the owner ID since the character ID specified in `params` is NOT the
+      // playable character ID we want.
+      originalPlayerID = PlayerRegistry.instance.getCharacterOwnerId(event.targetState.params.characterId);
+      trace("[Funker Selector] Original character ID: " + originalPlayerID);
+
+      // Check if the saved character is owned, then check if we're ACTUALLY playing as them.
+      if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf)) {
+        shouldReplace = (currentCharacterID == saveData.characterIDs.bf || isVariation(currentCharacterID, saveData.characterIDs.bf));
+
+        if (shouldReplace) {
+          replaced = true;
+          event.targetState.params.characterId = PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf);
+          trace('[Funker Selector] Using character ID ' + event.targetState.params.characterId);
+        }
+        else {
+          trace('[Funker Selector] Not replacing results!');
+        }
+      }
+    }
+  }
+
+  /**
+   * Simple helper function for character variations.
+   * @param currentID The ID we're comparing
+   * @param savedID The ID we're comparing
+   * @return Bool
+   */
+  function isVariation(currentID:String, savedID:String):Bool {
+    var fs_characterData:Dynamic = ModuleHandler.getModule('CharacterHandler').scriptCall('getCharacterData', [savedID]);
+    if (fs_characterData?.characterVariations != null) {
+      for (variation in fs_characterData.characterVariations) {
+        if (variation.characterID == currentID) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+}

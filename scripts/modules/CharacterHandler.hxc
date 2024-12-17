@@ -7,6 +7,7 @@ import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.data.song.SongRegistry;
 import funkin.graphics.FunkinSprite;
 import funkin.modding.PolymodErrorHandler;
+import funkin.modding.base.ScriptedFunkinSprite;
 import funkin.modding.base.ScriptedMusicBeatSubState;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
@@ -883,15 +884,12 @@ class CharacterHandler extends Module {
         charSelect = null;
       }
 
-      charSelectIcon = FunkinSprite.createSparrow(10, 120, 'freeplay/char_select');
-      charSelectIcon.animation.addByPrefix('intro', 'icon enter', 24, false);
-      charSelectIcon.animation.addByPrefix('idle', 'idle', 24, true);
-      charSelectIcon.zIndex = 1000;
+      charSelectIcon = ScriptedFunkinSprite.init('FunkerSelectorFreeplayIcon');
       charSelectIcon.scale.set(0.7, 0.7);
       charSelectIcon.camera = state.funnyCam;
       charSelectIcon.visible = false;
 
-      charText = new AtlasText(170, 270, 'G', 'bold');
+      charText = new AtlasText(170, 300, 'G', 'bold');
       charText.visible = false;
       charText.zIndex = 1001;
       charText.camera = state.funnyCam;
@@ -899,16 +897,12 @@ class CharacterHandler extends Module {
       state.add(charSelectIcon);
       state.add(charText);
 
-      // TODO, remake the icon and add a new unlock indicator
       state.dj.onIntroDone.add(function() {
         charSelectIcon.visible = true;
         charSelectIcon.animation.play('intro');
         charSelectIcon.animation.finishCallback = function(_) {
           charSelectIcon.animation.play('idle');
           charText.visible = true;
-          if (charSelectIcon.animation.curAnim.name == 'idle') charSelectIcon.offset.set(-15, 14);
-          else
-            charSelectIcon.offset.set();
         };
       });
     }
@@ -990,6 +984,15 @@ class CharacterHandler extends Module {
       if (saveData.preferences.get("djSwapping")) {
         trace("[Funker Selector] Switching out DJ...");
         ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, saveData]);
+      }
+
+      if (charSelectIcon != null) {
+        characterData = getCharacterData(saveData.characterIDs.bf, 1);
+        currentCharacterIcon = charSelectIcon.scriptGet('currentCharacterIcon');
+
+        if (currentCharacterIcon.characterId != characterData?.healthIcon?.id) {
+          charSelectIcon.scriptCall('spawnIcon');
+        }
       }
     }
   }

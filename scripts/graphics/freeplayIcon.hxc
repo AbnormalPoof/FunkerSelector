@@ -1,0 +1,64 @@
+import funkin.graphics.FunkinSprite;
+import funkin.modding.module.Module;
+import funkin.modding.module.ModuleHandler;
+import funkin.play.components.HealthIcon;
+import flixel.FlxG;
+
+class FunkerSelectorFreeplayIcon extends FunkinSprite {
+  /**
+   * The currently selected character's health icon.
+   * This defaults to BF.
+   */
+  var currentCharacterIcon:HealthIcon;
+
+  /**
+   * The CharacterHandler module.
+   */
+  var characterHandler:Module = ModuleHandler.getModule("CharacterHandler");
+
+  public function new() {
+    super(-20, 60);
+
+    zIndex = 900;
+
+    loadSparrow('freeplay/char_select');
+    active = true;
+
+    animation.addByPrefix('intro', 'char select intro', 24, false);
+    animation.addByIndices('idle', 'char select intro', [14], "", 24, true);
+    animation.callback = function(name:String, frameNumber:Int, frameIndex:Int) {
+      if (name == 'intro' && frameNumber == 3) {
+				spawnIcon();
+			}
+		};
+  }
+
+  function spawnIcon():Void {
+    if (currentCharacterIcon != null) FlxG.state.subState.remove(currentCharacterIcon);
+
+    var saveData:Dynamic = characterHandler.scriptGet('saveData');
+    var characterData:Dynamic = characterHandler.scriptCall('getCharacterData', [saveData.characterIDs.bf, 1]);
+
+    currentCharacterIcon = new HealthIcon('dad', 0);
+    currentCharacterIcon.configure(characterData?.healthIcon);
+    currentCharacterIcon.x = 125;
+    currentCharacterIcon.y = 195;
+    currentCharacterIcon.camera = FlxG.state.subState.funnyCam;
+    currentCharacterIcon.zIndex = 1000;
+
+    FlxG.state.subState.add(currentCharacterIcon);
+    FlxG.state.subState.refresh();
+
+    if (currentCharacterIcon.width > currentCharacterIcon.height) {
+      currentCharacterIcon.setGraphicSize(Std.int(currentCharacterIcon.width + (150 * currentCharacterIcon.size.x * 0.2)), 0);
+    }
+    else {
+      currentCharacterIcon.setGraphicSize(0, Std.int(currentCharacterIcon.height + (150 * currentCharacterIcon.size.y * 0.2)));
+    }
+
+    currentCharacterIcon.angle += 1;
+
+    currentCharacterIcon.updateHitbox();
+    currentCharacterIcon.updatePosition();
+  }
+}

@@ -59,8 +59,8 @@ The Character ID to use, this is ***needed*** or else the character will not sho
 ```json
 "characterType": "bf"
 ```
-The character type, accepted values are: `bf`, `gf`, `dad`, `player`, and `opponent`.
-(`player` and `opponent` are just aliases for `bf` and `dad` respectively.)
+The character type, accepted values are: `bf`, `gf`, `dad`, `player`, `speaker`, and `opponent`.
+(`player`, `speaker`, and `opponent` are just aliases for `bf`, `gf`, and `dad` respectively.)
 
 ---
 
@@ -76,6 +76,14 @@ You'll have to specify an unlock method.
 "voiceID": "bf"
 ```
 The ID to use for Vocal Replacement, defaults to the character ID.
+
+---
+
+```json
+"introSwapFrame": 4
+```
+The frame where the turntable stops moving and the character appears in the Freeplay DJ's intro animation. This is used for swapping out DJs.
+The default value is 3.
 
 ---
 

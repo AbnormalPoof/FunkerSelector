@@ -37,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - If "Random" is selected, the BPM is now obtained from the song metadata instead of using a hardcoded value.
 - Reworked how the Result Screen animations/music are swapped out.
   - This should have no effect on the functionality itself, it's simply a code refactor.
+- The icon in Freeplay has been remade, it now shows the health icon of your currently selected Playable Character.
 ### Fixed
 - Fixed Pico's results animations not playing if Pico (Playable) was used on Week 2 Erect.
 - Fixed a bug where the Character Menu SubState can be re-opened if it was already open.

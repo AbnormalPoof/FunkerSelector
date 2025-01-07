@@ -30,9 +30,9 @@ class FunkerSelectorFreeplayIcon extends FunkinSprite {
     animation.addByIndices('idle', 'char select intro', [14], "", 24, true);
     animation.callback = function(name:String, frameNumber:Int, frameIndex:Int) {
       if (name == 'intro' && frameNumber == 3) {
-				spawnIcon();
-			}
-		};
+        spawnIcon();
+      }
+    };
   }
 
   function spawnIcon():Void {

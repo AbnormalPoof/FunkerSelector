@@ -582,11 +582,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     leftDifficultyArrowHitbox.visible = false;
 
     topTextHitbox = new FunkinSprite(selectText.x - 280, selectText.y);
-    topTextHitbox.makeGraphic(
-        selectText.width * 9,
-        selectText.height * 3.8,
-        0xFF000000
-    );
+    topTextHitbox.makeGraphic(selectText.width * 9, selectText.height * 3.8, 0xFF000000);
     topTextHitbox.camera = uiCam;
     topTextHitbox.visible = false;
 
@@ -786,7 +782,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
       if (controls.FREEPLAY_LEFT || controls.FREEPLAY_RIGHT) {
         changePage(controls.FREEPLAY_LEFT ? -1 : 1);
-      } else if (mouseOverlaps(topTextHitbox) && FlxG.mouse.justPressed) {
+      }
+      else if (mouseOverlaps(topTextHitbox) && FlxG.mouse.justPressed) {
         changePage(1);
       }
 

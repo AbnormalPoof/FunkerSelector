@@ -2,6 +2,7 @@
   "version": "1.0.0",
   "characterID": "bf",
   "characterType": "bf",
+  "introSwapFrame": 4,
   "description": {
     "text": "The main protagonist of Friday Night Funkin', sporting his iconic blue hair and red-blue cap. Girlfriend loves him, her parents on the other hand..."
   },

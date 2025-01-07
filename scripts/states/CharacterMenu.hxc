@@ -42,6 +42,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
   var leftDifficultyArrow:FunkinSprite;
   var rightDifficultyArrow:FunkinSprite;
+
+  // This is a shitty way of doing hitboxes but it works so who cares
+  var leftDifficultyArrowHitbox:FunkinSprite;
+  var rightDifficultyArrowHitbox:FunkinSprite;
+  var characterHitbox:FunkinSprite;
+  var topTextHitbox:FunkinSprite;
+
   var keyBox:FunkinSprite;
   var descBox:FunkinSprite;
   var newGraphic:FunkinSprite;
@@ -157,7 +164,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
   var spamTimer:Float = 0;
   var spamming:Bool = false;
 
-  var characterHandler:Module;
+  /**
+   * the CharacterHandler module.
+   */
+  var characterHandler:Module = ModuleHandler.getModule("CharacterHandler");
 
   public function new() {
     super();
@@ -165,8 +175,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
   public override function create():Void {
     super.create();
-
-    characterHandler = ModuleHandler.getModule("CharacterHandler");
 
     setupUIStuff();
     updateFilteredKeys();
@@ -369,30 +377,21 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     iHateMyLife = tempArray.filter(function(shit) {
       characterType = characterMap.get(shit)[1];
+      var types:Array<String> = (characterType is Array) ? characterType : [characterType];
+
       switch (currentPageIndex) {
         case 0:
-          if (characterType is Array) return characterType.contains('bf') || characterType.contains('player');
-          else
-            return characterType == 'bf' || characterType == 'player';
+          return types.contains('bf') || types.contains('player');
         case 1:
-          if (characterType is Array) return characterType.contains('dad') || characterType.contains('opponent');
-          else
-            return characterType == 'dad' || characterType == 'opponent';
+          return types.contains('dad') || types.contains('opponent');
         case 2:
-          if (characterType is Array) return characterType.contains('gf') || characterType.contains('speaker');
-          else
-            return characterType == 'gf' || characterType == 'speaker';
+          return types.contains('gf') || types.contains('speaker');
       }
     });
 
     iHateMyLife.sort(function(a:String, b:String):Int {
-      characterOwnerA = characterMap.get(a)[0];
-      characterOwnerB = characterMap.get(b)[0];
-      characterA = jsonCharacterCache.get(characterOwnerA);
-      characterB = jsonCharacterCache.get(characterOwnerB);
-
-      characterDataA = characterA[1];
-      characterDataB = characterB[1];
+      characterDataA = characterHandler.scriptCall('getCharacterData', [a, 1]);
+      characterDataB = characterHandler.scriptCall('getCharacterData', [b, 1]);
 
       nameA = characterDataA.name.toUpperCase();
       nameB = characterDataB.name.toUpperCase();
@@ -433,7 +432,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
             var icon = new HealthIcon('dad', 0);
             icon.x = xStart + (j * 2 + k) * spacing;
             icon.y = yStart + (i * 2 + l) * spacing;
-            icon.alpha = (alpha != null ? alpha : 0.2);
+            icon.alpha = nullCoalesce(alpha, 0.2);
 
             if (characterData != null) {
               icon.configure(characterData.healthIcon);
@@ -483,10 +482,10 @@ class CharacterSelectSubState extends MusicBeatSubState {
       trace('[Funker Selector] ERROR: Data is null! Can\'t configure characterSprite.');
       return;
     }
-    var position = data.position != null ? data.position : [0, 0];
+    var position = nullCoalesce(data.position, [0, 0]);
     var scale = data.scale != null ? (data.isPixel ? data.scale * 6 : data.scale) : (data.isPixel ? 6.0 : 1.0);
     characterSprite.y += position[1];
-    characterSprite.flipX = data.flipX != null ? data.flipX : false;
+    characterSprite.flipX = nullCoalesce(data.flipX, false);
     characterSprite.scale.set(scale, scale);
     characterSprite.antialiasing = data.isPixel != null ? !data.isPixel : true;
     characterSprite.pixelPerfectRender = data?.isPixel;
@@ -576,12 +575,39 @@ class CharacterSelectSubState extends MusicBeatSubState {
     leftDifficultyArrow.scale.set(1.5, 1.5);
     leftDifficultyArrow.camera = uiCam;
 
+    leftDifficultyArrowHitbox = new FunkinSprite(leftDifficultyArrow.x - 15, leftDifficultyArrow.y - 25);
+    leftDifficultyArrowHitbox.makeGraphic(leftDifficultyArrow.frameWidth * leftDifficultyArrow.scale.x + 20,
+      leftDifficultyArrow.frameHeight * leftDifficultyArrow.scale.y + 20, 0xFF000000);
+    leftDifficultyArrowHitbox.camera = uiCam;
+    leftDifficultyArrowHitbox.visible = false;
+
+    topTextHitbox = new FunkinSprite(selectText.x - 280, selectText.y);
+    topTextHitbox.makeGraphic(
+        selectText.width * 9,
+        selectText.height * 3.8,
+        0xFF000000
+    );
+    topTextHitbox.camera = uiCam;
+    topTextHitbox.visible = false;
+
     rightDifficultyArrow = FunkinSprite.createSparrow(1200, leftDifficultyArrow.y, 'storymenu/ui/arrows');
     rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
     rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
     rightDifficultyArrow.animation.play('idle');
     rightDifficultyArrow.scale.set(1.5, 1.5);
     rightDifficultyArrow.camera = uiCam;
+
+    rightDifficultyArrowHitbox = new FunkinSprite(rightDifficultyArrow.x - 20, rightDifficultyArrow.y - 25);
+    rightDifficultyArrowHitbox.makeGraphic(rightDifficultyArrow.frameWidth * rightDifficultyArrow.scale.x + 20,
+      rightDifficultyArrow.frameHeight * rightDifficultyArrow.scale.y + 20, 0xFF000000);
+    rightDifficultyArrowHitbox.camera = uiCam;
+    rightDifficultyArrowHitbox.visible = false;
+
+    characterHitbox = new FunkinSprite(0, 0);
+    characterHitbox.makeGraphic(300, 300, 0xFF000000);
+    characterHitbox.screenCenter();
+    characterHitbox.camera = uiCam;
+    characterHitbox.visible = false;
 
     if (saveData.preferences.get("potatoMode")) {
       lockedChill = new Lock(530, 270, FlxG.random.int(1, 9));
@@ -614,11 +640,17 @@ class CharacterSelectSubState extends MusicBeatSubState {
     unlockSound.loadEmbedded(Paths.sound('funkerSelector/charUnlock'));
     unlockSound.volume = 1;
 
+    // UI Sprites
     add(bg);
+
+    // Only add this if "Simplify UI" is turned off.
     if (!saveData.preferences.get("potatoMode")) createIconGrid(150, 0.2);
     add(leftDifficultyArrow);
     add(rightDifficultyArrow);
+
+    // Only add this if "Simplify UI" is turned off.
     if (!saveData.preferences.get("potatoMode")) add(characterWheel);
+
     add(selectText);
     add(numberThing);
     add(selected);
@@ -626,19 +658,29 @@ class CharacterSelectSubState extends MusicBeatSubState {
     add(charIcon);
     add(charName);
     add(variationText);
+
+    // Only add this if "Simplify UI" is turned on.
     if (saveData.preferences.get("potatoMode")) add(lockedChill);
+
     add(keyBox);
     add(hotkeys);
     add(newGraphic);
     add(descBox);
     add(charDesc);
 
+    // Adding the hitboxes for the arrows and the text.
+    add(leftDifficultyArrowHitbox);
+    add(rightDifficultyArrowHitbox);
+    add(characterHitbox);
+    add(topTextHitbox);
+
+    // Set the window title.
     WindowUtil.setWindowTitle('Friday Night Funkin\' - Funker Selector Menu');
 
+    // Fade the background in.
     FlxTween.tween(bg, {alpha: 0.5}, 0.5, {ease: FlxEase.quartOut});
 
     trace('[Funker Selector] UI has been set up.');
-
     conductorInUse.forceBPM(songBPM);
   }
 
@@ -713,10 +755,20 @@ class CharacterSelectSubState extends MusicBeatSubState {
     }
 
     if (!hotkeyCam.visible) {
-      if (controls.UI_LEFT || controls.UI_RIGHT) {
+      var leftPressed:Bool = controls.UI_LEFT || (mouseOverlaps(leftDifficultyArrowHitbox) && FlxG.mouse.pressed);
+      var rightPressed:Bool = controls.UI_RIGHT || (mouseOverlaps(rightDifficultyArrowHitbox) && FlxG.mouse.pressed);
+      var anyPressed:Bool = leftPressed || rightPressed;
+
+      if (anyPressed) {
         if ((spamming && spamTimer >= 0.07) || (!spamming && spamTimer <= 0)) {
           spamTimer = 0;
-          changeCharacter(controls.UI_LEFT ? -1 : 1);
+
+          if (leftPressed) {
+            changeCharacter(-1);
+          }
+          else if (rightPressed) {
+            changeCharacter(1);
+          }
         }
         else if (!spamming && spamTimer >= 0.9) {
           spamming = true;
@@ -729,11 +781,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
         spamTimer = 0;
       }
 
-      leftDifficultyArrow.animation.play(controls.UI_LEFT ? 'press' : 'idle');
-      rightDifficultyArrow.animation.play(controls.UI_RIGHT ? 'press' : 'idle');
+      leftDifficultyArrow.animation.play(leftPressed ? 'press' : 'idle');
+      rightDifficultyArrow.animation.play(rightPressed ? 'press' : 'idle');
 
       if (controls.FREEPLAY_LEFT || controls.FREEPLAY_RIGHT) {
         changePage(controls.FREEPLAY_LEFT ? -1 : 1);
+      } else if (mouseOverlaps(topTextHitbox) && FlxG.mouse.justPressed) {
+        changePage(1);
       }
 
       // Mouse scrolling:
@@ -792,7 +846,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
         showVariations(currentCharacterID);
       }
 
-      if (controls.ACCEPT) {
+      if (controls.ACCEPT || (mouseOverlaps(characterHitbox) && FlxG.mouse.justPressed)) {
         var shouldConfirm:Bool = false;
         if (currentCharacterID != characterIDsArray[currentPageIndex]) {
           if (!lockedCharMap.exists(currentCharacterID)) {
@@ -884,7 +938,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     }
     if (!saveData.preferences.get("potatoMode")) {
       fs_characterData = characterHandler.scriptCall('getCharacterData', [currentCharacterID]);
-      animation = fs_characterData?.characterMenu?.selectedAnim != null ? fs_characterData.characterMenu.selectedAnim : 'hey';
+      var animation = nullCoalesce(fs_characterData?.characterMenu?.selectedAnim, 'hey');
       var item:Dynamic = characterWheel.members[currentCharacterIndex - 1];
       if (item != null && item is BaseCharacter) item.playAnimation(animation, true, true);
     }
@@ -958,7 +1012,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
    */
   function showVariations(characterID:String) {
     var fs_characterData:Dynamic = characterHandler.scriptCall('getCharacterData', [characterID]);
-    var variationCount:Int = fs_characterData?.characterVariations != null ? fs_characterData.characterVariations.length : 0;
+    var variationCount:Int = nullCoalesce(fs_characterData?.characterVariations?.length, 0);
     var alertBody = "";
 
     if (variationCount <= 0) return;
@@ -987,6 +1041,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
   function isDebugBuild():Bool {
     // Debug builds use a different background color.
     return Application.current.window.context.attributes.background == 0xFFFF00FF;
+  }
+
+  /**
+   * Copypasted from CharacterHandler.
+   */
+  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic {
+    return value != null ? value : fallback;
   }
 
   /**
@@ -1079,6 +1140,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
   }
 
   /**
+   * Whether or not the mouse overlaps this sprite.
+   */
+  function mouseOverlaps(sprite:FlxSprite):Bool {
+    return sprite.pixelsOverlapPoint(FlxG.mouse.getScreenPosition());
+  }
+
+  /**
    * Skips the unlock animation.
    */
   function skipUnlockAnim(lockedChill:Dynamic):Void {
@@ -1168,7 +1236,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
           charIcon.size.set(1, 1);
           charIcon.setPosition(270, 380);
 
-          descText = fs_characterData.description?.text != null ? fs_characterData.description.text : "No description was specified in the JSON file.";
+          descText = nullCoalesce(fs_characterData.description?.text, "No description was specified in the JSON file.");
         }
     }
 

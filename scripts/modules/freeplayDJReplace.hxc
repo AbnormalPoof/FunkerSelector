@@ -61,8 +61,8 @@ class DJReplace extends Module {
     var fs_characterData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [saveData.characterIDs.bf]);
     var playableCharId:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
     var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(playableCharId);
-    var playableCharData:Dynamic = playableChar != null ? playableChar.getFreeplayDJData() : null;
-    var introFrame:Int = fs_characterData?.introSwapFrame != null ? fs_characterData.introSwapFrame : 3;
+    var playableCharData:Dynamic = nullCoalesce(playableChar?.getFreeplayDJData(), null);
+    var introFrame:Int = nullCoalesce(fs_characterData?.introSwapFrame, 3);
 
     var startTime = Timer.stamp();
 
@@ -78,8 +78,6 @@ class DJReplace extends Module {
       freeplayDJ.characterId = playableCharId;
       freeplayDJ.playableCharData = playableCharData;
 
-      freeplayDJ.currentState = FreeplayDJState.Intro;
-
       var animPrefix = playableCharData.getAnimationPrefix('intro');
       freeplayDJ.playFlashAnimation(animPrefix, true, false, false, introFrame);
 
@@ -94,7 +92,7 @@ class DJReplace extends Module {
   }
 
   /**
-   * A modified version of replaceDJNoIntro() that replaces the DJ quicker.
+   * A modified version of `replaceDJNoIntro();` that replaces the DJ quicker.
    * This is used when *entering* Freeplay.
    */
   function replaceDJIntro():Void {
@@ -102,7 +100,7 @@ class DJReplace extends Module {
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
     var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
     var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
-    var playableCharData = playableChar != null ? playableChar.getFreeplayDJData() : null;
+    var playableCharData = nullCoalesce(playableChar?.getFreeplayDJData(), null);
 
     var startTime = Timer.stamp();
 
@@ -196,5 +194,12 @@ class DJReplace extends Module {
     }
 
     textObject.speed = speed;
+  }
+
+  /**
+   * Copypasted from CharacterHandler.
+   */
+  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic {
+    return value != null ? value : fallback;
   }
 }

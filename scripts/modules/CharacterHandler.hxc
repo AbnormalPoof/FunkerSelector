@@ -67,7 +67,12 @@ class CharacterHandler extends Module {
    * NOTE: Only change this if there's breaking changes that
    * make it not function on older versions!!
    */
-  var supportedVersionRule:String = ">=0.5.2 <0.6.0";
+  var GAME_VERSION_RULE:String = ">=0.5.2 <0.6.0";
+
+  /**
+   * The version for sava data.
+   */
+  var FS_SAVE_DATA_VERSION:String = "1.0.0";
 
   /**
    * currentCachedTextures gets cleared everytime we load into a song.
@@ -121,7 +126,7 @@ class CharacterHandler extends Module {
     // The FIRST thing we check is the game version.
     // We use `lime.app.Application` instead of `Constants.VERSION` because the latter
     // has added suffixes depending on if the game is a debug build or not.
-    if (!VersionUtil.validateVersionStr(Application.current.meta.get('version'), supportedVersionRule)) {
+    if (!VersionUtil.validateVersionStr(Application.current.meta.get('version'), GAME_VERSION_RULE)) {
       PolymodErrorHandler.showAlert("Funker Selector Error",
         "Funker Selector is not supported on Friday Night Funkin' v" + Application.current.meta.get('version') + ".");
       this.active = false;
@@ -148,6 +153,7 @@ class CharacterHandler extends Module {
    */
   function initializeSaveData():Dynamic {
     var defaultSaveData:Dynamic = {
+      version: FS_SAVE_DATA_VERSION,
       characterIDs: {
         bf: 'default',
         gf: 'default',
@@ -206,6 +212,10 @@ class CharacterHandler extends Module {
         if (!saveData.preferences.exists(key)) saveData.preferences.set(key, value);
       };
 
+      if (saveData.version == null) {
+        saveData.version = defaultSaveData.version;
+      }
+
       trace('[Funker Selector] Successfully retrieved save data:\n\n---Character IDs---\n\nBoyfriend: '
         + saveData.characterIDs.bf
         + '\nGirlfriend: '
@@ -241,20 +251,20 @@ class CharacterHandler extends Module {
 
     var migratedSave:Dynamic = {
       characterIDs: {
-        bf: oldCharacterIDs?.bf != null ? oldCharacterIDs.bf : 'default',
-        gf: oldCharacterIDs?.gf != null ? oldCharacterIDs.gf : 'default',
-        dad: oldCharacterIDs?.dad != null ? oldCharacterIDs.dad : 'default'
+        bf: nullCoalesce(oldCharacterIDs?.bf, 'default'),
+        gf: nullCoalesce(oldCharacterIDs?.gf, 'default'),
+        dad: nullCoalesce(oldCharacterIDs?.dad, 'default')
       },
       preferences: new StringMap(),
-      seenUnlocks: oldSeenUnlocks != null ? oldSeenUnlocks : []
+      seenUnlocks: nullCoalesce(oldSeenUnlocks, [])
     };
 
     // Settings is a special case...
     var settings:Dynamic = {
-      potatoMode: oldPrefs?.potatoMode != null ? oldPrefs.potatoMode : false,
-      preloadSprites: oldPrefs?.preloadSprites != null ? oldPrefs.preloadSprites : false,
-      preferredSFX: oldPrefs?.preferredSFX != null ? oldPrefs.preferredSFX : 'funkin',
-      djSwapping: oldPrefs?.djSwapping != null ? oldPrefs.djSwapping : true
+      potatoMode: nullCoalesce(oldPrefs?.potatoMode, false),
+      preloadSprites: nullCoalesce(oldPrefs?.preloadSprites, false),
+      preferredSFX: nullCoalesce(oldPrefs?.preferredSFX, 'funkin'),
+      djSwapping: nullCoalesce(oldPrefs?.djSwapping, true)
     };
 
     for (key in ReflectUtil.getAnonymousFieldsOf(settings)) {
@@ -607,6 +617,7 @@ class CharacterHandler extends Module {
     else {
       trace('[Funker Selector] Successfully cached graphic: ' + path);
       graphic.persist = true;
+      graphic.destroyOnNoUse = false;
       cachedJSONSparrows.set(path, graphic);
     }
   }
@@ -645,7 +656,7 @@ class CharacterHandler extends Module {
     var fs_characterData:Dynamic = getCharacterData(characterID);
     var oldChar:BaseCharacter = null;
 
-    var voiceID:String = fs_characterData?.voiceID != null ? fs_characterData.voiceID : characterID;
+    var voiceID:String = nullCoalesce(fs_characterData?.voiceID, characterID);
     var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
     var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + voiceID + variationSuffix);
 
@@ -703,7 +714,7 @@ class CharacterHandler extends Module {
         }
 
         if (songMatch && variationMatch) {
-          fs_characterData = getCharacterData(variation.characterID) != null ? getCharacterData(variation.characterID) : fs_characterData;
+          fs_characterData = nullCoalesce(getCharacterData(variation.characterID), fs_characterData);
 
           if (charJSONCheck(variation.characterID)) {
             trace('[Funker Selector] Variation found: ' + variation.characterID);
@@ -737,12 +748,9 @@ class CharacterHandler extends Module {
     }
 
     if (fs_characterData != null && characterType == CharacterType.BF) {
-      PauseSubState.musicSuffix = (fs_characterData.suffixes?.pauseMusic != null
-        && fs_characterData.suffixes.pauseMusic != '') ? fs_characterData.suffixes.pauseMusic : PauseSubState.musicSuffix;
-      GameOverSubState.musicSuffix = (fs_characterData.suffixes?.gameOverMusic != null
-        && fs_characterData.suffixes.gameOverMusic != '') ? fs_characterData.suffixes.gameOverMusic : GameOverSubState.musicSuffix;
-      GameOverSubState.blueBallSuffix = (fs_characterData.suffixes?.blueBall != null
-        && fs_characterData.suffixes.blueBall != '') ? fs_characterData.suffixes.blueBall : GameOverSubState.blueBallSuffix;
+      PauseSubState.musicSuffix = nullCoalesce(fs_characterData.suffixes?.pauseMusic, PauseSubState.musicSuffix);
+      GameOverSubState.musicSuffix = nullCoalesce(fs_characterData.suffixes?.gameOverMusic, GameOverSubState.musicSuffix);
+      GameOverSubState.blueBallSuffix = nullCoalesce(fs_characterData.suffixes?.blueBall, GameOverSubState.blueBallSuffix);
     }
 
     trace('[Funker Selector] Suffixes\n\nPause Music: ' + PauseSubState.musicSuffix + '\nGame Over Music: ' + GameOverSubState.musicSuffix
@@ -811,6 +819,16 @@ class CharacterHandler extends Module {
 
     if (characterData == null) return null;
     return characterData;
+  }
+
+  /**
+   * Imitates null coalescing since HScript doesn't support it yet.
+   * @param value The value to check.
+   * @param fallback The fallback value.
+   * @return The value if it's not null, otherwise the fallback value.
+   */
+  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic {
+    return value != null ? value : fallback;
   }
 
   override function onCreate(event) {

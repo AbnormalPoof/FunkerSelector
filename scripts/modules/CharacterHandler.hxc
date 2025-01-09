@@ -195,13 +195,13 @@ class CharacterHandler extends Module {
         + '\nOpponent: '
         + saveData.characterIDs.dad
         + '\n\n---Settings---\n\nSimplify UI: '
-        + saveData.preferences.get("potatoMode")
+        + getPreference("potatoMode")
         + '\nPreload Sprites: '
-        + saveData.preferences.get("preloadSprites")
+        + getPreference("preloadSprites")
         + '\nPreferred SFX: '
-        + saveData.preferences.get("preferredSFX")
+        + getPreference("preferredSFX")
         + '\nDJ Replacement: '
-        + saveData.preferences.get("djSwapping")
+        + getPreference("djSwapping")
         + '\n\n---Seen Unlock Animations---\n\n'
         + saveData.seenUnlocks);
     }
@@ -231,13 +231,13 @@ class CharacterHandler extends Module {
         + '\nOpponent: '
         + saveData.characterIDs.dad
         + '\n\n---Settings---\n\nSimplify UI: '
-        + saveData.preferences.get("potatoMode")
+        + getPreference("potatoMode")
         + '\nPreload Sprites: '
-        + saveData.preferences.get("preloadSprites")
+        + getPreference("preloadSprites")
         + '\nPreferred SFX: '
-        + saveData.preferences.get("preferredSFX")
+        + getPreference("preferredSFX")
         + '\nDJ Replacement: '
-        + saveData.preferences.get("djSwapping")
+        + getPreference("djSwapping")
         + '\n\n---Seen Unlock Animations---\n\n'
         + saveData.seenUnlocks);
     }
@@ -340,13 +340,13 @@ class CharacterHandler extends Module {
       + '\nOpponent: '
       + saveData.characterIDs.dad
       + '\n\n---Settings---\n\nSimplify UI: '
-      + saveData.preferences.get("potatoMode")
+      + getPreference("potatoMode")
       + '\nPreload Sprites: '
-      + saveData.preferences.get("preloadSprites")
+      + getPreference("preloadSprites")
       + '\nPreferred SFX: '
-      + saveData.preferences.get("preferredSFX")
+      + getPreference("preferredSFX")
       + '\nDJ Replacement: '
-      + saveData.preferences.get("djSwapping")
+      + getPreference("djSwapping")
       + '\n\n---Seen Unlock Animations---\n\n'
       + saveData.seenUnlocks);
   }
@@ -464,6 +464,22 @@ class CharacterHandler extends Module {
         trace("[Funker Selector] Unlock Method " + unlockMethod.type + " not recognized.");
         return false;
     }
+  }
+
+  /**
+   * Retrieves a setting from the save data.
+   */
+  function getPreference(key:String):Dynamic {
+    return saveData.preferences.get(key);
+  }
+
+  /**
+   * Apply a given value to a setting in the save data.
+   * @param value The value to apply.
+   */
+  function setPreference(key:String, value:Dynamic) {
+    saveData.preferences.set(key, value);
+    writeSaveData();
   }
 
   /**
@@ -842,7 +858,7 @@ class CharacterHandler extends Module {
     super.onCreate(event);
     // Cache the sprites for JSON characters.
     // This is only done once.
-    if (saveData.preferences.get("preloadSprites") && !saveData.preferences.get("potatoMode")) cacheJSONSparrows();
+    if (getPreference("preloadSprites") && !getPreference("potatoMode")) cacheJSONSparrows();
   }
 
   override function onUpdate(event) {
@@ -899,7 +915,7 @@ class CharacterHandler extends Module {
     var state = event.targetState;
     // Set up the Character Select button.
     if (state is FreeplayState) {
-      if (saveData.preferences.get("djSwapping")) {
+      if (getPreference("djSwapping")) {
         trace("[Funker Selector] Switching out DJ...");
         ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, saveData, true]);
       }
@@ -956,14 +972,12 @@ class CharacterHandler extends Module {
         prefs.add(prefs.items.createItem(120, 120 * prefs.items.length + 30, "-- FUNKER SELECTOR --", "bold", () -> {})).fireInstantly = true;
 
         prefs.createPrefItemCheckbox("Simplify UI", "Simplifies the UI and disables character sprite caching.", (value) -> {
-          saveData.preferences.set("potatoMode", value);
-          writeSaveData();
-        }, saveData.preferences.get("potatoMode"));
+          setPreference("potatoMode", value);
+        }, getPreference("potatoMode"));
 
         prefs.createPrefItemCheckbox("Preload Sprites",
           "Whether to preload the character sprites or not. Will cause lag on the Character Selection Menu if off!", (value) -> {
-            saveData.preferences.set("preloadSprites", value);
-            writeSaveData();
+            setPreference("preloadSprites", value);
             if (value) {
               cacheJSONSparrows();
             }
@@ -971,25 +985,23 @@ class CharacterHandler extends Module {
               // Remove the JSON Characters from memory when the user disables the option.
               purgeJSONCache();
             }
-          }, saveData.preferences.get("preloadSprites"));
+          }, getPreference("preloadSprites"));
 
         prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
           ["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
-            saveData.preferences.set("preferredSFX", value);
-            writeSaveData();
+            setPreference("preferredSFX", value);
             if (value == "charSelect") {
               FunkinSound.playOnce(Paths.sound('CS_confirm'));
             }
             else {
               FunkinSound.playOnce(Paths.sound('confirmMenu'));
             }
-          }, saveData.preferences.get("preferredSFX"));
+          }, getPreference("preferredSFX"));
 
         prefs.createPrefItemCheckbox("DJ Replacement", "When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.",
           (value) -> {
-            saveData.preferences.set("djSwapping", value);
-            writeSaveData();
-          }, saveData.preferences.get("djSwapping"));
+            setPreference("djSwapping", value);
+          }, getPreference("djSwapping"));
 
         prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold", () -> {})).fireInstantly = true;
       }
@@ -1001,7 +1013,7 @@ class CharacterHandler extends Module {
     if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState) {
       FlxG.state.subState.busy = false;
       charSelect = null;
-      if (saveData.preferences.get("djSwapping")) {
+      if (getPreference("djSwapping")) {
         trace("[Funker Selector] Switching out DJ...");
         ModuleHandler.getModule("DJReplace").scriptCall('transitionToNewDJ', [FlxG.state.subState, saveData]);
       }

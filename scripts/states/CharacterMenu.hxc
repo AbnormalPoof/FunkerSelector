@@ -178,7 +178,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     setupUIStuff();
     updateFilteredKeys();
-    if (!saveData.preferences.get("potatoMode")) buildCharacterWheel();
+    if (!getPreference("potatoMode")) buildCharacterWheel();
     jumpToCurSelected();
 
     ModuleHandler.callEvent(new ScriptEvent(FS_OPENED_SUBSTATE));
@@ -216,7 +216,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       }
     }
 
-    if (!saveData.preferences.get("potatoMode")) {
+    if (!getPreference("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item:Dynamic = characterWheel.members[index];
         if (item != null) {
@@ -299,7 +299,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     currentCharacterID = filteredKeys[currentCharacterIndex];
 
-    if (!saveData.preferences.get("potatoMode")) {
+    if (!getPreference("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item:Dynamic = characterWheel.members[index];
 
@@ -313,7 +313,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     }
 
     if (currentCharacterIndex != prevIndex) {
-      if (saveData.preferences.get("preferredSFX") == "charSelect") {
+      if (getPreference("preferredSFX") == "charSelect") {
         FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
       }
       else {
@@ -339,7 +339,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     currentCharacterIndex = 0;
 
     updateFilteredKeys();
-    if (!saveData.preferences.get("potatoMode")) {
+    if (!getPreference("potatoMode")) {
       buildCharacterWheel();
     }
     changeCharacter();
@@ -347,7 +347,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
   function beatHit():Void {
     bopDaThing();
-    if (!saveData.preferences.get("potatoMode")) {
+    if (!getPreference("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item:Dynamic = characterWheel.members[index];
         if (index == currentCharacterIndex - 1 && item is BaseCharacter) item.dance();
@@ -605,7 +605,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     characterHitbox.camera = uiCam;
     characterHitbox.visible = false;
 
-    if (saveData.preferences.get("potatoMode")) {
+    if (getPreference("potatoMode")) {
       lockedChill = new Lock(530, 270, FlxG.random.int(1, 9));
       lockedChill.onAnimationComplete.add(function(name) {
         if (name != 'selected') lockedChill.playAnimation('selected');
@@ -640,12 +640,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
     add(bg);
 
     // Only add this if "Simplify UI" is turned off.
-    if (!saveData.preferences.get("potatoMode")) createIconGrid(150, 0.2);
+    if (!getPreference("potatoMode")) createIconGrid(150, 0.2);
     add(leftDifficultyArrow);
     add(rightDifficultyArrow);
 
     // Only add this if "Simplify UI" is turned off.
-    if (!saveData.preferences.get("potatoMode")) add(characterWheel);
+    if (!getPreference("potatoMode")) add(characterWheel);
 
     add(selectText);
     add(numberThing);
@@ -656,7 +656,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
     add(variationText);
 
     // Only add this if "Simplify UI" is turned on.
-    if (saveData.preferences.get("potatoMode")) add(lockedChill);
+    if (getPreference("potatoMode")) add(lockedChill);
 
     add(keyBox);
     add(hotkeys);
@@ -798,7 +798,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       }
 
       if (controls.FREEPLAY_CHAR_SELECT) {
-        if (saveData.preferences.get("preferredSFX") == "charSelect") {
+        if (getPreference("preferredSFX") == "charSelect") {
           FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
         }
         else {
@@ -875,14 +875,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
           characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
         }
         else {
-          if (saveData.preferences.get("preferredSFX") == "charSelect") {
+          if (getPreference("preferredSFX") == "charSelect") {
             FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
           }
           else {
             FunkinSound.playOnce(Paths.sound('cancelMenu'));
           }
           flashScreen(0xFFFF0000, 0.03, 0.1);
-          if (!saveData.preferences.get("potatoMode")) {
+          if (!getPreference("potatoMode")) {
             for (index in 0...characterWheel.members.length) {
               var item = characterWheel.members[index];
               if (index == currentCharacterIndex - 1 && item is FunkinSprite) item.animation.play('denied', true);
@@ -924,13 +924,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
   }
 
   function confirmThing():Void {
-    if (saveData.preferences.get("preferredSFX") == "charSelect") {
+    if (getPreference("preferredSFX") == "charSelect") {
       FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
     }
     else {
       FunkinSound.playOnce(Paths.sound('confirmMenu'));
     }
-    if (!saveData.preferences.get("potatoMode")) {
+    if (!getPreference("potatoMode")) {
       fs_characterData = characterHandler.scriptCall('getCharacterData', [currentCharacterID]);
       var animation = nullCoalesce(fs_characterData?.characterMenu?.selectedAnim, 'hey');
       var item:Dynamic = characterWheel.members[currentCharacterIndex - 1];
@@ -943,7 +943,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       // I wanted this really cool effect where the icons in the icon grid would also
       // play the winning animation!
       // But let's not play that if "Simplify UI" is turned on.
-      if (!saveData.preferences.get("potatoMode") && iconGrid != null) {
+      if (!getPreference("potatoMode") && iconGrid != null) {
         for (i in 0...iconGrid.length) {
           var icon = iconGrid[i];
           new FlxTimer().start(0.01 * i, function() {
@@ -1048,7 +1048,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
    * Does a really fucking cool unlock animation.
    */
   function doUnlockAnimation(?skip:Bool):Void {
-    if (!saveData.preferences.get("potatoMode")) {
+    if (!getPreference("potatoMode")) {
       for (index in 0...characterWheel.members.length) {
         var item = characterWheel.members[index];
         if (index == currentCharacterIndex - 1 && item is FunkinSprite) {
@@ -1080,7 +1080,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     if (FlxG.sound.music != null) FlxG.sound.music.fadeOut();
 
-    if (!saveData.preferences.get("potatoMode")) {
+    if (!getPreference("potatoMode")) {
       lockedChill.offset.set();
       lockedChill.animation.play('idle', true);
     }
@@ -1093,7 +1093,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       onComplete: function(twn:FlxTween) {
         unlockSound.play(true);
         new FlxTimer().start(1.45, function() {
-          if (!saveData.preferences.get("potatoMode")) {
+          if (!getPreference("potatoMode")) {
             lockedChill.offset.set(170, 220);
             lockedChill.animation.play('death');
           }
@@ -1151,7 +1151,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       lockedChill.animation.curAnim.curFrame = 36;
       lockedChill.animation.resume();
 
-      if (saveData.preferences.get("preferredSFX") == "charSelect") {
+      if (getPreference("preferredSFX") == "charSelect") {
         FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
       }
       else {
@@ -1164,7 +1164,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
       lockedChill.anim.curFrame = 34;
       lockedChill.anim.resume();
 
-      if (saveData.preferences.get("preferredSFX") == "charSelect") {
+      if (getPreference("preferredSFX") == "charSelect") {
         FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
       }
       else {
@@ -1188,6 +1188,13 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
       if (currentFontSize <= 8) return;
     }
+  }
+
+  /**
+   * Copypasted from CharacterHandler.
+   */
+  function getPreference(key:String):Dynamic {
+    return saveData.preferences.get(key);
   }
 
   /**
@@ -1263,12 +1270,12 @@ class CharacterSelectSubState extends MusicBeatSubState {
     }, descText.length * 2);
 
     // Making it not look so awkward when "Simplify UI" is turned on.
-    if (saveData.preferences.get("potatoMode") || currentCharacterID == 'default') {
+    if (getPreference("potatoMode") || currentCharacterID == 'default') {
       charIcon.setPosition(500, 230);
       charIcon.size.set(1.7, 1.7);
     }
 
-    if (!saveData.preferences.get("potatoMode")) {
+    if (!getPreference("potatoMode")) {
       for (icon in iconGrid) {
         if (currentCharacterID == 'default' || lockedCharMap.exists(currentCharacterID)) {
           icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
@@ -1281,11 +1288,11 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     if (lockedCharMap.exists(currentCharacterID)) {
       if (charIcon != null) charIcon.visible = false;
-      if (saveData.preferences.get("potatoMode")) lockedChill.visible = true;
+      if (getPreference("potatoMode")) lockedChill.visible = true;
     }
     else {
       if (charIcon != null) charIcon.visible = true;
-      if (saveData.preferences.get("potatoMode")) lockedChill.visible = false;
+      if (getPreference("potatoMode")) lockedChill.visible = false;
     }
 
     charName.screenCenter(0x01);

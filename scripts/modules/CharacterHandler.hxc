@@ -148,6 +148,14 @@ class CharacterHandler extends Module {
   }
 
   /**
+   * Write save data to disk.
+   */
+  function writeSaveData():Void {
+    Save.instance.modOptions.set("FunkerSelector", saveData);
+    Save.instance.flush();
+  }
+
+  /**
    * Retrieves the Funker Selector save data.
    * @return The saved data as a dynamic object.
    */
@@ -323,8 +331,7 @@ class CharacterHandler extends Module {
 
     saveData = saveObject;
 
-    Save.instance.modOptions.set("FunkerSelector", saveData);
-    Save.instance.flush();
+    writeSaveData();
 
     trace('[Funker Selector] DEBUG: Loaded save data from JSON:\n\n---Character IDs---\n\nBoyfriend: '
       + saveData.characterIDs.bf
@@ -950,15 +957,13 @@ class CharacterHandler extends Module {
 
         prefs.createPrefItemCheckbox("Simplify UI", "Simplifies the UI and disables character sprite caching.", (value) -> {
           saveData.preferences.set("potatoMode", value);
-          Save.instance.modOptions.set("FunkerSelector", saveData);
-          Save.instance.flush();
+          writeSaveData();
         }, saveData.preferences.get("potatoMode"));
 
         prefs.createPrefItemCheckbox("Preload Sprites",
           "Whether to preload the character sprites or not. Will cause lag on the Character Selection Menu if off!", (value) -> {
             saveData.preferences.set("preloadSprites", value);
-            Save.instance.modOptions.set("FunkerSelector", saveData);
-            Save.instance.flush();
+            writeSaveData();
             if (value) {
               cacheJSONSparrows();
             }
@@ -971,8 +976,7 @@ class CharacterHandler extends Module {
         prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
           ["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
             saveData.preferences.set("preferredSFX", value);
-            Save.instance.modOptions.set("FunkerSelector", saveData);
-            Save.instance.flush();
+            writeSaveData();
             if (value == "charSelect") {
               FunkinSound.playOnce(Paths.sound('CS_confirm'));
             }
@@ -984,8 +988,7 @@ class CharacterHandler extends Module {
         prefs.createPrefItemCheckbox("DJ Replacement", "When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.",
           (value) -> {
             saveData.preferences.set("djSwapping", value);
-            Save.instance.modOptions.set("FunkerSelector", saveData);
-            Save.instance.flush();
+            writeSaveData();
           }, saveData.preferences.get("djSwapping"));
 
         prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold", () -> {})).fireInstantly = true;

@@ -356,8 +356,8 @@ class CharacterSelectSubState extends MusicBeatSubState {
 
     if (conductorInUse.currentBeat % 4 == 0) {
       if (uiCam != null && spriteCam != null) {
-        uiCam.zoom = 1.02;
-        spriteCam.zoom = 1.02;
+        FlxTween.tween(uiCam, {zoom: 1.02}, 0.01, {ease: FlxEase.quartOut});
+        FlxTween.tween(spriteCam, {zoom: 1.02}, 0.01, {ease: FlxEase.quartOut});
       }
     }
   }
@@ -824,8 +824,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
         if (shouldPlaySound) {
           FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
           selected.visible = selectedTextVisibility();
-          Save.instance.modOptions.set("FunkerSelector", saveData);
-          Save.instance.flush();
+          characterHandler.scriptCall('writeSaveData');
 
           // Updating the array with the latest changes
           characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
@@ -870,8 +869,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
           confirmThing();
           selected.visible = selectedTextVisibility();
           newGraphic.visible = false;
-          Save.instance.modOptions.set("FunkerSelector", saveData);
-          Save.instance.flush();
+          characterHandler.scriptCall('writeSaveData');
 
           // Updating the array with the latest changes
           characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
@@ -914,8 +912,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
           saveData.characterIDs.gf = 'default';
       }
       // Save everything
-      Save.instance.modOptions.set("FunkerSelector", saveData);
-      Save.instance.flush();
+      characterHandler.scriptCall('writeSaveData');
 
       // Updating the array with the latest changes
       characterIDsArray = [saveData.characterIDs.bf, saveData.characterIDs.dad, saveData.characterIDs.gf];
@@ -1305,10 +1302,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
         lockedCharMap.remove(currentCharacterID);
         saveData.seenUnlocks.push(currentCharacterID);
 
-        characterHandler.scriptSet('saveData', saveData);
-        Save.instance.modOptions.set("FunkerSelector", saveData);
-        Save.instance.flush();
-
+        characterHandler.scriptCall('writeSaveData');
         characterHandler.scriptSet('lockedCharMap', lockedCharMap);
 
         busy = true;

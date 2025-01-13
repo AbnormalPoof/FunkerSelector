@@ -2,14 +2,12 @@ import flixel.FlxG;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-
 import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.ui.freeplay.FreeplayDJ;
 import funkin.ui.freeplay.FreeplayDJState;
 import funkin.ui.freeplay.FreeplayState;
-
 import haxe.Timer;
 
 /**

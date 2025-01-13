@@ -455,9 +455,8 @@ class CharacterHandler extends Module {
    * - storyWeek: Checks if the week has been beaten on the specified difficulty list.
    */
   function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool {
-    if (unlockMethod == null) return false;
     trace("[Funker Selector] Checking unlock methods for ID " + characterID + " ...");
-    switch (unlockMethod.type) {
+    switch (unlockMethod?.type) {
       case 'playableCharacter':
         if (PlayerRegistry.instance.isCharacterOwned(characterID)) {
           var ownerID:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
@@ -617,16 +616,14 @@ class CharacterHandler extends Module {
         continue;
       }
 
-      if (data.mustUnlock && data.unlockMethod != null) {
+      if (data.mustUnlock) {
         if (!isCharacterUnlocked(data.characterID, data.unlockMethod)) {
           trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
           lockedCharMap.set(data.characterID, data);
         }
-        else {
-          if (!saveData.seenUnlocks.contains(data.characterID)) {
-            trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
-            lockedCharMap.set(data.characterID, data);
-          }
+        else if (!saveData.seenUnlocks.contains(data.characterID)) {
+          trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
+          lockedCharMap.set(data.characterID, data);
         }
       }
 
@@ -634,14 +631,14 @@ class CharacterHandler extends Module {
       charData = CharacterDataParser.parseCharacterData(data.characterID);
 
       var variationList:Array = [];
-      var variationNum:Int = 0;
 
       for (variation in data.characterVariations) {
         if (charJSONCheck(variation.characterID)) {
           variationList.push(variation.characterID);
         }
       }
-      variationNum = variationList.length;
+
+      var variationNum:Int = 0;
 
       // NOTE: `jsonCharacterCache` and `characterMap` serve 2 different purposes.
       jsonCharacterCache.set(funker, [data, charData, variationNum]);

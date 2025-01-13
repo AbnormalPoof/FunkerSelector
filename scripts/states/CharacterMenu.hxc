@@ -22,9 +22,6 @@ import funkin.ui.MusicBeatSubState;
 import funkin.ui.charSelect.Lock;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
 import funkin.util.WindowUtil;
-import funkin.util.SerializerUtil;
-import funkin.util.FileWriteMode;
-import funkin.util.FileUtil;
 import funkin.util.assets.DataAssets;
 import flixel.group.FlxTypedGroup;
 import funkin.util.MathUtil;
@@ -751,14 +748,6 @@ class CharacterSelectSubState extends MusicBeatSubState {
         if (typewriterTimer != null) typewriterTimer.cancel();
         close();
       }
-    }
-
-    if (FlxG.keys.justPressed.F1) {
-      var filePath:String = "mods/[V-Slice] Funker Selector/data/" + currentCharacterID + "_FS_dumped.json";
-      var fs_characterData:Dynamic = characterHandler.scriptCall('getCharacterData', [currentCharacterID]);
-
-      FileUtil.writeStringToPath(filePath, SerializerUtil.toJSON(fs_characterData, true), FileWriteMode.Force);
-      trace("[Funker Selector] Dumped character data to " + filePath);
     }
 
     if (!hotkeyCam.visible) {

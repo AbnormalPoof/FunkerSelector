@@ -34,6 +34,7 @@ import funkin.util.VersionUtil;
 import funkin.util.assets.DataAssets;
 import haxe.Exception;
 import haxe.ds.StringMap;
+import haxe.ds.Either;
 import haxe.io.Bytes;
 import lime.app.Application;
 import openfl.display.BitmapData;
@@ -1088,7 +1089,7 @@ class CharacterHandler extends Module {
 }
 
 /**
- * A type for Funker Selector's JSON character data.
+ * A typedef for Funker Selector's JSON character data.
  */
 typedef FS_characterData = {
   /**
@@ -1133,77 +1134,106 @@ typedef FS_characterData = {
   /**
    * The character description.
    */
-  var description:{
-    /**
-     * The description text of the character.
-     */
-    var text:String;
-    /**
-     * The unlock condition, optional.
-     */
-    var unlockCondition:String;
-  };
+  var description:FS_descriptionData;
 
   /**
    * Data for the character sprites. Determines the appearance of the character in the menu.
    */
-  var characterMenu:{
-    /**
-     * The X and Y coordinates of the character.
-     */
-    var position:Array<Float, Float>;
-    /**
-     * The scale/size of the character.
-     */
-    var scale:Float;
-    /**
-     * Multiplies the scale by 6 and disables anti-aliasing.
-     */
-    var isPixel:Bool;
-    /**
-     * Whether or not to flip the character horizontally.
-     */
-    var flipX:Bool;
-    /**
-     * The animation to use when the character is selected.
-     * The default animation is "hey"
-     */
-    var selectedAnim:String;
-  };
+  var characterMenu:FS_characterMenuData;
 
   /**
    * Data for the character's suffixes.
    */
-  var suffixes:{
-    /**
-     * The music suffix used in the Game Over screen.
-     */
-    var gameOverMusic:String;
-    /**
-     * The blue ball suffix used in the Game Over screen.
-     */
-    var blueBall:String;
-    /**
-     * The music suffix used in the Pause Menu.
-     */
-    var pauseMusic:String;
-  };
+  var suffixes:FS_suffixesData;
 
   /**
    * Data for the character's variations.
    */
-  var characterVariations:Array<{
-    /**
-     * The song ID to check for.
-     */
-    var songID:Either<String, Array<String>>;
-    /**
-     * The character ID to use.
-     */
-    var characterID:String;
-    /**
-     * The song variation to check for.
-     */
-    var songVariation:String;
-  }>;
+  var characterVariations:Array<FS_characterVariationData>;
+}
+
+/**
+ * Data for character variations.
+ */
+typedef FS_characterVariationData = {
+  /**
+   * The song ID to check for.
+   */
+  var songID:Either<String, Array<String>>;
+
+  /**
+   * The character ID to use.
+   */
+  var characterID:String;
+
+  /**
+   * The song variation to check for.
+   */
+  var songVariation:String;
+}
+
+/**
+ * Data for suffixes.
+ */
+typedef FS_suffixesData = {
+  /**
+   * The music suffix used in the Game Over screen.
+   */
+  var gameOverMusic:String;
+
+  /**
+   * The blue ball suffix used in the Game Over screen.
+   */
+  var blueBall:String;
+
+  /**
+   * The music suffix used in the Pause Menu.
+   */
+  var pauseMusic:String;
+}
+
+/**
+ * Data for the character's appearance in the menu.
+ */
+typedef FS_characterMenuData = {
+  /**
+   * The X and Y coordinates of the character.
+   */
+  var position:Array<Float, Float>;
+
+  /**
+   * The scale/size of the character.
+   */
+  var scale:Float;
+
+  /**
+   * Multiplies the scale by 6 and disables anti-aliasing.
+   */
+  var isPixel:Bool;
+
+  /**
+   * Whether or not to flip the character horizontally.
+   */
+  var flipX:Bool;
+
+  /**
+   * The animation to use when the character is selected.
+   * The default animation is "hey"
+   */
+  var selectedAnim:String;
+}
+
+/**
+ * Data for the character's descriptions.
+ */
+typedef FS_descriptionData = {
+  /**
+   * The description text of the character.
+   */
+  var text:String;
+
+  /**
+   * The unlock condition, optional.
+   */
+  var unlockCondition:String;
 }

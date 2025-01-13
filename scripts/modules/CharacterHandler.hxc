@@ -1088,8 +1088,6 @@ class CharacterHandler extends Module {
   }
 }
 
-// These don't actually work in HScript yet it's just for flair lol
-
 /**
  * A typedef for Funker Selector's JSON character data.
  */

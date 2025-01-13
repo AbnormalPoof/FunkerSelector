@@ -1,9 +1,10 @@
 import flixel.FlxG;
+
+import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.PlayState;
 import funkin.play.ResultState;
-import funkin.data.freeplay.player.PlayerRegistry;
 
 /**
  * This is a module to help with the Results Screen.

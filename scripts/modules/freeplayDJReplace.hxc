@@ -62,7 +62,7 @@ class DJReplace extends Module {
     var playableCharId:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
     var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(playableCharId);
     var playableCharData:Dynamic = nullCoalesce(playableChar?.getFreeplayDJData(), null);
-    var introFrame:Int = nullCoalesce(fs_characterData?.introSwapFrame, 3);
+    var introFrame:Int = fs_characterData.introSwapFrame;
 
     var startTime = Timer.stamp();
 

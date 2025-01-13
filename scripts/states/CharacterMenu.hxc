@@ -22,6 +22,9 @@ import funkin.ui.MusicBeatSubState;
 import funkin.ui.charSelect.Lock;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
 import funkin.util.WindowUtil;
+import funkin.util.SerializerUtil;
+import funkin.util.FileWriteMode;
+import funkin.util.FileUtil;
 import funkin.util.assets.DataAssets;
 import flixel.group.FlxTypedGroup;
 import funkin.util.MathUtil;
@@ -233,7 +236,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
           }
         }
 
-        var xOffset:Float = fs_characterData?.characterMenu != null ? fs_characterData.characterMenu.position[0] : 0;
+        var xOffset:Float = fs_characterData.characterMenu.position[0];
 
         item.x = MathUtil.smoothLerp(item.x, ((index - (currentCharacterIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.20);
       }
@@ -477,18 +480,18 @@ class CharacterSelectSubState extends MusicBeatSubState {
   /**
    * Configuring the JSON character, setting up position, scale, flipping, etc.
    */
-  function configureChar(characterSprite:BaseCharacter, data:Null):BaseCharacter {
+  function configureChar(characterSprite:BaseCharacter, data:Dynamic):BaseCharacter {
     if (data == null) {
       trace('[Funker Selector] ERROR: Data is null! Can\'t configure characterSprite.');
       return;
     }
-    var position = nullCoalesce(data.position, [0, 0]);
-    var scale = data.scale != null ? (data.isPixel ? data.scale * 6 : data.scale) : (data.isPixel ? 6.0 : 1.0);
+    var position = data.position;
+    var scale = data.isPixel ? 6.0 : 1.0;
     characterSprite.y += position[1];
-    characterSprite.flipX = nullCoalesce(data.flipX, false);
+    characterSprite.flipX = data.flipX;
     characterSprite.scale.set(scale, scale);
-    characterSprite.antialiasing = data.isPixel != null ? !data.isPixel : true;
-    characterSprite.pixelPerfectRender = data?.isPixel;
+    characterSprite.antialiasing = !data.isPixel ? true : false;
+    characterSprite.pixelPerfectRender = data.isPixel;
 
     return characterSprite;
   }
@@ -750,6 +753,14 @@ class CharacterSelectSubState extends MusicBeatSubState {
       }
     }
 
+    if (FlxG.keys.justPressed.F1) {
+      var filePath:String = "mods/[V-Slice] Funker Selector/data/" + currentCharacterID + "_FS_dumped.json";
+      var fs_characterData:Dynamic = characterHandler.scriptCall('getCharacterData', [currentCharacterID]);
+
+      FileUtil.writeStringToPath(filePath, SerializerUtil.toJSON(fs_characterData, true), FileWriteMode.Force);
+      trace("[Funker Selector] Dumped character data to " + filePath);
+    }
+
     if (!hotkeyCam.visible) {
       var leftPressed:Bool = controls.UI_LEFT || (mouseOverlaps(leftDifficultyArrowHitbox) && FlxG.mouse.pressed);
       var rightPressed:Bool = controls.UI_RIGHT || (mouseOverlaps(rightDifficultyArrowHitbox) && FlxG.mouse.pressed);
@@ -930,9 +941,9 @@ class CharacterSelectSubState extends MusicBeatSubState {
     else {
       FunkinSound.playOnce(Paths.sound('confirmMenu'));
     }
-    if (!getPreference("potatoMode")) {
+    if (!getPreference("potatoMode") && currentCharacterID != "default") {
       fs_characterData = characterHandler.scriptCall('getCharacterData', [currentCharacterID]);
-      var animation = nullCoalesce(fs_characterData?.characterMenu?.selectedAnim, 'hey');
+      var animation = fs_characterData.characterMenu.selectedAnim;
       var item:Dynamic = characterWheel.members[currentCharacterIndex - 1];
       if (item != null && item is BaseCharacter) item.playAnimation(animation, true, true);
     }
@@ -1006,7 +1017,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
    */
   function showVariations(characterID:String) {
     var fs_characterData:Dynamic = characterHandler.scriptCall('getCharacterData', [characterID]);
-    var variationCount:Int = nullCoalesce(fs_characterData?.characterVariations?.length, 0);
+    var variationCount:Int = fs_characterData.characterVariations?.length;
     var alertBody = "";
 
     if (variationCount <= 0) return;
@@ -1226,8 +1237,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
         if (lockedCharMap.exists(currentCharacterID)) {
           charName.text = "LOCKED";
 
-          var unlockHint = fs_characterData.description?.unlockCondition != null ? "\n\nUnlock Condition: "
-            + fs_characterData.description.unlockCondition : "";
+          var unlockHint = "\n\nUnlock Condition: " + fs_characterData.description.unlockCondition;
 
           descText = "This character is locked! I wonder who it could be..." + unlockHint;
         }
@@ -1237,7 +1247,7 @@ class CharacterSelectSubState extends MusicBeatSubState {
           charIcon.size.set(1, 1);
           charIcon.setPosition(270, 380);
 
-          descText = nullCoalesce(fs_characterData.description?.text, "No description was specified in the JSON file.");
+          descText = fs_characterData.description.text;
         }
     }
 

@@ -34,7 +34,11 @@ import funkin.util.VersionUtil;
 import funkin.util.assets.DataAssets;
 import haxe.Exception;
 import haxe.ds.StringMap;
+import haxe.ds.Either;
 import haxe.io.Bytes;
+import hxjsonast.Parser;
+import json2object.PositionUtils;
+import json2object.reader.BaseParser;
 import lime.app.Application;
 import openfl.display.BitmapData;
 import openfl.display3D.textures.RectangleTexture;
@@ -392,16 +396,52 @@ class CharacterHandler extends Module {
   }
 
   /**
-   * Parse a Funker Selector JSON file and return the data.
+   * Parse a Funker Selector JSON file and return the data as FS_characterData.
    * @param characterID The character ID to use.
-   * @return The JSON data as a Json object.
+   * @return The character data as FS_characterData, or null if parsing fails.
    */
-  function parseJSONData(characterID:String = 'default'):Dynamic {
+  function parseJSONData(characterID:String = 'default'):FS_characterData {
     var filePath = Paths.json('funkerSelector/' + characterID);
 
+    // Check if the file exists
     if (Assets.exists(filePath)) {
-      var result = SerializerUtil.fromJSON(Assets.getText(filePath));
-      if (result == null) trace("[Funker Selector] Something went wrong when parsing " + Assets.getPath(filePath) + "! Returning null...");
+
+      var parsedData = SerializerUtil.fromJSON(Assets.getText(filePath));
+
+      if (parsedData == null) {
+        trace("[Funker Selector] Failed to parse " + Assets.getPath(filePath) + "!");
+        return null;
+      }
+
+      // I basically just put this all in one big object so that I don't have to do a bunch of null checks lol
+      var result:FS_characterData = {
+        version: nullCoalesce(parsedData?.version, "1.0.0"),
+        characterID: nullCoalesce(parsedData?.characterID, null),
+        characterType: nullCoalesce(parsedData?.characterType, "bf"),
+        mustUnlock: nullCoalesce(parsedData?.mustUnlock, false),
+        voiceID: nullCoalesce(parsedData?.voiceID, parsedData?.characterID),
+        introSwapFrame: nullCoalesce(parsedData?.introSwapFrame, 3),
+        unlockMethod: nullCoalesce(parsedData?.unlockMethod, null),
+        description: {
+          text: nullCoalesce(parsedData?.description?.text, "No description was specified in the JSON file."),
+          unlockCondition: nullCoalesce(parsedData?.description?.unlockCondition, "No unlock condition was specified in the JSON file.")
+        },
+        characterMenu: {
+          position: nullCoalesce(parsedData?.characterMenu?.position, [0, 0]),
+          scale: nullCoalesce(parsedData?.characterMenu?.scale, (parsedData?.isPixel ? 6.0 : 1.0)),
+          isPixel: nullCoalesce(parsedData?.characterMenu?.isPixel, false),
+          flipX: nullCoalesce(parsedData?.characterMenu?.flipX, false),
+          selectedAnim: nullCoalesce(parsedData?.characterMenu?.selectedAnim, "hey")
+        },
+        // We still set suffixes to null to account for scripts.
+        suffixes: {
+          gameOverMusic: nullCoalesce(parsedData?.suffixes?.gameOverMusic, null),
+          blueBall: nullCoalesce(parsedData?.suffixes?.blueBall, null),
+          pauseMusic: nullCoalesce(parsedData?.suffixes?.pauseMusic, null)
+        },
+        characterVariations: nullCoalesce(parsedData?.characterVariations, [])
+      };
+
       return result;
     }
 
@@ -595,23 +635,18 @@ class CharacterHandler extends Module {
         }
       }
 
-      // Default to bf if the character type doesn't exist.
-      if (data.characterType == null) data.characterType = 'bf';
-
       // Caching the character data.
       charData = CharacterDataParser.parseCharacterData(data.characterID);
 
       var variationList:Array = [];
       var variationNum:Int = 0;
 
-      if (data.characterVariations != null) {
-        for (variation in data.characterVariations) {
-          if (charJSONCheck(variation.characterID)) {
-            variationList.push(variation.characterID);
-          }
+      for (variation in data.characterVariations) {
+        if (charJSONCheck(variation.characterID)) {
+          variationList.push(variation.characterID);
         }
-        variationNum = variationList.length;
       }
+      variationNum = variationList.length;
 
       // NOTE: `jsonCharacterCache` and `characterMap` serve 2 different purposes.
       jsonCharacterCache.set(funker, [data, charData, variationNum]);
@@ -679,7 +714,7 @@ class CharacterHandler extends Module {
     var fs_characterData:Dynamic = getCharacterData(characterID);
     var oldChar:BaseCharacter = null;
 
-    var voiceID:String = nullCoalesce(fs_characterData?.voiceID, characterID);
+    var voiceID:String = fs_characterData?.voiceID;
     var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
     var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + voiceID + variationSuffix);
 
@@ -708,7 +743,7 @@ class CharacterHandler extends Module {
     // Return if the target character does not exist.
     if (oldChar == null) return;
 
-    if (fs_characterData?.characterVariations != null) {
+    if (fs_characterData.characterVariations.length > 0) {
       for (variation in fs_characterData.characterVariations) {
         if (variation.songID == null || variation.characterID == null) {
           continue;
@@ -770,10 +805,10 @@ class CharacterHandler extends Module {
       trace('[Funker Selector] ID ' + characterID + ' and ID ' + oldChar.characterId + ' match. Not replacing...');
     }
 
-    if (fs_characterData != null && characterType == CharacterType.BF) {
-      PauseSubState.musicSuffix = nullCoalesce(fs_characterData.suffixes?.pauseMusic, PauseSubState.musicSuffix);
-      GameOverSubState.musicSuffix = nullCoalesce(fs_characterData.suffixes?.gameOverMusic, GameOverSubState.musicSuffix);
-      GameOverSubState.blueBallSuffix = nullCoalesce(fs_characterData.suffixes?.blueBall, GameOverSubState.blueBallSuffix);
+    if (characterType == CharacterType.BF) {
+      PauseSubState.musicSuffix = nullCoalesce(fs_characterData.suffixes.pauseMusic, PauseSubState.musicSuffix);
+      GameOverSubState.musicSuffix = nullCoalesce(fs_characterData.suffixes.gameOverMusic, GameOverSubState.musicSuffix);
+      GameOverSubState.blueBallSuffix = nullCoalesce(fs_characterData.suffixes.blueBall, GameOverSubState.blueBallSuffix);
     }
 
     trace('[Funker Selector] Suffixes\n\nPause Music: ' + PauseSubState.musicSuffix + '\nGame Over Music: ' + GameOverSubState.musicSuffix
@@ -1058,4 +1093,125 @@ class CharacterHandler extends Module {
       PlayState.instance.vocals = replaceVocals(voiceList);
     }
   }
+}
+
+/**
+ * A type for Funker Selector's JSON character data.
+ */
+typedef FS_characterData = {
+  /**
+   * The version of the JSON Format.
+   */
+  var version:String;
+
+  /**
+   * The character ID.
+   */
+  var characterID:String;
+
+  /**
+   * The character type.
+   */
+  var characterType:String;
+
+  /**
+   * Whether or not the character must be unlocked.
+   */
+  var mustUnlock:Bool;
+
+  /**
+   * The voice ID, optional. Defaults to the character ID.
+   */
+  var voiceID:String;
+
+  /**
+   * The frame where the turntable stops moving and the character appears in the Freeplay DJ's intro animation.
+   * This is used for swapping out DJs.
+   */
+  var introSwapFrame:Int;
+
+  /**
+   * The unlock method. Can be one of the following:
+   * - playableCharacter
+   * - song
+   * - storyWeek
+   */
+  var unlockMethod:Dynamic;
+
+  /**
+   * The character description.
+   */
+  var description:{
+    /**
+     * The description text of the character.
+     */
+    var text:String;
+    /**
+     * The unlock condition, optional.
+     */
+    var unlockCondition:String;
+  };
+
+  /**
+   * Data for the character sprites. Determines the appearance of the character in the menu.
+   */
+  var characterMenu:{
+    /**
+     * The X and Y coordinates of the character.
+     */
+    var position:Array<Float, Float>;
+    /**
+     * The scale/size of the character.
+     */
+    var scale:Float;
+    /**
+     * Multiplies the scale by 6 and disables anti-aliasing.
+     */
+    var isPixel:Bool;
+    /**
+     * Whether or not to flip the character horizontally.
+     */
+    var flipX:Bool;
+    /**
+     * The animation to use when the character is selected.
+     * The default animation is "hey"
+     */
+    var selectedAnim:String;
+  };
+
+  /**
+   * Data for the character's suffixes.
+   */
+  var suffixes:{
+    /**
+     * The music suffix used in the Game Over screen.
+     */
+    var gameOverMusic:String;
+    /**
+     * The blue ball suffix used in the Game Over screen.
+     */
+    var blueBall:String;
+    /**
+     * The music suffix used in the Pause Menu.
+     */
+    var pauseMusic:String;
+  };
+
+  /**
+   * Data for the character's variations.
+   */
+  var characterVariations:Array<{
+    /**
+     * The song ID to check for.
+     */
+    var songID:Either<String, Array<String>>;
+    /**
+     * The character ID to use.
+     */
+    var characterID:String;
+    /**
+     * The song variation to check for.
+     */
+    var songVariation:String;
+  }>;
 }

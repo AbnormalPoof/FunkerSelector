@@ -1,6 +1,5 @@
 {
   "disableFormatting": false,
-
   "indentation": {
     "character": "  ",
     "tabWidth": 2,
@@ -12,10 +11,9 @@
       "leftCurly": "after",
       "rightCurly": "both"
     },
-    "leftCurly": "after",
+    "leftCurly": "both",
     "rightCurly": "both"
   },
-
   "sameLine": {
     "ifBody": "same",
     "ifElse": "next",
@@ -23,7 +21,6 @@
     "tryBody": "next",
     "tryCatch": "next"
   },
-
   "whitespace": {
     "switchPolicy": "around"
   }

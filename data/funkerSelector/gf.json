@@ -5,8 +5,7 @@
   "description": {
     "text": "The Girlfriend of... well... Boyfriend. She is also the daughter of the Dearest family!"
   },
-  "characterMenu":
-  {
+  "characterMenu": {
     "position": [30, 100],
     "scale": 0.7,
     "selectedAnim": "cheer"

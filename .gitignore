@@ -2,5 +2,8 @@
 .DS_Store
 __MACOSX/
 
+# VSCode configuration files
+.vscode/
+
 # Dumped Funker Selector save data
 data/FS_dumpedSave.json

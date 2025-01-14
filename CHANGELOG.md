@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2025-??-??
+### Added
+- Added basic mouse support. You can now click through the menu and select characters using only the mouse.
+  - This is not mobile support.
+### Changed
+- Complete refactor of the code for better readability.
+  - All scripts now follow a naming scheme, using a `FS_` prefix.
+  - A good portion of the code has been split into smaller modules.
+  - This should hopefully make the code a lot easier to go through, since it isn't so convoluted anymore.
+
 ## [2.0.0] - 2024-12-17
 ### Added
 - The Freeplay DJ will now change if your character is associated with a Playable Character (and has valid Freeplay DJ data).
@@ -69,8 +79,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added better visual feedback for selecting a character.
 - New option which allows you to change the SFX used in the menu. Currently, you can only switch between `Funkin' Main Menu` and `Funkin' Character Select`
 ### Changed
-- Refactored a lot of the code for readability and efficiency.
-  - In turn, Funker Selector now requires FNF v0.5.2 and above due to breaking changes.
+- Funker Selector now requires FNF v0.5.2 and above due to breaking changes related to HScript.
 - Better version checking, now using a proper version rule instead of an array of unsupported versions.
 - Pico (Playable) will now change to Pico (Dark) if Spookeez Erect or South Erect is selected.
 - JSON character data is now cached. If you are making a JSON character and don't see the changes immediately. Press F5 to hot-reload.

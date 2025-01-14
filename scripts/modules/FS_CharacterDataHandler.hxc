@@ -1,0 +1,651 @@
+import flixel.FlxG;
+import flixel.graphics.FlxGraphic;
+import funkin.data.freeplay.player.PlayerRegistry;
+import funkin.modding.PolymodErrorHandler;
+import funkin.modding.module.Module;
+import funkin.modding.module.ModuleHandler;
+import funkin.play.character.CharacterDataParser;
+import funkin.save.Save;
+import funkin.util.MemoryUtil;
+import funkin.util.SerializerUtil;
+import funkin.util.assets.DataAssets;
+import haxe.ds.StringMap;
+import haxe.ds.Either;
+
+/**
+ * A module responsible for handling character caches and data.
+ */
+class FS_CharacterDataHandler extends Module
+{
+  /**
+   * A map containing every character.
+   */
+  var characterMap:StringMap<String, Array<String, String>> = new StringMap();
+
+  /**
+   * Cache for JSON character data.
+   */
+  var jsonCharacterCache:StringMap<String, Array<Dynamic, Dynamic>, Array> = new StringMap();
+
+  /**
+   * A map of all the locked characters.
+   */
+  var lockedCharMap:StringMap<String> = new StringMap();
+
+  /**
+   * currentCachedTextures gets cleared everytime we load into a song.
+   * It'd be annoying to have to re-cache everything everytime we exit, so we
+   * keep track of JSON characters in a separate map instead.
+   */
+  var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
+
+  /**
+   * The default character data. This is used as base.
+   *
+   * TODO: Use this in `parseJSONData()` when v0.6.0 is out.
+   */
+  var FS_DEFAULT_CHARACTER_DATA:FS_characterData =
+    {
+      version: "1.0.0",
+      characterID: "bf",
+      characterType: "bf",
+      mustUnlock: false,
+      voiceID: null,
+      introSwapFrame: 4,
+      unlockMethod: null,
+      description:
+        {
+          text: "This is placeholder data! If you're somehow reading this then you probably did something really wrong.",
+          unlockCondition: "This is placeholder data! If you're somehow reading this then you probably did something really wrong."
+        },
+      characterMenu:
+        {
+          position: [200, 0],
+          scale: 1.0,
+          isPixel: false,
+          flipX: false,
+          selectedAnim: null
+        },
+      suffixes:
+        {
+          gameOverMusic: null,
+          blueBall: null,
+          pauseMusic: null
+        },
+      characterVariations: []
+    };
+
+  public function new()
+  {
+    super("FS_CharacterDataHandler", 100);
+  }
+
+  /**
+   * Initializing and caching character data for use in the `CharacterMenu` SubState itself.
+   *
+   * Characters use a JSON file and are loaded from `data/funkerSelector/` and
+   * then parsed, they can specify Game Over music, Blue Ball,
+   * and Pause Menu music suffixes.
+   * If no character type is specified in the JSON, it is pushed
+   * to the Boyfriend character list.
+   * If no character ID exists in the file (or the character ID is invalid), the character will be skipped.
+   */
+  function loadJSONDataCache():Void
+  {
+    var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
+    for (funker in funkerJSONs)
+    {
+      trace('[Funker Selector] Parsing JSON data for ' + funker);
+
+      var data:FS_characterData = parseJSONData(funker);
+
+      // If the data is null (Caused by an issue when parsing the json file)
+      if (data == null)
+      {
+        PolymodErrorHandler.showAlert("Funker Selector JSON Parsing Error",
+          "Something went wrong when parsing the following JSON file:\n\n" + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
+          "\n\nPlease check the JSON file for any syntax errors.");
+        continue;
+      }
+
+      // If the "characterID" field was not found.
+      if (data.characterID == null)
+      {
+        PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+          'In "' + Assets.getPath(Paths.json('funkerSelector/' + funker)) +
+          '":\n\nThe "characterID" field was not found. This character will be skipped to prevent any issues.');
+        continue;
+      }
+
+      // If the Character ID is "default"
+      if (data.characterID == 'default')
+      {
+        PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+          'In "'
+          + Assets.getPath(Paths.json('funkerSelector/' + funker))
+          + '":\n\nThe specified Character ID ('
+          + data.characterID
+          +
+          ') is set to "default"! Please change it, since it will conflict with the "default" character object in the menu.\nThis character will be skipped to prevent any issues.');
+        continue;
+      }
+
+      // If the specified Character ID does not exist in data/characters/
+      if (!charJSONCheck(data.characterID))
+      {
+        PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
+          'In "'
+          + Assets.getPath(Paths.json('funkerSelector/' + funker))
+          + '":\n\nThe specified Character ID ('
+          + data.characterID
+          + ') is invalid. This character will be skipped to prevent any issues.');
+        continue;
+      }
+
+      if (data.mustUnlock)
+      {
+        if (!isCharacterUnlocked(data.characterID, data.unlockMethod))
+        {
+          trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
+          lockedCharMap.set(data.characterID, data);
+        }
+        else if (!ModuleHandler.getModule('FS_SaveDataHandler').scriptGet('saveData').seenUnlocks.contains(data.characterID))
+        {
+          trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
+          lockedCharMap.set(data.characterID, data);
+        }
+      }
+
+      // Caching the character data.
+      charData = CharacterDataParser.parseCharacterData(data.characterID);
+
+      var variationList:Array = [];
+
+      for (variation in data.characterVariations)
+      {
+        if (charJSONCheck(variation.characterID))
+        {
+          variationList.push(variation.characterID);
+        }
+      }
+
+      // NOTE: `jsonCharacterCache` and `characterMap` serve 2 different purposes.
+      jsonCharacterCache.set(funker, [data, charData, variationList.length]);
+      characterMap.set(data.characterID, [funker, data.characterType]);
+
+      trace("[Funker Selector] " + funker + " has " + variationList.length + " available variation(s).");
+    }
+  }
+
+  /**
+   * Parse a Funker Selector JSON file and return the data as `FS_characterData`.
+   * @param characterID The character ID to use.
+   * @return The character data as `FS_characterData`, or null if parsing fails.
+   */
+  function parseJSONData(characterID:String = 'default'):FS_characterData
+  {
+    var filePath = Paths.json('funkerSelector/' + characterID);
+
+    // Check if the file exists
+    if (Assets.exists(filePath))
+    {
+      var parsedData = SerializerUtil.fromJSON(Assets.getText(filePath));
+
+      if (parsedData == null)
+      {
+        trace("[Funker Selector] Failed to parse " + Assets.getPath(filePath) + "!");
+        return null;
+      }
+
+      // I basically just put this all in one big object so that I don't have to do a bunch of null checks lol
+      var result:FS_characterData =
+        {
+          version: nullCoalesce(parsedData?.version, "1.0.0"),
+          characterID: nullCoalesce(parsedData?.characterID, null),
+          characterType: nullCoalesce(parsedData?.characterType, "bf"),
+          mustUnlock: nullCoalesce(parsedData?.mustUnlock, false),
+          voiceID: nullCoalesce(parsedData?.voiceID, parsedData?.characterID),
+          introSwapFrame: nullCoalesce(parsedData?.introSwapFrame, 3),
+          unlockMethod: nullCoalesce(parsedData?.unlockMethod, null),
+          description:
+            {
+              text: nullCoalesce(parsedData?.description?.text, "No description was specified in the JSON file."),
+              unlockCondition: nullCoalesce(parsedData?.description?.unlockCondition, "No unlock condition was specified in the JSON file.")
+            },
+          characterMenu:
+            {
+              position: nullCoalesce(parsedData?.characterMenu?.position, [0, 0]),
+              scale: calculateCharacterScale(parsedData.characterMenu?.scale, parsedData?.characterMenu?.isPixel),
+              isPixel: nullCoalesce(parsedData?.characterMenu?.isPixel, false),
+              flipX: nullCoalesce(parsedData?.characterMenu?.flipX, false),
+              selectedAnim: nullCoalesce(parsedData?.characterMenu?.selectedAnim, "hey")
+            },
+          // We still set suffixes to null to account for scripts.
+          suffixes:
+            {
+              gameOverMusic: nullCoalesce(parsedData?.suffixes?.gameOverMusic, null),
+              blueBall: nullCoalesce(parsedData?.suffixes?.blueBall, null),
+              pauseMusic: nullCoalesce(parsedData?.suffixes?.pauseMusic, null)
+            },
+          characterVariations: nullCoalesce(parsedData?.characterVariations, [])
+        };
+
+      return result;
+    }
+
+    return null;
+  }
+
+  /**
+   * Calculates the scale of the character.
+   * @return The calculated scale value.
+   */
+  function calculateCharacterScale(scale:Float, isPixel:Bool):Float
+  {
+    if (scale == null)
+    {
+      return 1;
+    }
+
+    if (isPixel)
+    {
+      return scale * 6;
+    }
+
+    return scale;
+  }
+
+  /**
+   * Whether or not the character should be shown.
+   * @param characterID The character ID we're using.
+   * @param unlockType The method we're using to determine if this character is unlocked.
+   * @return Bool
+   *
+   * Unlock Methods:
+   * - playableCharacter: Checks if the associated playable character is unlocked.
+   * - song: Checks if the song has been beaten on the specified difficulty list.
+   * - storyWeek: Checks if the week has been beaten on the specified difficulty list.
+   */
+  function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool
+  {
+    trace("[Funker Selector] Checking unlock methods for ID " + characterID + " ...");
+    switch (unlockMethod?.type)
+    {
+      case 'playableCharacter':
+        if (PlayerRegistry.instance.isCharacterOwned(characterID))
+        {
+          var ownerID:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+          var playableCharacter:PlayableCharacter = PlayerRegistry.instance.fetchEntry(ownerID);
+          if (playableCharacter != null && playableCharacter.isUnlocked())
+          {
+            trace("[Funker Selector] Playable character is unlocked with ID " + ownerID);
+            return true;
+          }
+          else
+          {
+            trace("[Funker Selector] Playable character is not unlocked with ID " + ownerID);
+            return false;
+          }
+        }
+      case "song":
+        if (Save.instance.hasBeatenSong(unlockMethod.songID, unlockMethod.difficultyList))
+        {
+          trace("[Funker Selector] Song ID " + unlockMethod.songID + " was beaten with difficulty list " + unlockMethod.difficultyList);
+          return true;
+        }
+        else
+        {
+          trace("[Funker Selector] Song ID "
+            + unlockMethod.songID
+            + " has not been beaten with difficulty list "
+            + unlockMethod.difficultyList);
+          return false;
+        }
+      case 'storyWeek':
+        if (Save.instance.hasBeatenLevel(unlockMethod.levelID, unlockMethod.difficultyList))
+        {
+          trace("[Funker Selector] Level ID " + unlockMethod.levelID + " was beaten with difficulty list " + unlockMethod.difficultyList);
+          return true;
+        }
+        else
+        {
+          trace("[Funker Selector] Level ID "
+            + unlockMethod.levelID
+            + " has not been beaten with difficulty list "
+            + unlockMethod.difficultyList);
+          return false;
+        }
+      default:
+        trace("[Funker Selector] Unlock Method " + unlockMethod.type + " not recognized.");
+        return false;
+    }
+  }
+
+  /**
+   * Fetches the Character Data from the cache.
+   * @param characterID The character ID we are using.
+   * @param arrayNum The index specifying what part of the JSON cache to get.
+   * @return The character data as a dynamic object.
+   */
+  function getCharacterData(characterID:String, ?arrayNum:Int = 0):FS_characterData
+  {
+    var invalidCharacterID:Bool = false;
+
+    characterInfo = characterMap.get(characterID);
+
+    if (characterInfo == null) invalidCharacterID = true;
+
+    if (!invalidCharacterID)
+    {
+      ownerJSONname = characterInfo[0];
+      jsonData = jsonCharacterCache.get(ownerJSONname);
+
+      // Checking to see if it's within bounds...
+      if (jsonData == null || arrayNum < 0 || arrayNum >= jsonData.length) return null;
+
+      characterData = jsonData[arrayNum];
+
+      if (characterData == null) return null;
+      return characterData;
+    }
+    else
+    {
+      return FS_DEFAULT_CHARACTER_DATA;
+    }
+  }
+
+  /**
+   * Check if the JSON file in `data/characters/` ACTUALLY exists.
+   *
+   * I wrote this function because OpenFL Assets is case-insensitive
+   * on Windows and macOS. This is for an edge case where the JSON filename
+   * in data/characters/ has different capitalization than the Character ID
+   * specified in the Funker Selector JSON. Because OpenFL is case insensitive, it will
+   * always return true, which confuses Funker Selector!
+   *
+   * This was reported in issue [#1](https://github.com/AbnormalPoof/FunkerSelector/issues/1)!
+   *
+   * This should hopefully solve any and all issues like that one.
+   *
+   * @param string The character ID we're comparing.
+   * @return Returns a true or false if the file exists.
+   */
+  function charJSONCheck(string:String):Bool
+  {
+    if (Assets.exists(Paths.json('characters/' + string)))
+    {
+      var characterFiles = DataAssets.listDataFilesInPath('characters/');
+      return characterFiles.contains(string);
+    }
+    return false;
+  }
+
+  /**
+   * We preload the sprites for the JSON characters
+   * when the Module is created in order to reduce lag when
+   * they're shown in the Character Selection screen.
+   *
+   * If "Simplify UI" is enabled, the sprites are not
+   * cached as they won't show up in the menu.
+   */
+  function cacheJSONSparrows():Void
+  {
+    var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
+    for (funker in funkerJSONs)
+    {
+      var funkerData:FS_characterData = jsonCharacterCache.get(funker);
+      var data:Dynamic = funkerData[0];
+      var charData:Dynamic = funkerData[1];
+
+      if (data == null) continue;
+
+      if (data.characterID == null)
+      {
+        trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '! The "characterID" field does not exist.');
+        continue;
+      }
+
+      if (!charJSONCheck(data.characterID))
+      {
+        trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
+        continue;
+      }
+
+      switch (charData.renderType)
+      {
+        case 'multisparrow':
+          for (anim in charData.animations)
+          {
+            if (anim.assetPath != null) cacheSprite(Paths.image(anim.assetPath));
+          }
+        case 'animateatlas':
+          cacheSprite(Paths.image(charData.assetPath + '/spritemap1'));
+        case 'sparrow':
+          cacheSprite(Paths.image(charData.assetPath));
+        default:
+          cacheSprite(Paths.image(charData.assetPath));
+      }
+    }
+  }
+
+  /**
+   * Stolen from FunkinSprite.
+   *
+   * @param path The file path.
+   */
+  function cacheSprite(path:String):Void
+  {
+    if (cachedJSONSparrows.exists(path))
+    {
+      trace('[Funker Selector] Graphic is already cached: ' + path);
+      return cachedJSONSparrows.get(path);
+    }
+    trace('[Funker Selector] Caching sprite: ' + path);
+
+    var graphic:FlxGraphic = FlxGraphic.fromAssetKey(path, false, null, true);
+    if (graphic == null)
+    {
+      trace('[Funker Selector] Failed to cache graphic: ' + path);
+    }
+    else
+    {
+      trace('[Funker Selector] Successfully cached graphic: ' + path);
+      graphic.persist = true;
+      graphic.destroyOnNoUse = false;
+      cachedJSONSparrows.set(path, graphic);
+    }
+  }
+
+  /**
+   * Clear the JSON sparrows from memory.
+   */
+  function purgeJSONSparrowCache():Void
+  {
+    for (graphicKey in cachedJSONSparrows.keys())
+    {
+      trace("[Funker Selector] Clearing from memory: " + graphicKey);
+      var graphic = cachedJSONSparrows.get(graphicKey);
+      if (graphic == null)
+      {
+        trace("[Funker Selector] Graphic is null!!");
+        continue;
+      }
+      FlxG.bitmap.remove(graphic);
+      graphic.persist = false;
+      graphic.destroyOnNoUse = true;
+      graphic.destroy();
+      cachedJSONSparrows.remove(graphicKey);
+    }
+    MemoryUtil.collect(true);
+  }
+
+  /**
+   * HELPER FUNCTIONS
+   * These are functions that are simply nice to have. They make the code cleaner.
+   */
+  /**
+   * Imitates null coalescing since HScript doesn't support it yet.
+   * @param value The value to check.
+   * @param fallback The fallback value.
+   * @return The value if it's not null, otherwise the fallback value.
+   */
+  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
+  {
+    return value != null ? value : fallback;
+  }
+}
+
+/**
+ * A typedef for Funker Selector's JSON character data.
+ */
+typedef FS_characterData =
+{
+  /**
+   * The version of the JSON Format.
+   */
+  var version:String;
+
+  /**
+   * The character ID.
+   */
+  var characterID:String;
+
+  /**
+   * The character type.
+   */
+  var characterType:String;
+
+  /**
+   * Whether or not the character must be unlocked.
+   */
+  var mustUnlock:Bool;
+
+  /**
+   * The voice ID, optional. Defaults to the character ID.
+   */
+  var voiceID:String;
+
+  /**
+   * The frame where the turntable stops moving and the character appears in the Freeplay DJ's intro animation.
+   * This is used for swapping out DJs.
+   */
+  var introSwapFrame:Int;
+
+  /**
+   * The unlock method. Can be one of the following:
+   * - playableCharacter
+   * - song
+   * - storyWeek
+   */
+  var unlockMethod:Dynamic;
+
+  /**
+   * The character description.
+   */
+  var description:FS_descriptionData;
+
+  /**
+   * Data for the character sprites. Determines the appearance of the character in the menu.
+   */
+  var characterMenu:FS_characterMenuData;
+
+  /**
+   * Data for the character's suffixes.
+   */
+  var suffixes:FS_suffixesData;
+
+  /**
+   * Data for the character's variations.
+   */
+  var characterVariations:Array<FS_characterVariationData>;
+}
+
+/**
+ * Data for character variations.
+ */
+typedef FS_characterVariationData =
+{
+  /**
+   * The song ID to check for.
+   */
+  var songID:Either<String, Array<String>>;
+
+  /**
+   * The character ID to use.
+   */
+  var characterID:String;
+
+  /**
+   * The song variation to check for.
+   */
+  var songVariation:String;
+}
+
+/**
+ * Data for suffixes.
+ */
+typedef FS_suffixesData =
+{
+  /**
+   * The music suffix used in the Game Over screen.
+   */
+  var gameOverMusic:String;
+
+  /**
+   * The blue ball suffix used in the Game Over screen.
+   */
+  var blueBall:String;
+
+  /**
+   * The music suffix used in the Pause Menu.
+   */
+  var pauseMusic:String;
+}
+
+/**
+ * Data for the character's appearance in the menu.
+ */
+typedef FS_characterMenuData =
+{
+  /**
+   * The X and Y coordinates of the character.
+   */
+  var position:Array<Float, Float>;
+
+  /**
+   * The scale/size of the character.
+   */
+  var scale:Float;
+
+  /**
+   * Multiplies the scale by 6 and disables anti-aliasing.
+   */
+  var isPixel:Bool;
+
+  /**
+   * Whether or not to flip the character horizontally.
+   */
+  var flipX:Bool;
+
+  /**
+   * The animation to use when the character is selected.
+   * The default animation is "hey"
+   */
+  var selectedAnim:String;
+}
+
+/**
+ * Data for the character's descriptions.
+ */
+typedef FS_descriptionData =
+{
+  /**
+   * The description text of the character.
+   */
+  var text:String;
+
+  /**
+   * The unlock condition, optional.
+   */
+  var unlockCondition:String;
+}

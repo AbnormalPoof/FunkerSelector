@@ -8,24 +8,29 @@ import funkin.play.ResultState;
 /**
  * This is a module to help with the Results Screen.
  */
-class ResultsHandler extends Module {
+class ResultsHandler extends Module
+{
   var originalPlayerID:String;
   var shouldReplace:Bool;
   var replaced:Bool;
 
-  function new() {
-    super('ResultsHandler');
+  function new()
+  {
+    super('FS_ResultsHandler', 300);
   }
 
   /**
    * Revert the playable character ID to the original after the animations and music are loaded.
    * @param event
    */
-  function onUpdate(event) {
-    if (FlxG.state.subState is ResultState) {
+  function onUpdate(event:UpdateScriptEvent):Void
+  {
+    if (FlxG.state.subState is ResultState)
+    {
       if (shouldReplace
         && (FlxG.state.subState.characterAtlasAnimations.length > 0 || FlxG.state.subState.characterSparrowAnimations.length > 0)
-        && replaced) {
+        && replaced)
+      {
         shouldReplace = false;
         replaced = false;
         FlxG.state.subState.playerCharacterId = originalPlayerID;
@@ -39,14 +44,16 @@ class ResultsHandler extends Module {
    * NOTE: We modify `params` instead of `playerCharacterID` directly, else it gets set too late.
    * @param event
    */
-  override function onSubStateOpenBegin(event) {
-    if (event.targetState is ResultState) {
+  override function onSubStateOpenBegin(event:SubStateScriptEvent):Void
+  {
+    if (event.targetState is ResultState)
+    {
       shouldReplace = false;
       replaced = false;
 
       if (PlayState.instance.currentStage?.getBoyfriend() == null) return;
 
-      var saveData:Dynamic = ModuleHandler.getModule('CharacterHandler').scriptGet('saveData');
+      var saveData:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler').scriptGet('saveData');
       var currentCharacterID:String = PlayState.instance.currentStage.getBoyfriend().characterId;
 
       // Save the original ID.
@@ -56,15 +63,18 @@ class ResultsHandler extends Module {
       trace("[Funker Selector] Original character ID: " + originalPlayerID);
 
       // Check if the saved character is owned, then check if we're ACTUALLY playing as them.
-      if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf)) {
+      if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf))
+      {
         shouldReplace = (currentCharacterID == saveData.characterIDs.bf || isVariation(currentCharacterID, saveData.characterIDs.bf));
 
-        if (shouldReplace) {
+        if (shouldReplace)
+        {
           replaced = true;
           event.targetState.params.characterId = PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf);
           trace('[Funker Selector] Using character ID ' + event.targetState.params.characterId);
         }
-        else {
+        else
+        {
           trace('[Funker Selector] Not replacing results!');
         }
       }
@@ -77,11 +87,15 @@ class ResultsHandler extends Module {
    * @param savedID The ID we're comparing
    * @return Bool
    */
-  function isVariation(currentID:String, savedID:String):Bool {
-    var fs_characterData:Dynamic = ModuleHandler.getModule('CharacterHandler').scriptCall('getCharacterData', [savedID]);
-    if (fs_characterData?.characterVariations.length > 0) {
-      for (variation in fs_characterData.characterVariations) {
-        if (variation.characterID == currentID) {
+  function isVariation(currentID:String, savedID:String):Bool
+  {
+    var fs_characterData:Dynamic = ModuleHandler.getModule('FS_CharacterDataHandler').scriptCall('getCharacterData', [savedID]);
+    if (fs_characterData?.characterVariations.length > 0)
+    {
+      for (variation in fs_characterData.characterVariations)
+      {
+        if (variation.characterID == currentID)
+        {
           return true;
         }
       }

@@ -1,40 +1,86 @@
 import flixel.FlxG;
 import flixel.text.FlxText;
-import flixel.tweens.FlxEase;
-import flixel.tweens.FlxTween;
 import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
-import funkin.ui.freeplay.FreeplayDJ;
 import funkin.ui.freeplay.FreeplayDJState;
 import funkin.ui.freeplay.FreeplayState;
 import haxe.Timer;
 
 /**
- * Separate module for replacing the Freeplay DJ to prevent messy code in CharacterHandler.
+ * This is a module that handles Freeplay DJ replacement.
  */
-class DJReplace extends Module {
+class DJReplace extends Module
+{
   public var saveData:Dynamic;
 
-  public function new() {
-    super('DJReplace');
+  public function new()
+  {
+    super('FS_FreeplayDJReplace', 300);
+  }
+
+  /**
+   * Swaps out the Freeplay DJ when the CharacterMenu SubState is closed, if needed.
+   * @param event
+   */
+  override function onScriptEvent(event:ScriptEvent):Void
+  {
+    super.onScriptEvent(event);
+    if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState)
+    {
+      var shouldSwap:Bool = ModuleHandler.getModule("FS_SaveDataHandler").scriptCall("getPreference", ["djSwapping"]);
+      trace("[Funker Selector] Swapping DJ? " + shouldSwap);
+      if (shouldSwap)
+      {
+        trace("[Funker Selector] Switching out DJ...");
+        var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet("saveData");
+        transitionToNewDJ(FlxG.state.subState, saveData);
+      }
+      else
+      {
+        trace("[Funker Selector] Not swapping out DJ...");
+      }
+    }
+  }
+
+  /**
+   * Swap out the Freeplay DJ when the Freeplay Menu is opened, if needed.
+   * @param event
+   */
+  override function onSubStateOpenEnd(event)
+  {
+    super.onSubStateOpenEnd(event);
+    if (event.targetState is FreeplayState)
+    {
+      var shouldSwap:Bool = ModuleHandler.getModule("FS_SaveDataHandler").scriptCall("getPreference", ["djSwapping"]);
+      if (shouldSwap)
+      {
+        trace("[Funker Selector] Switching out DJ...");
+        var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet("saveData");
+        transitionToNewDJ(FlxG.state.subState, saveData, true);
+      }
+    }
   }
 
   /**
    * Swap out the Freeplay DJ.
    * @param freeplay The Freeplay SubState we're using.
    */
-  function transitionToNewDJ(freeplay:FreeplayState, FS_saveData:Dynamic, ?inIntro:Bool = false):Void {
+  function transitionToNewDJ(freeplay:FreeplayState, FS_saveData:Dynamic, ?inIntro:Bool = false):Void
+  {
     saveData = FS_saveData;
 
-    var freeplayDJ = freeplay.dj;
-    var playableCharData = freeplayDJ.playableCharData;
+    var freeplayDJ:FreeplayDJ = freeplay.dj;
+    var playableCharData:PlayerFreeplayDJData = freeplayDJ.playableCharData;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : freeplay.currentCharacterId;
-    var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+    var playableCharId:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
 
-    if (freeplayDJ.characterId != playableCharId) {
-      if (!inIntro) {
-        if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect'))) {
+    if (freeplayDJ.characterId != playableCharId)
+    {
+      if (!inIntro)
+      {
+        if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect')))
+        {
           freeplay.busy = true;
           freeplayDJ.onIntroDone.removeAll();
           freeplayDJ.onAnimationComplete.addOnce(replaceDJNoIntro);
@@ -43,22 +89,25 @@ class DJReplace extends Module {
           freeplayDJ.playFlashAnimation(animPrefix, true, false, false);
         }
       }
-      else {
+      else
+      {
         replaceDJIntro();
       }
     }
-    else {
+    else
+    {
       trace("[Funker Selector] DJ Character IDs match! Not replacing.");
     }
   }
 
   /**
-   * Replaces the Freeplay DJ.
+   * Replaces the Freeplay DJ. Plays the DJ's intro animation when done.
    */
-  function replaceDJNoIntro():Void {
+  function replaceDJNoIntro():Void
+  {
     var freeplayDJ = FlxG.state.subState.dj;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
-    var fs_characterData:Dynamic = ModuleHandler.getModule("CharacterHandler").scriptCall('getCharacterData', [saveData.characterIDs.bf]);
+    var fs_characterData:Dynamic = ModuleHandler.getModule("FS_CharacterDataHandler").scriptCall('getCharacterData', [saveData.characterIDs.bf]);
     var playableCharId:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
     var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(playableCharId);
     var playableCharData:Dynamic = nullCoalesce(playableChar?.getFreeplayDJData(), null);
@@ -66,13 +115,15 @@ class DJReplace extends Module {
 
     var startTime = Timer.stamp();
 
-    if (playableCharData == null) {
+    if (playableCharData == null)
+    {
       trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
       trace(characterID);
       return;
     }
 
-    if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect')) {
+    if (freeplayDJ.anim.curSymbol.name == freeplayDJ.playableCharData.getAnimationPrefix('charSelect'))
+    {
       trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
       freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
       freeplayDJ.characterId = playableCharId;
@@ -92,10 +143,11 @@ class DJReplace extends Module {
   }
 
   /**
-   * A modified version of `replaceDJNoIntro();` that replaces the DJ quicker.
+   * A modified version of `replaceDJNoIntro()` that replaces the DJ quicker.
    * This is used when *entering* Freeplay.
    */
-  function replaceDJIntro():Void {
+  function replaceDJIntro():Void
+  {
     var freeplayDJ = FlxG.state.subState.dj;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
     var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
@@ -104,7 +156,8 @@ class DJReplace extends Module {
 
     var startTime = Timer.stamp();
 
-    if (playableCharData == null) {
+    if (playableCharData == null)
+    {
       trace('[WARNING] Tried to replace Freeplay DJ with invalid data.');
       trace(characterID);
       return;
@@ -130,7 +183,8 @@ class DJReplace extends Module {
    * @param text2 The 2nd string.
    * @param text3 The 3rd string.
    */
-  function reapplyBackingText(freeplay:FreeplayState, text1:String, text2:String, text3:String) {
+  function reapplyBackingText(freeplay:FreeplayState, text1:String, text2:String, text3:String):Void
+  {
     trace("[Funker Selector] Applying backing text...");
     trace(text1);
     trace(text2);
@@ -142,12 +196,14 @@ class DJReplace extends Module {
       freeplay.backingCard.funnyScroll3
     ];
     var moreWaysArray:Array<Dynamic> = [freeplay.backingCard.moreWays, freeplay.backingCard.moreWays2];
-    for (scrollText in funnyScrollArray) {
+    for (scrollText in funnyScrollArray)
+    {
       trace("[Funker Selector] Setting up text group with text " + text1);
       setupTextGroup(scrollText, 60, FlxG.width / 2, text1, -3.8, false);
     }
 
-    for (scrollText in moreWaysArray) {
+    for (scrollText in moreWaysArray)
+    {
       trace("[Funker Selector] Setting up text group with text " + text2);
       setupTextGroup(scrollText, 43, FlxG.width, text2, 6.8, true);
     }
@@ -171,7 +227,8 @@ class DJReplace extends Module {
    * @param speed The speed of the text scrolling
    * @param bold Wether or not the text is bold
    */
-  function setupTextGroup(textObject:Dynamic, size:Int = 10, widthShit:Int = 1, text:String = "FUCK", speed:Float = 1.0, bold:Bool = false):Void {
+  function setupTextGroup(textObject:Dynamic, size:Int = 10, widthShit:Int = 1, text:String = "FUCK", speed:Float = 1.0, bold:Bool = false):Void
+  {
     textObject.grpTexts.clear();
     var testText:FlxText = new FlxText(0, 0, 0, text, size);
     testText.font = "5by7";
@@ -181,7 +238,8 @@ class DJReplace extends Module {
 
     var needed:Int = Math.ceil(widthShit / testText.frameWidth) + 1;
 
-    for (i in 0...needed) {
+    for (i in 0...needed)
+    {
       var lmfao:Int = i + 1;
 
       var coolText:FlxText = new FlxText((lmfao * testText.frameWidth) + (lmfao * 20), 0, 0, text, size);
@@ -197,9 +255,17 @@ class DJReplace extends Module {
   }
 
   /**
-   * Copypasted from CharacterHandler.
+   * HELPER FUNCTIONS
+   * These are functions that are simply nice to have. They make the code cleaner.
    */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic {
+  /**
+   * Imitates null coalescing since HScript doesn't support it yet.
+   * @param value The value to check.
+   * @param fallback The fallback value.
+   * @return The value if it's not null, otherwise the fallback value.
+   */
+  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
+  {
     return value != null ? value : fallback;
   }
 }

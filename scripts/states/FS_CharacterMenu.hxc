@@ -279,14 +279,23 @@ class FS_CharacterMenu extends MusicBeatSubState
       for (index in 0...characterWheel.members.length)
       {
         var item:Dynamic = characterWheel.members[index];
-        if (item != null)
+        if (item == null) continue;
+        if (!isSpriteVisible(item) && item.alive)
         {
-          fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [item.characterId]);
+          item.kill();
         }
+        else
+        {
+          if (!item.alive)
+          {
+            item.revive();
+          }
+          fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [item.characterId]);
 
-        var xOffset:Float = fs_characterData.characterMenu.position[0];
+          var xOffset:Float = fs_characterData.characterMenu.position[0];
 
-        item.x = MathUtil.smoothLerp(item.x, ((index - (currentCharacterIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.20);
+          item.x = MathUtil.smoothLerp(item.x, ((index - (currentCharacterIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.20);
+        }
       }
     }
 
@@ -1102,45 +1111,6 @@ class FS_CharacterMenu extends MusicBeatSubState
     flashScreen(0xFFFFFFFF, 0.03, 0.1);
   }
 
-  function selectedTextVisibility():Bool
-  {
-    switch (currentPageIndex)
-    {
-      case 0:
-        return currentCharacterID == FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf;
-      case 1:
-        return currentCharacterID == FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad;
-      case 2:
-        return currentCharacterID == FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf;
-      default:
-        return false;
-    }
-  }
-
-  /**
-   * Helper function for configuring a FlxText
-   * @param object The FlxText object
-   * @param text The text itself
-   * @param offsets The offsets as an array
-   * @param size The size of the text
-   * @param font The font
-   * @return A FlxText object
-   */
-  function configureText(object:FlxText, ?text:String = "", ?offsets:Array<Int>, ?size:Int = 38, ?font:String = null):FlxText
-  {
-    if (text == null) text = "";
-    if (offsets == null) offsets = [0, 0];
-    if (size == null) size = 35;
-    if (object == null) object = new FlxText(0, 0, 0, "PLACEHOLDER");
-
-    object.text = text;
-    object.x += offsets[0];
-    object.y += offsets[1];
-    if (font != null) object.setFormat(font, size, null, 'center');
-
-    return object;
-  }
-
   /**
    * Displays the available character variations.
    * @param characterID The character ID we're using.
@@ -1276,14 +1246,6 @@ class FS_CharacterMenu extends MusicBeatSubState
     uiCam.alpha = 1;
 
     if (FlxG.sound.music != null) FlxG.sound.music.fadeIn();
-  }
-
-  /**
-   * Whether or not the mouse overlaps this sprite.
-   */
-  function mouseOverlaps(sprite:FlxSprite):Bool
-  {
-    return sprite.pixelsOverlapPoint(FlxG.mouse.getScreenPosition());
   }
 
   /**
@@ -1515,5 +1477,61 @@ class FS_CharacterMenu extends MusicBeatSubState
   public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
   {
     return value != null ? value : fallback;
+  }
+
+  /**
+   * Whether or not the mouse overlaps this sprite.
+   */
+  function mouseOverlaps(sprite:FunkinSprite):Bool
+  {
+    return sprite.pixelsOverlapPoint(FlxG.mouse.getScreenPosition());
+  }
+
+  /**
+   * Something.
+   * @return Whether it's the selected character.
+   */
+  function selectedTextVisibility():Bool
+  {
+    switch (currentPageIndex)
+    {
+      case 0:
+        return currentCharacterID == FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf;
+      case 1:
+        return currentCharacterID == FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad;
+      case 2:
+        return currentCharacterID == FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Helper function for configuring a FlxText
+   * @param object The FlxText object
+   * @param text The text itself
+   * @param offsets The offsets as an array
+   * @param size The size of the text
+   * @param font The font
+   * @return A FlxText object
+   */
+  function configureText(object:FlxText, ?text:String = "", ?offsets:Array<Int>, ?size:Int = 38, ?font:String = null):FlxText
+  {
+    if (text == null) text = "";
+    if (offsets == null) offsets = [0, 0];
+    if (size == null) size = 35;
+    if (object == null) object = new FlxText(0, 0, 0, "PLACEHOLDER");
+
+    object.text = text;
+    object.x += offsets[0];
+    object.y += offsets[1];
+    if (font != null) object.setFormat(font, size, null, 'center');
+
+    return object;
+  }
+
+  function isSpriteVisible(sprite:Sprite):Bool
+  {
+    return sprite.x + sprite.width > 0 && sprite.x < FlxG.width && sprite.y + sprite.height > 0 && sprite.y < FlxG.height;
   }
 }

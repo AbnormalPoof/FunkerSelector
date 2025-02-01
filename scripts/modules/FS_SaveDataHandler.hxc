@@ -98,13 +98,6 @@ class FS_SaveDataHandler extends Module
     {
       saveData = Save.instance.modOptions.get("FunkerSelector");
 
-      // Check if save data uses the old system.
-      if (saveData.characterIDs == null && saveData.preferences == null && saveData.seenUnlocks == null)
-      {
-        trace('[Funker Selector] Save data needs migration!');
-        saveData = migrateSaveData();
-      }
-
       // Add new settings if they don't exist
       for (key in ReflectUtil.getAnonymousFieldsOf(defaultSettings))
       {
@@ -115,6 +108,21 @@ class FS_SaveDataHandler extends Module
       if (saveData.version == null)
       {
         saveData.version = defaultSaveData.version;
+      }
+
+      // MIGRATION
+      // Check if save data uses the legacy system.
+      if (saveData.characterIDs == null && saveData.preferences == null && saveData.seenUnlocks == null)
+      {
+        trace('[Funker Selector] Save data needs migration!');
+        saveData = migrateSaveData("LEGACY");
+      }
+
+      // Check if the save data version is outdated.
+      if (saveData.version != defaultSaveData.version)
+      {
+        trace('[Funker Selector] Save data is outdated! Migrating...');
+        saveData = migrateSaveData(saveData.version);
       }
 
       trace('[Funker Selector] Successfully retrieved save data:\n\n---Character IDs---\n\nBoyfriend: '
@@ -141,50 +149,54 @@ class FS_SaveDataHandler extends Module
    * @param oldSave The old save data to use.
    * @return The migrated save file.
    */
-  function migrateSaveData():Dynamic
+  function migrateSaveData(version:String):Dynamic
   {
     trace('[Funker Selector] Migrating save data...');
 
-    var oldCharacterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
-    var oldPrefs:Dynamic = Save.instance.modOptions.get("FunkerSelectorSettings");
-    var oldSeenUnlocks:Array = Save.instance.modOptions.get("FunkerSelector-SeenChars");
-
-    var migratedSave:Dynamic =
-      {
-        characterIDs:
-          {
-            bf: nullCoalesce(oldCharacterIDs?.bf, 'default'),
-            gf: nullCoalesce(oldCharacterIDs?.gf, 'default'),
-            dad: nullCoalesce(oldCharacterIDs?.dad, 'default')
-          },
-        preferences: new StringMap(),
-        seenUnlocks: nullCoalesce(oldSeenUnlocks, [])
-      };
-
-    // Settings is a special case...
-    var settings:Dynamic =
-      {
-        potatoMode: nullCoalesce(oldPrefs?.potatoMode, false),
-        preloadSprites: nullCoalesce(oldPrefs?.preloadSprites, false),
-        preferredSFX: nullCoalesce(oldPrefs?.preferredSFX, 'funkin'),
-        djSwapping: nullCoalesce(oldPrefs?.djSwapping, true)
-      };
-
-    for (key in ReflectUtil.getAnonymousFieldsOf(settings))
+    switch (version)
     {
-      var value = ReflectUtil.getAnonymousField(settings, key);
-      migratedSave.preferences.set(key, value);
-    };
+      case "LEGACY":
+        var oldCharacterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
+        var oldPrefs:Dynamic = Save.instance.modOptions.get("FunkerSelectorSettings");
+        var oldSeenUnlocks:Array = Save.instance.modOptions.get("FunkerSelector-SeenChars");
 
-    // Clear out the old save data.
-    Save.instance.modOptions.remove("FunkerSelector");
-    Save.instance.modOptions.remove("FunkerSelectorSettings");
-    Save.instance.modOptions.remove("FunkerSelector-SeenChars");
+        var migratedSave:Dynamic =
+          {
+            version: FS_SAVE_DATA_VERSION,
+            characterIDs:
+              {
+                bf: nullCoalesce(oldCharacterIDs?.bf, 'default'),
+                gf: nullCoalesce(oldCharacterIDs?.gf, 'default'),
+                dad: nullCoalesce(oldCharacterIDs?.dad, 'default')
+              },
+            preferences: new StringMap(),
+            seenUnlocks: nullCoalesce(oldSeenUnlocks, [])
+          };
+
+        // Settings is a special case...
+        var settings:Dynamic =
+          {
+            potatoMode: nullCoalesce(oldPrefs?.potatoMode, false),
+            preloadSprites: nullCoalesce(oldPrefs?.preloadSprites, false),
+            preferredSFX: nullCoalesce(oldPrefs?.preferredSFX, 'funkin'),
+            djSwapping: nullCoalesce(oldPrefs?.djSwapping, true)
+          };
+
+        for (key in ReflectUtil.getAnonymousFieldsOf(settings))
+        {
+          var value = ReflectUtil.getAnonymousField(settings, key);
+          migratedSave.preferences.set(key, value);
+        };
+
+        // Clear out the old save data.
+        Save.instance.modOptions.remove("FunkerSelector");
+        Save.instance.modOptions.remove("FunkerSelectorSettings");
+        Save.instance.modOptions.remove("FunkerSelector-SeenChars");
+    }
 
     // Save the new data.
     Save.instance.modOptions.set("FunkerSelector", migratedSave);
     Save.instance.flush();
-
     return migratedSave;
   }
 
@@ -277,7 +289,7 @@ class FS_SaveDataHandler extends Module
    */
   function getPreference(key:String):Dynamic
   {
-    return saveData.preferences.get(key);
+    return saveData.preferences[key];
   }
 
   /**
@@ -286,7 +298,7 @@ class FS_SaveDataHandler extends Module
    */
   function setPreference(key:String, value:Dynamic):Void
   {
-    saveData.preferences.set(key, value);
+    saveData.preferences[key] = value;
     writeSaveData();
   }
 

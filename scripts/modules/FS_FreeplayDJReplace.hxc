@@ -132,8 +132,8 @@ class DJReplace extends Module
       var animPrefix = playableCharData.getAnimationPrefix('intro');
       freeplayDJ.playFlashAnimation(animPrefix, true, false, false, introFrame);
 
-      if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1),
-        playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3));
+      if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, [playableChar.getFreeplayDJText(1),
+        playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3)]);
       FlxG.state.subState.busy = false;
 
       var endTime = Timer.stamp();
@@ -168,8 +168,11 @@ class DJReplace extends Module
     freeplayDJ.characterId = playableCharId;
     freeplayDJ.playableCharData = playableCharData;
 
-    if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, playableChar.getFreeplayDJText(1),
-      playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3));
+    if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, [
+      playableChar.getFreeplayDJText(1),
+      playableChar.getFreeplayDJText(2),
+      playableChar.getFreeplayDJText(3)
+    ]);
 
     var endTime = Timer.stamp();
     var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
@@ -183,12 +186,12 @@ class DJReplace extends Module
    * @param text2 The 2nd string.
    * @param text3 The 3rd string.
    */
-  function reapplyBackingText(freeplay:FreeplayState, text1:String, text2:String, text3:String):Void
+  function reapplyBackingText(freeplay:FreeplayState, textArray:Array<String>):Void
   {
     trace("[Funker Selector] Applying backing text...");
-    trace(text1);
-    trace(text2);
-    trace(text3);
+    trace(textArray[0]);
+    trace(textArray[1]);
+    trace(textArray[2]);
 
     var funnyScrollArray:Array<Dynamic> = [
       freeplay.backingCard.funnyScroll,
@@ -198,18 +201,18 @@ class DJReplace extends Module
     var moreWaysArray:Array<Dynamic> = [freeplay.backingCard.moreWays, freeplay.backingCard.moreWays2];
     for (scrollText in funnyScrollArray)
     {
-      trace("[Funker Selector] Setting up text group with text " + text1);
-      setupTextGroup(scrollText, 60, FlxG.width / 2, text1, -3.8, false);
+      trace("[Funker Selector] Setting up text group with text " + textArray[0]);
+      setupTextGroup(scrollText, 60, FlxG.width / 2, textArray[0], -3.8, false);
     }
 
     for (scrollText in moreWaysArray)
     {
-      trace("[Funker Selector] Setting up text group with text " + text2);
-      setupTextGroup(scrollText, 43, FlxG.width, text2, 6.8, true);
+      trace("[Funker Selector] Setting up text group with text " + textArray[1]);
+      setupTextGroup(scrollText, 43, FlxG.width, textArray[1], 6.8, true);
     }
 
-    trace("[Funker Selector] Setting up text group with text " + text3);
-    setupTextGroup(freeplay.backingCard.txtNuts, 43, FlxG.width / 2, text3, 3.5, true);
+    trace("[Funker Selector] Setting up text group with text " + textArray[2]);
+    setupTextGroup(freeplay.backingCard.txtNuts, 43, FlxG.width / 2, textArray[2], 3.5, true);
 
     freeplay.backingCard.funnyScroll.funnyColor = 0xFFFF9963;
     freeplay.backingCard.funnyScroll2.funnyColor = 0xFFFF9963;

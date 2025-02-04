@@ -127,7 +127,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    *
    * This is just an array, their index is used to control a lot of things in the menu.
    */
-  var pages:Array<String> = ['bf', 'dad', 'gf'];
+  var pages:Array<String> = [['bf', 'player'], ['dad', 'opponent'], ['gf', 'speaker']];
 
   /**
    * Stuff related to the icon grid.
@@ -462,18 +462,17 @@ class FS_CharacterMenu extends MusicBeatSubState
     }
 
     iHateMyLife = tempArray.filter(function(shit) {
-      characterType = characterMap.get(shit)[1];
+      characterType = characterMap[shit][1];
       var types:Array<String> = (characterType is Array) ? characterType : [characterType];
 
-      switch (currentPageIndex)
+      for (pageType in pages[currentPageIndex])
       {
-        case 0:
-          return types.contains('bf') || types.contains('player');
-        case 1:
-          return types.contains('dad') || types.contains('opponent');
-        case 2:
-          return types.contains('gf') || types.contains('speaker');
+        if (types.contains(pageType))
+        {
+          return true;
+        }
       }
+      return false;
     });
 
     iHateMyLife.sort(function(a:String, b:String):Int {

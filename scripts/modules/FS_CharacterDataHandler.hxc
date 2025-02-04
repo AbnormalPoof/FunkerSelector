@@ -331,14 +331,14 @@ class FS_CharacterDataHandler extends Module
   {
     var invalidCharacterID:Bool = false;
 
-    characterInfo = characterMap.get(characterID);
+    characterInfo = characterMap[characterID];
 
     if (characterInfo == null) invalidCharacterID = true;
 
     if (!invalidCharacterID)
     {
       ownerJSONname = characterInfo[0];
-      jsonData = jsonCharacterCache.get(ownerJSONname);
+      jsonData = jsonCharacterCache[ownerJSONname];
 
       // Checking to see if it's within bounds...
       if (jsonData == null || arrayNum < 0 || arrayNum >= jsonData.length) return null;
@@ -391,9 +391,11 @@ class FS_CharacterDataHandler extends Module
   function cacheJSONSparrows():Void
   {
     var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
+    var spriteQueue:StringMap<String> = new StringMap();
+
     for (funker in funkerJSONs)
     {
-      var funkerData:FS_characterData = jsonCharacterCache.get(funker);
+      var funkerData:FS_characterData = jsonCharacterCache[funker];
       var data:Dynamic = funkerData[0];
       var charData:Dynamic = funkerData[1];
 
@@ -416,43 +418,50 @@ class FS_CharacterDataHandler extends Module
         case 'multisparrow':
           for (anim in charData.animations)
           {
-            if (anim.assetPath != null) cacheSprite(Paths.image(anim.assetPath));
+            if (anim.assetPath != null) spriteQueue.set(Paths.image(anim.assetPath), Paths.image(anim.assetPath));
           }
         case 'animateatlas':
-          cacheSprite(Paths.image(charData.assetPath + '/spritemap1'));
+          spriteQueue.set(Paths.image(charData.assetPath + '/spritemap1'), Paths.image(charData.assetPath + '/spritemap1'));
         case 'sparrow':
-          cacheSprite(Paths.image(charData.assetPath));
+          spriteQueue.set(Paths.image(charData.assetPath), Paths.image(charData.assetPath));
         default:
-          cacheSprite(Paths.image(charData.assetPath));
+          spriteQueue.set(Paths.image(charData.assetPath), Paths.image(charData.assetPath));
       }
     }
+
+    // Cache the sprites.
+    cacheSprites(spriteQueue);
   }
 
   /**
    * Stolen from FunkinSprite.
    *
-   * @param path The file path.
+   * @param spriteQueue The sprite queue.
    */
-  function cacheSprite(path:String):Void
+  function cacheSprites(spriteQueue:StringMap<String>):Void
   {
-    if (cachedJSONSparrows.exists(path))
+    for (sprite in spriteQueue.keys())
     {
-      trace('[Funker Selector] Graphic is already cached: ' + path);
-      return cachedJSONSparrows.get(path);
-    }
-    trace('[Funker Selector] Caching sprite: ' + path);
+      if (cachedJSONSparrows.exists(sprite))
+      {
+        trace('[Funker Selector] Graphic is already cached: ' + sprite);
+        continue;
+      }
 
-    var graphic:FlxGraphic = FlxGraphic.fromAssetKey(path, false, null, true);
-    if (graphic == null)
-    {
-      trace('[Funker Selector] Failed to cache graphic: ' + path);
-    }
-    else
-    {
-      trace('[Funker Selector] Successfully cached graphic: ' + path);
-      graphic.persist = true;
-      graphic.destroyOnNoUse = false;
-      cachedJSONSparrows.set(path, graphic);
+      trace('[Funker Selector] Caching sprite: ' + sprite);
+
+      var graphic:FlxGraphic = FlxGraphic.fromAssetKey(sprite, false, null, true);
+      if (graphic == null)
+      {
+        trace('[Funker Selector] Failed to cache graphic: ' + sprite);
+      }
+      else
+      {
+        trace('[Funker Selector] Successfully cached graphic: ' + sprite);
+        graphic.persist = true;
+        graphic.destroyOnNoUse = false;
+        cachedJSONSparrows.set(sprite, graphic);
+      }
     }
   }
 
@@ -464,7 +473,7 @@ class FS_CharacterDataHandler extends Module
     for (graphicKey in cachedJSONSparrows.keys())
     {
       trace("[Funker Selector] Clearing from memory: " + graphicKey);
-      var graphic = cachedJSONSparrows.get(graphicKey);
+      var graphic = cachedJSONSparrows[graphicKey];
       if (graphic == null)
       {
         trace("[Funker Selector] Graphic is null!!");

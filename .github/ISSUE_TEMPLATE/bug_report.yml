@@ -6,8 +6,8 @@ body:
   - type: input
     attributes:
       label: Version
-      description: What version of Friday Night Funkin' are you using?
-      placeholder: ex. 0.4.1
+      description: What version of Funker Selector are you using?
+      placeholder: ex. 2.0.0
     validations:
       required: true
 
@@ -19,6 +19,8 @@ body:
         - label: Have you tried reinstalling the mod?
         - label: Have you tried disabling every mod except Funker Selector?
         - label: Have you tried reproducing this issue on a fresh install of FNF?
+    validations:
+      required: true
 
   - type: markdown
     attributes:

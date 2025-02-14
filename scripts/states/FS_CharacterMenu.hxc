@@ -44,6 +44,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   var charDesc:FlxText;
   var selected:FlxText;
   var numberThing:FlxText;
+  var loadingText:FlxText;
 
   /**
    * `FunkinSprite`s for various things related to graphics.
@@ -74,12 +75,24 @@ class FS_CharacterMenu extends MusicBeatSubState
   var unlockSound:FunkinSound;
 
   /**
-   * Various cameras for the UI.
+   * The camera for the hotkey menu.
    */
   var hotkeyCam:FunkinCamera;
 
+  /**
+   * The camera for various UI elements.
+   */
   var uiCam:FunkinCamera;
+
+  /**
+   * The camera for character sprites.
+   */
   var spriteCam:FunkinCamera;
+
+  /**
+   * The camera for the background.
+   */
+  var bgCam:FunkinCamera;
 
   /**
    * A map containing every character.
@@ -123,11 +136,12 @@ class FS_CharacterMenu extends MusicBeatSubState
   var topTextColor = [0xFF2DB2D2, 0xFFAF66CE, 0xFFA7004C];
 
   /**
-   * Pages.
-   *
-   * This is just an array, their index is used to control a lot of things in the menu.
+   * Character slots in the order of "PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", and "SPEAKER CHARACTERS".
+   * These are an array of arrays, they can have multiple aliases for better flexibility.
+   * 
+   * `pageIndex` uses this to determine which page is currently selected.
    */
-  var pages:Array<String> = [['bf', 'player'], ['dad', 'opponent'], ['gf', 'speaker']];
+  var characterSlots:Array<String> = [['bf', 'player'], ['dad', 'opponent'], ['gf', 'speaker']];
 
   /**
    * Stuff related to the icon grid.
@@ -231,9 +245,25 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     setupUIStuff();
     updateFilteredKeys();
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"])) buildCharacterWheel();
-    jumpToCurSelected();
-
+    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+    {
+      loadingText.visible = true;
+      spriteCam.visible = false;
+      uiCam.visible = false;
+      FlxTween.tween(bg, {alpha: 0.5}, 0.05,
+        {
+          ease: FlxEase.quartOut,
+          onComplete: function(twn:FlxTween) {
+            buildCharacterWheel();
+            jumpToCurSelected();
+          }
+        });
+    }
+    else
+    {
+      FlxTween.tween(bg, {alpha: 0.5}, 0.05, {ease: FlxEase.quartOut});
+      jumpToCurSelected();
+    }
     ModuleHandler.callEvent(new ScriptEvent(FS_OPENED_SUBSTATE));
   }
 
@@ -311,6 +341,10 @@ class FS_CharacterMenu extends MusicBeatSubState
   {
     characterWheel.clear();
 
+    loadingText.visible = true;
+    spriteCam.visible = false;
+    uiCam.visible = false;
+
     for (characterIndex in 0...filteredKeys.length)
     {
       var characterID:String = filteredKeys[characterIndex];
@@ -352,6 +386,10 @@ class FS_CharacterMenu extends MusicBeatSubState
         characterWheel.add(null);
       }
     }
+
+    loadingText.visible = false;
+    spriteCam.visible = true;
+    uiCam.visible = true;
 
     changeCharacter();
   }
@@ -411,7 +449,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   function changePage(change:Int = 0):Void
   {
     var prevIndex:Int = currentPageIndex;
-    currentPageIndex = (prevIndex + (change + pages.length)) % pages.length;
+    currentPageIndex = (prevIndex + (change + characterSlots.length)) % characterSlots.length;
 
     // Reset currentCharacterIndex
     currentCharacterIndex = 0;
@@ -465,7 +503,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       characterType = characterMap[shit][1];
       var types:Array<String> = (characterType is Array) ? characterType : [characterType];
 
-      for (pageType in pages[currentPageIndex])
+      for (pageType in characterSlots[currentPageIndex])
       {
         if (types.contains(pageType))
         {
@@ -567,6 +605,10 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function setupUIStuff():Void
   {
+    bgCam = new FunkinCamera('BGCam');
+    FlxG.cameras.add(bgCam, false);
+    bgCam.bgColor = 0x0;
+
     spriteCam = new FunkinCamera('SpriteCam');
     FlxG.cameras.add(spriteCam, false);
     spriteCam.bgColor = 0x0;
@@ -583,7 +625,12 @@ class FS_CharacterMenu extends MusicBeatSubState
     bg = new FunkinSprite(0, 0);
     bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
     bg.alpha = 0;
-    bg.camera = spriteCam;
+    bg.camera = bgCam;
+
+    loadingText = configureText(null, "LOADING\nPLEASE WAIT", [170, 10], 50, Paths.font("PhantomMuff.ttf"));
+    loadingText.screenCenter();
+    loadingText.camera = bgCam;
+    loadingText.visible = false;
 
     selectText = configureText(null, null, [170, 10], 50, Paths.font("PhantomMuff.ttf"));
     selectText.screenCenter(0x01);
@@ -710,6 +757,8 @@ class FS_CharacterMenu extends MusicBeatSubState
     // UI Sprites
     add(bg);
 
+    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"])) add(loadingText);
+
     // Only add this if "Simplify UI" is turned off.
     if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"])) createIconGrid(150, 0.2);
     add(leftDifficultyArrow);
@@ -743,9 +792,6 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     // Set the window title.
     WindowUtil.setWindowTitle('Friday Night Funkin\' - Funker Selector Menu');
-
-    // Fade the background in.
-    FlxTween.tween(bg, {alpha: 0.5}, 0.5, {ease: FlxEase.quartOut});
 
     trace('[Funker Selector] UI has been set up.');
     conductorInUse.forceBPM(songBPM);
@@ -1530,8 +1576,15 @@ class FS_CharacterMenu extends MusicBeatSubState
     return object;
   }
 
-  function isSpriteVisible(sprite:Sprite):Bool
+  /**
+   * Determines whether or not a sprite is visible on screen.
+   * @param sprite The `FlxSprite` to check.
+   * @return Whether or not the sprite is visible.
+   */
+  function isSpriteVisible(sprite:FlxSprite):Bool
   {
-    return sprite.x + sprite.width > 0 && sprite.x < FlxG.width && sprite.y + sprite.height > 0 && sprite.y < FlxG.height;
+    if (sprite == null) return;
+    var bounds = sprite.getScreenBounds();
+    return bounds.x + bounds.width > 0 && bounds.x < FlxG.width && bounds.y + bounds.height > 0 && bounds.y < FlxG.height;
   }
 }

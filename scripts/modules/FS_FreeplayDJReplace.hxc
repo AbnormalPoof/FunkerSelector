@@ -5,7 +5,7 @@ import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.ui.freeplay.FreeplayDJState;
 import funkin.ui.freeplay.FreeplayState;
-import haxe.Timer;
+import funkin.util.TimerUtil;
 
 /**
  * This is a module that handles Freeplay DJ replacement.
@@ -105,15 +105,15 @@ class DJReplace extends Module
    */
   function replaceDJNoIntro():Void
   {
-    var freeplayDJ = FlxG.state.subState.dj;
-    var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
+    var freeplayDJ:FreeplayDJ = FlxG.state.subState.dj;
+    var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf) : FlxG.state.subState.currentCharacterId;
+    var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(characterID);
+    var playableCharData:Dynamic = playableChar != null ? playableChar.getFreeplayDJData() : null;
+
     var fs_characterData:Dynamic = ModuleHandler.getModule("FS_CharacterDataHandler").scriptCall('getCharacterData', [saveData.characterIDs.bf]);
-    var playableCharId:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
-    var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(playableCharId);
-    var playableCharData:Dynamic = nullCoalesce(playableChar?.getFreeplayDJData(), null);
     var introFrame:Int = fs_characterData.introSwapFrame;
 
-    var startTime = Timer.stamp();
+    var startTime = TimerUtil.start();
 
     if (playableCharData == null)
     {
@@ -126,19 +126,20 @@ class DJReplace extends Module
     {
       trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
       freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
-      freeplayDJ.characterId = playableCharId;
+      freeplayDJ.characterId = characterID;
       freeplayDJ.playableCharData = playableCharData;
 
       var animPrefix = playableCharData.getAnimationPrefix('intro');
       freeplayDJ.playFlashAnimation(animPrefix, true, false, false, introFrame);
 
-      if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, [playableChar.getFreeplayDJText(1),
-        playableChar.getFreeplayDJText(2), playableChar.getFreeplayDJText(3)]);
+      if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, [
+        playableChar.getFreeplayDJText(1),
+        playableChar.getFreeplayDJText(2),
+        playableChar.getFreeplayDJText(3)
+      ]);
       FlxG.state.subState.busy = false;
 
-      var endTime = Timer.stamp();
-      var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
-      trace("[Funker Selector] replaceDJNoIntro took " + elapsedTime + " seconds to complete.");
+      trace("[Funker Selector] replaceDJNoIntro took " + TimerUtil.seconds(startTime) + " seconds to complete.");
     }
   }
 
@@ -148,13 +149,12 @@ class DJReplace extends Module
    */
   function replaceDJIntro():Void
   {
-    var freeplayDJ = FlxG.state.subState.dj;
-    var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : FlxG.state.subState.currentCharacterId;
-    var playableCharId = PlayerRegistry.instance.getCharacterOwnerId(characterID);
-    var playableChar = PlayerRegistry.instance.fetchEntry(playableCharId);
-    var playableCharData = nullCoalesce(playableChar?.getFreeplayDJData(), null);
+    var freeplayDJ:FreeplayDJ = FlxG.state.subState.dj;
+    var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf) : FlxG.state.subState.currentCharacterId;
+    var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(characterID);
+    var playableCharData:Dynamic = playableChar != null ? playableChar.getFreeplayDJData() : null;
 
-    var startTime = Timer.stamp();
+    var startTime = TimerUtil.start();
 
     if (playableCharData == null)
     {
@@ -165,7 +165,7 @@ class DJReplace extends Module
 
     trace("[Funker Selector] Loading texture atlas: " + playableCharData.getAtlasPath());
     freeplayDJ.loadAtlas(playableCharData.getAtlasPath());
-    freeplayDJ.characterId = playableCharId;
+    freeplayDJ.characterId = characterID;
     freeplayDJ.playableCharData = playableCharData;
 
     if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, [
@@ -174,9 +174,7 @@ class DJReplace extends Module
       playableChar.getFreeplayDJText(3)
     ]);
 
-    var endTime = Timer.stamp();
-    var elapsedTime = Math.round((endTime - startTime) * 100) / 100;
-    trace("[Funker Selector] replaceDJIntro took " + elapsedTime + " seconds to complete.");
+    trace("[Funker Selector] replaceDJNoIntro took " + TimerUtil.seconds(startTime) + " seconds to complete.");
   }
 
   /**

@@ -202,6 +202,9 @@ class FS_CharacterDataHandler extends Module
       // Merge the parsed data with the default character data, basically layering the parsed object on top of the default one.
       var result = mergeStructures(Objects.clone(FS_DEFAULT_CHARACTER_DATA), parsedData);
 
+      // Manually calculate the scale of the character.
+      result.characterMenu.scale = calculateCharacterScale(result.characterMenu.scale, result.characterMenu.isPixel);
+
       return result;
     }
 
@@ -244,12 +247,7 @@ class FS_CharacterDataHandler extends Module
    */
   function calculateCharacterScale(scale:Float, isPixel:Bool):Float
   {
-    if (isPixel)
-    {
-      return scale * 6;
-    }
-
-    return scale;
+    return isPixel ? (scale * 6) : scale;
   }
 
   /**

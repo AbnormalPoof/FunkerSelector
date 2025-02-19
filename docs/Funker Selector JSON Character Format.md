@@ -113,6 +113,11 @@ A song has to be beaten, this has 2 associated properties:
 The song ID.
 
 ```json
+"minimumRequiredRank": "PERFECT"
+```
+The minimum rank required. Valid values are `SHIT`, `GOOD`, `GREAT`, `EXCELLENT`, `PERFECT`, and `PERFECT_GOLD`
+
+```json
 "difficultyList": ["erect", "nightmare"]
 ```
 The required difficulties, defaults to `["easy", "normal", "hard"]`.
@@ -221,6 +226,16 @@ Multiplies the scale by 6 and disables anti-aliasing.
 ```
 The animation to use when the character is selected.
 The default animation is "hey"!
+
+```json
+"useCustomSprites": false
+```
+Whether or not to use custom sprites.
+
+```json
+"customSpriteData": {}
+```
+Data for the custom sprites, basically the same as the data for a stage or level prop.
 
 ---
 

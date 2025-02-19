@@ -1,0 +1,47 @@
+{
+  "version": "1.0.0",
+  "characterID": "nene",
+  "characterType": "gf",
+  "description": {
+    "text": "It's Nene, one of Pico's... friends? She did not seem very happy with him after the events of Week 7. Featured in WeekEnd 1 as a supporting character!",
+    "unlockCondition": "Achieve a Perfect rank on Darnell (BF Mix) at Hard difficulty"
+  },
+  "mustUnlock": true,
+  "unlockMethod": {
+    "type": "song",
+    "songID": "darnell",
+    "songVariation": "bf",
+    "minimumRequiredRank": "PERFECT",
+    "difficultyList": ["hard"]
+  },
+  "characterMenu": {
+    "position": [110, 230],
+    "scale": 1,
+    "selectedAnim": "cheer",
+    "useCustomSprites": true,
+    "customSpriteData": {
+      "assetPath": "funkerSelector/nene_fs",
+      "startingAnimation": "idle",
+      "animations": [
+        {
+          "name": "idle",
+          "prefix": "nene fs idle",
+          "offsets": [0, 0],
+          "looped": true
+        },
+        {
+          "name": "cheer",
+          "prefix": "nene fs confirm",
+          "offsets": [0, 0]
+        }
+      ]
+    }
+  },
+  "characterVariations": [
+    {
+      "songID": ["spookeez", "south"],
+      "characterID": "nene-dark",
+      "songVariation": "erect"
+    }
+  ]
+}

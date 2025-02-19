@@ -1,15 +1,18 @@
 import Array;
 import Std;
 import haxe.Json;
+import haxe.ds.ObjectMap;
 import haxe.ds.StringMap;
 import lime.app.Application;
 import flixel.FlxG;
+import flixel.addons.text.FlxTypeText;
 import flixel.group.FlxTypedGroup;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
 import funkin.audio.FunkinSound;
+import funkin.data.animation.AnimationDataUtil;
 import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.data.song.SongRegistry;
 import funkin.graphics.FunkinCamera;
@@ -22,14 +25,18 @@ import funkin.play.PauseSubState;
 import funkin.play.character.BaseCharacter;
 import funkin.play.character.CharacterDataParser;
 import funkin.play.components.HealthIcon;
+import funkin.play.stage.Bopper;
 import funkin.save.Save;
 import funkin.ui.MusicBeatSubState;
 import funkin.ui.charSelect.Lock;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
+import funkin.util.Constants;
 import funkin.util.MathUtil;
+import funkin.util.ReflectUtil;
 import funkin.util.SortUtil;
 import funkin.util.WindowUtil;
 import funkin.util.assets.DataAssets;
+import funkin.util.assets.FlxAnimationUtil;
 import funkin.util.tools.IteratorTools;
 
 /**
@@ -38,31 +45,65 @@ import funkin.util.tools.IteratorTools;
 class FS_CharacterMenu extends MusicBeatSubState
 {
   /**
-   * `FlxText`s for various things related to text.
+   * The character name, displayed at the top of the screen.
    */
-  var charName:FlxText;
+  var characterName:FlxText;
 
+  /**
+   * A list of character variations. Used in the pop-up when selecting the `DEBUG_MENU` keybind.
+   */
   var variationText:FlxText;
-  var charDesc:FlxText;
+
+  /**
+   * An indicator that the current character is selected.
+   */
   var selected:FlxText;
-  var numberThing:FlxText;
+
+  /**
+   * A counter that shows the current character's index, and the total amount of characters.
+   * Displayed as "< current / total >".
+   */
+  var characterCount:FlxText;
+
+  /**
+   * The text used in the loading screen.
+   */
   var loadingText:FlxText;
 
   /**
-   * `FunkinSprite`s for various things related to graphics.
+   * The character's description. This is a `FlxTypeText` for the typewriter effect.
+   * This is automatically resized to fit inside `descriptionBox`.
+   */
+  var characterDescription:FlxTypeText;
+
+  /**
+   * The character's description text, grabbed from the character's JSON.
+   */
+  var descriptionText:String;
+
+  /**
+   * A box where all the hotkeys are displayed.
+   */
+  var hotkeyBox:FunkinSprite;
+
+  /**
+   * The left difficulty arrow.
    */
   var leftDifficultyArrow:FunkinSprite;
 
+  /**
+   * The right difficulty arrow.
+   */
   var rightDifficultyArrow:FunkinSprite;
 
-  // This is a shitty way of doing hitboxes but it works so who cares
-  var leftDifficultyArrowHitbox:FunkinSprite;
-  var rightDifficultyArrowHitbox:FunkinSprite;
-  var characterHitbox:FunkinSprite;
-  var topTextHitbox:FunkinSprite;
+  /**
+   * A box where the character description is displayed.
+   */
+  var descriptionBox:FunkinSprite;
 
-  var keyBox:FunkinSprite;
-  var descBox:FunkinSprite;
+  /**
+   * Stolen from `FreeplayState` LMAO
+   */
   var newGraphic:FunkinSprite;
 
   /**
@@ -77,24 +118,9 @@ class FS_CharacterMenu extends MusicBeatSubState
   var unlockSound:FunkinSound;
 
   /**
-   * The camera for the hotkey menu.
+   * The camera for the entire UI.
    */
-  var hotkeyCam:FunkinCamera;
-
-  /**
-   * The camera for various UI elements.
-   */
-  var uiCam:FunkinCamera;
-
-  /**
-   * The camera for character sprites.
-   */
-  var spriteCam:FunkinCamera;
-
-  /**
-   * The camera for the background.
-   */
-  var bgCam:FunkinCamera;
+  var uiCamera:FunkinCamera;
 
   /**
    * A map containing every character.
@@ -113,19 +139,15 @@ class FS_CharacterMenu extends MusicBeatSubState
   var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet('saveData');
 
   /**
-   * An array of the saved character IDs.
-   * NOTE: For writing, access `FS_SaveDataHandler.scriptGet('saveData').characterIDs` directly. This is only for reading.
-   */
-  var characterIDsArray:Array<String> = [
-    FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf,
-    FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad,
-    FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf
-  ];
-
-  /**
    * A map of all the locked characters.
    */
   var lockedCharMap:StringMap<String> = ModuleHandler.getModule("FS_CharacterDataHandler").scriptGet('lockedCharMap');
+
+  /**
+   * A map of `Boppers`.
+   * This is used for the character wheel.
+   */
+  var bopperCharacterIDs:ObjectMap<Bopper, String> = new ObjectMap();
 
   /**
    * The JSON character cache, which is retrieved from `FS_CoreModule`.
@@ -133,14 +155,22 @@ class FS_CharacterMenu extends MusicBeatSubState
   var jsonCharacterCache:StringMap<String, Array<Dynamic, Dynamic>, Array> = ModuleHandler.getModule("FS_CharacterDataHandler")
     .scriptGet('jsonCharacterCache');
 
-  // For the top text in the menu.
-  var topText = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "SPEAKER CHARACTERS"];
-  var topTextColor = [0xFF2DB2D2, 0xFFAF66CE, 0xFFA7004C];
+  /**
+   * For the top text in the menu.
+   * These alternate depending on the page.
+   */
+  var topText:Array<String> = ["PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", "SPEAKER CHARACTERS"];
+
+  /**
+   * The color of the top text.
+   * These alternate depending on the page.
+   */
+  var topTextColor:Array<FlxColor> = [0xFF2DB2D2, 0xFFAF66CE, 0xFFA7004C];
 
   /**
    * Character slots in the order of "PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", and "SPEAKER CHARACTERS".
    * These are an array of arrays, they can have multiple aliases for better flexibility.
-   * 
+   *
    * `pageIndex` uses this to determine which page is currently selected.
    */
   var characterSlots:Array<String> = [['bf', 'player'], ['dad', 'opponent'], ['gf', 'speaker']];
@@ -148,7 +178,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   /**
    * Stuff related to the icon grid.
    */
-  var charIcon:HealthIcon;
+  var currentCharacterIcon:HealthIcon;
 
   /**
    * An array of `HealthIcon`s used for the icon grid.
@@ -247,11 +277,11 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     setupUIStuff();
     updateFilteredKeys();
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+
+    if (!saveData.preferences.potatoMode)
     {
       loadingText.visible = true;
-      spriteCam.visible = false;
-      uiCam.visible = false;
+      uiCamera.visible = false;
       FlxTween.tween(bg, {alpha: 0.5}, 0.05,
         {
           ease: FlxEase.quartOut,
@@ -274,6 +304,8 @@ class FS_CharacterMenu extends MusicBeatSubState
     super.update(elapsed);
 
     conductorInUse.update();
+
+    adjustFontSize(characterDescription ?? null);
 
     // Adding some useful stuff to the variable watch window.
     if (isDebugBuild())
@@ -307,11 +339,12 @@ class FS_CharacterMenu extends MusicBeatSubState
       }
     }
 
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+    if (!saveData.preferences.potatoMode)
     {
       for (index in 0...characterWheel.members.length)
       {
         var item:Dynamic = characterWheel.members[index];
+        var characterID:String = bopperCharacterIDs.exists(item) ? bopperCharacterIDs.get(item) : item.characterId;
         if (item == null) continue;
         if (!isSpriteVisible(item) && item.alive)
         {
@@ -323,7 +356,7 @@ class FS_CharacterMenu extends MusicBeatSubState
           {
             item.revive();
           }
-          fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [item.characterId]);
+          fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
 
           var xOffset:Float = fs_characterData.characterMenu.position[0];
 
@@ -332,10 +365,9 @@ class FS_CharacterMenu extends MusicBeatSubState
       }
     }
 
-    if (uiCam != null && spriteCam != null)
+    if (uiCamera != null)
     {
-      uiCam.zoom = MathUtil.smoothLerp(uiCam.zoom, 1, FlxG.elapsed, 0.45);
-      spriteCam.zoom = MathUtil.smoothLerp(spriteCam.zoom, 1, FlxG.elapsed, 0.45);
+      uiCamera.zoom = MathUtil.smoothLerp(uiCamera.zoom, 1, FlxG.elapsed, 0.45);
     }
   }
 
@@ -344,23 +376,22 @@ class FS_CharacterMenu extends MusicBeatSubState
     characterWheel.clear();
 
     loadingText.visible = true;
-    spriteCam.visible = false;
-    uiCam.visible = false;
+    uiCamera.visible = false;
 
     for (characterIndex in 0...filteredKeys.length)
     {
       var characterID:String = filteredKeys[characterIndex];
-      var characterSprite:BaseCharacter = (characterID != 'default' ? CharacterDataParser.fetchCharacter(characterID) : null);
+      var characterSprite:Bopper;
       var lockedChill:FunkinSprite;
 
       if (characterID != 'default')
       {
         fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
+        characterSprite = buildCharacterSprite(fs_characterData);
       }
 
       if (characterSprite != null)
       {
-        characterSprite.camera = spriteCam;
         if (lockedCharMap.exists(characterID))
         {
           lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
@@ -373,13 +404,12 @@ class FS_CharacterMenu extends MusicBeatSubState
             lockedChill.animation.play('idle');
           };
           lockedChill.scale.set(1.2, 1.2);
-          lockedChill.camera = spriteCam;
+          lockedChill.camera = uiCamera;
           characterWheel.add(lockedChill);
         }
         else
         {
           trace("[Funker Selector] Configuring sprite...");
-          configureChar(characterSprite, fs_characterData?.characterMenu);
           characterWheel.add(characterSprite);
         }
       }
@@ -390,10 +420,40 @@ class FS_CharacterMenu extends MusicBeatSubState
     }
 
     loadingText.visible = false;
-    spriteCam.visible = true;
-    uiCam.visible = true;
+    uiCamera.visible = true;
 
+    refresh();
     changeCharacter();
+  }
+
+  function buildCharacterSprite(data:FS_characterData):FunkinSprite
+  {
+    var baseCharacter:BaseCharacter = CharacterDataParser.fetchCharacter(data.characterID);
+
+    if (data.characterMenu.useCustomSprites && data.characterMenu.customSpriteData != null)
+    {
+      var animationData:Array<Dynamic> = data.characterMenu.customSpriteData.animations;
+      characterSprite = new Bopper(data.characterMenu.customSpriteData?.danceEvery ?? 1.0);
+      characterSprite.loadSparrow(data.characterMenu.customSpriteData.assetPath);
+      FlxAnimationUtil.addAtlasAnimations(characterSprite, animationData);
+      for (animation in data.characterMenu.customSpriteData?.animations)
+      {
+        characterSprite.setAnimationOffsets(animation.name, animation.offsets[0], animation.offsets[1]);
+      }
+      bopperCharacterIDs.set(characterSprite, data.characterID);
+      characterSprite.playAnimation(data.characterMenu.customSpriteData?.startingAnimation ?? 'idle');
+      configureChar(characterSprite, data.characterMenu);
+      return characterSprite;
+    }
+    else if (baseCharacter != null)
+    {
+      configureChar(baseCharacter, data.characterMenu);
+      return baseCharacter;
+    }
+    else
+    {
+      return null;
+    }
   }
 
   /**
@@ -409,7 +469,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     currentCharacterID = filteredKeys[currentCharacterIndex];
 
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+    if (!saveData.preferences.potatoMode)
     {
       for (index in 0...characterWheel.members.length)
       {
@@ -418,17 +478,19 @@ class FS_CharacterMenu extends MusicBeatSubState
         if (index == currentCharacterIndex - 1)
         {
           item.alpha = 1.0;
+          if (item.animation.paused) item.animation.resume();
         }
         else
         {
           item.alpha = 0.5;
+          if (item.animation.curAnim.looped) item.animation.pause();
         }
       }
     }
 
     if (currentCharacterIndex != prevIndex)
     {
-      if (FS_SaveDataHandler.scriptCall('getPreference', ["preferredSFX"]) == "charSelect")
+      if (saveData.preferences.preferredSFX == "charSelect")
       {
         FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
       }
@@ -440,8 +502,8 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     updateCharInfo();
 
-    numberThing.text = "< " + (currentCharacterIndex + 1) + " / " + filteredKeys.length + " >";
-    numberThing.screenCenter(0x01);
+    characterCount.text = "< " + (currentCharacterIndex + 1) + " / " + filteredKeys.length + " >";
+    characterCount.screenCenter(0x01);
   }
 
   /**
@@ -457,7 +519,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     currentCharacterIndex = 0;
 
     updateFilteredKeys();
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+    if (!saveData.preferences.potatoMode)
     {
       buildCharacterWheel();
     }
@@ -467,21 +529,26 @@ class FS_CharacterMenu extends MusicBeatSubState
   function beatHit():Void
   {
     bopDaThing();
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+    if (!saveData.preferences.potatoMode)
     {
       for (index in 0...characterWheel.members.length)
       {
         var item:Dynamic = characterWheel.members[index];
-        if (index == currentCharacterIndex - 1 && item is BaseCharacter) item.dance();
+        if (index == currentCharacterIndex - 1)
+        {
+          if (item is Bopper)
+          {
+            item.dance();
+          }
+        }
       }
     }
 
     if (conductorInUse.currentBeat % 4 == 0)
     {
-      if (uiCam != null && spriteCam != null)
+      if (uiCamera != null)
       {
-        FlxTween.tween(uiCam, {zoom: 1.02}, 0.01, {ease: FlxEase.quartOut});
-        FlxTween.tween(spriteCam, {zoom: 1.02}, 0.01, {ease: FlxEase.quartOut});
+        FlxTween.tween(uiCamera, {zoom: 1.02}, 0.01, {ease: FlxEase.quartOut});
       }
     }
   }
@@ -492,9 +559,8 @@ class FS_CharacterMenu extends MusicBeatSubState
   function updateFilteredKeys():Void
   {
     trace('[Funker Selector] Sorting the Character Map...');
-    filteredKeys = ['default']; // Ensures 'default' is always the first thing.
 
-    iHateMyLife = IteratorTools.array(characterMap.keys()).filter(function(shit) {
+    filteredKeys = IteratorTools.array(characterMap.keys()).filter(function(shit) {
       characterType = characterMap[shit][1];
       var types:Array<String> = (characterType is Array) ? characterType : [characterType];
 
@@ -508,14 +574,14 @@ class FS_CharacterMenu extends MusicBeatSubState
       return false;
     });
 
-    iHateMyLife.sort(function(a:String, b:String):Int {
-      characterDataA = FS_CharacterDataHandler.scriptCall('getCharacterData', [a, 1]);
-      characterDataB = FS_CharacterDataHandler.scriptCall('getCharacterData', [b, 1]);
+    filteredKeys.sort(function(a:String, b:String):Int {
+      characterDataA = CharacterDataParser.fetchCharacterData(a);
+      characterDataB = CharacterDataParser.fetchCharacterData(b);
 
       return SortUtil.alphabetically(characterDataA?.name, characterDataB?.name);
     });
 
-    filteredKeys = filteredKeys.concat(iHateMyLife);
+    filteredKeys.insert(0, 'default');
 
     trace("[Funker Selector] Updated the character list:\n" + filteredKeys);
   }
@@ -526,9 +592,9 @@ class FS_CharacterMenu extends MusicBeatSubState
    *
    * This is disabled if "Simplify UI" is turned on in the Options Menu.
    */
-  function createIconGrid(spacing:Int, ?alpha:Float = null):Void
+  function createIconGrid(spacing:Int, ?alpha:Float = 0.2):Void
   {
-    var characterData = currentCharacterID != 'default' ? FS_CharacterDataHandler.scriptCall('getCharacterData', [currentCharacterID, 1]) : null;
+    var characterData = CharacterDataParser.fetchCharacterData(currentCharacterID);
     var columns = Math.ceil(FlxG.width / (spacing * 2));
     var rows = Math.ceil(FlxG.height / (spacing * 2));
     var xStart = (FlxG.width - columns * spacing * 2) / 2;
@@ -545,13 +611,14 @@ class FS_CharacterMenu extends MusicBeatSubState
             var icon = new HealthIcon('dad', 0);
             icon.x = xStart + (j * 2 + k) * spacing;
             icon.y = yStart + (i * 2 + l) * spacing;
-            icon.alpha = nullCoalesce(alpha, 0.2);
+            icon.alpha = alpha;
+            icon.zIndex = 200;
 
-            icon.configure(nullCoalesce(characterData?.healthIcon, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'));
+            icon.configure(characterData?.healthIcon ?? 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 
             add(icon);
             iconGrid.push(icon);
-            icon.camera = spriteCam;
+            icon.camera = uiCamera;
           }
         }
       }
@@ -564,7 +631,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    * @param data The character data to use.
    * @return The configured BaseCharacter.
    */
-  function configureChar(characterSprite:BaseCharacter, data:Dynamic):BaseCharacter
+  function configureChar(characterSprite:FunkinSprite, data:Dynamic):FunkinSprite
   {
     if (data == null)
     {
@@ -574,9 +641,10 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     characterSprite.y += data.position[1];
     characterSprite.flipX = data.flipX;
-    characterSprite.scale.set(data.scale, data.scale);
+    characterSprite.scale.set((data.isPixel ? data.scale * 6 : data.scale), (data.isPixel ? data.scale * 6 : data.scale));
     characterSprite.antialiasing = !data.isPixel ? true : false;
     characterSprite.pixelPerfectRender = data.isPixel;
+    characterSprite.camera = uiCamera;
 
     return characterSprite;
   }
@@ -586,62 +654,59 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function setupUIStuff():Void
   {
-    bgCam = new FunkinCamera('BGCam');
-    FlxG.cameras.add(bgCam, false);
-    bgCam.bgColor = 0x0;
-
-    spriteCam = new FunkinCamera('SpriteCam');
-    FlxG.cameras.add(spriteCam, false);
-    spriteCam.bgColor = 0x0;
-
-    uiCam = new FunkinCamera('UIElements');
-    FlxG.cameras.add(uiCam, false);
-    uiCam.bgColor = 0x0;
-
-    hotkeyCam = new FunkinCamera('HotkeyMenu');
-    FlxG.cameras.add(hotkeyCam, false);
-    hotkeyCam.bgColor = 0x0;
-    hotkeyCam.visible = false;
+    uiCamera = new FunkinCamera('UIElements');
+    FlxG.cameras.add(uiCamera, false);
+    uiCamera.bgColor = 0x0;
 
     bg = new FunkinSprite(0, 0);
     bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
     bg.alpha = 0;
-    bg.camera = bgCam;
-
-    loadingText = configureText(null, "LOADING\nPLEASE WAIT", [170, 10], 50, Paths.font("PhantomMuff.ttf"));
-    loadingText.screenCenter();
-    loadingText.camera = bgCam;
-    loadingText.visible = false;
+    bg.zIndex = 100;
+    bg.camera = uiCamera;
+    add(bg);
 
     selectText = configureText(null, null, [170, 10], 50, Paths.font("PhantomMuff.ttf"));
     selectText.screenCenter(0x01);
-    selectText.camera = uiCam;
+    selectText.zIndex = 300;
+    selectText.camera = uiCamera;
+    add(selectText);
 
-    numberThing = configureText(null, null, [170, 60], 45, Paths.font("PhantomMuff.ttf"));
-    numberThing.color = 0xFFE3E1E1;
-    numberThing.camera = uiCam;
+    characterCount = configureText(null, null, [170, 60], 45, Paths.font("PhantomMuff.ttf"));
+    characterCount.color = 0xFFE3E1E1;
+    characterCount.zIndex = 300;
+    characterCount.camera = uiCamera;
+    add(characterCount);
 
-    charDesc = configureText(null, "PLACEHOLDER", [250, 510], null, Paths.font("PhantomMuff.ttf"));
-    charDesc.wordWrap = true;
-    charDesc.fieldWidth = 800;
-    charDesc.camera = uiCam;
+    characterDescription = configureText(null, "PLACEHOLDER", [250, 510], null, Paths.font("PhantomMuff.ttf"), true);
+    characterDescription.wordWrap = true;
+    characterDescription.fieldWidth = 800;
+    characterDescription.zIndex = 400;
+    characterDescription.camera = uiCamera;
+    add(characterDescription);
 
     selected = configureText(null, '(SELECTED)', [720, 220], 50, Paths.font("PhantomMuff.ttf"));
     selected.color = 0xFF53FF38;
     selected.visible = false;
-    selected.camera = uiCam;
+    selected.zIndex = 400;
+    selected.camera = uiCamera;
+    add(selected);
 
-    keyBox = new FunkinSprite(0, 0);
-    keyBox.makeSolidColor(600, 600, 0xFF000000);
-    keyBox.camera = hotkeyCam;
-    keyBox.alpha = 0.8;
-    keyBox.screenCenter();
+    hotkeyBox = new FunkinSprite(0, 0);
+    hotkeyBox.makeSolidColor(600, 600, 0xFF000000);
+    hotkeyBox.camera = uiCamera;
+    hotkeyBox.alpha = 0.8;
+    hotkeyBox.zIndex = 500;
+    hotkeyBox.screenCenter();
+    hotkeyBox.visible = false;
+    add(hotkeyBox);
 
-    hotkeyText = configureText(null, controls.getDialogueNameFromToken("RESET", true) + ' - Hotkeys', [990, 15], 45, Paths.font("PhantomMuff.ttf"));
-    hotkeyText.color = 0xFFE3E1E1;
-    hotkeyText.camera = uiCam;
+    hotkeyHintText = configureText(null, controls.getDialogueNameFromToken("RESET", true) + ' - Hotkeys', [990, 15], 45, Paths.font("PhantomMuff.ttf"));
+    hotkeyHintText.color = 0xFFE3E1E1;
+    hotkeyHintText.camera = uiCamera;
+    hotkeyHintText.zIndex = 300;
+    add(hotkeyHintText);
 
-    hotkeys = configureText(null,
+    hotkeyBoxText = configureText(null,
       controls.getDialogueNameFromToken("FREEPLAY_FAVORITE", true)
       + ' - Reset everything to default.\n\n'
       + controls.getDialogueNameFromToken("FREEPLAY_CHAR_SELECT", true)
@@ -655,55 +720,45 @@ class FS_CharacterMenu extends MusicBeatSubState
       + controls.getDialogueNameFromToken("DEBUG_MENU", true)
       + ' - Show available character variations.',
       [350, 100], 35, Paths.font("PhantomMuff.ttf"));
-    hotkeys.camera = hotkeyCam;
-    hotkeys.wordWrap = true;
-    hotkeys.fieldWidth = 600;
+    hotkeyBoxText.camera = uiCamera;
+    hotkeyBoxText.wordWrap = true;
+    hotkeyBoxText.visible = false;
+    hotkeyBoxText.fieldWidth = 600;
+    hotkeyBoxText.zIndex = 600;
+    add(hotkeyBoxText);
 
-    charName = configureText(null, null, [170, 110], 70, Paths.font("PhantomMuff.ttf"));
-    charName.camera = uiCam;
+    characterName = configureText(null, null, [170, 110], 70, Paths.font("PhantomMuff.ttf"));
+    characterName.camera = uiCamera;
+    characterName.zIndex = 300;
+    add(characterName);
 
     variationText = configureText(null, null, [170, 180], 35, Paths.font("PhantomMuff.ttf"));
     variationText.color = 0xFFFF8F2E;
-    variationText.camera = uiCam;
+    variationText.camera = uiCamera;
+    variationText.zIndex = 300;
+    add(variationText);
 
     leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
     leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
     leftDifficultyArrow.animation.addByPrefix('press', 'leftConfirm0');
     leftDifficultyArrow.animation.play('idle');
     leftDifficultyArrow.scale.set(1.5, 1.5);
-    leftDifficultyArrow.camera = uiCam;
-
-    leftDifficultyArrowHitbox = new FunkinSprite(leftDifficultyArrow.x - 15, leftDifficultyArrow.y - 25);
-    leftDifficultyArrowHitbox.makeGraphic(leftDifficultyArrow.frameWidth * leftDifficultyArrow.scale.x + 20,
-      leftDifficultyArrow.frameHeight * leftDifficultyArrow.scale.y + 20, 0xFF000000);
-    leftDifficultyArrowHitbox.camera = uiCam;
-    leftDifficultyArrowHitbox.visible = false;
-
-    topTextHitbox = new FunkinSprite(selectText.x - 280, selectText.y);
-    topTextHitbox.makeGraphic(selectText.width * 9, selectText.height * 3.8, 0xFF000000);
-    topTextHitbox.camera = uiCam;
-    topTextHitbox.visible = false;
+    leftDifficultyArrow.camera = uiCamera;
+    leftDifficultyArrow.zIndex = 500;
+    leftDifficultyArrow.updateHitbox();
+    add(leftDifficultyArrow);
 
     rightDifficultyArrow = FunkinSprite.createSparrow(1200, leftDifficultyArrow.y, 'storymenu/ui/arrows');
     rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
     rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
     rightDifficultyArrow.animation.play('idle');
     rightDifficultyArrow.scale.set(1.5, 1.5);
-    rightDifficultyArrow.camera = uiCam;
+    rightDifficultyArrow.camera = uiCamera;
+    rightDifficultyArrow.zIndex = 500;
+    rightDifficultyArrow.updateHitbox();
+    add(rightDifficultyArrow);
 
-    rightDifficultyArrowHitbox = new FunkinSprite(rightDifficultyArrow.x - 20, rightDifficultyArrow.y - 25);
-    rightDifficultyArrowHitbox.makeGraphic(rightDifficultyArrow.frameWidth * rightDifficultyArrow.scale.x + 20,
-      rightDifficultyArrow.frameHeight * rightDifficultyArrow.scale.y + 20, 0xFF000000);
-    rightDifficultyArrowHitbox.camera = uiCam;
-    rightDifficultyArrowHitbox.visible = false;
-
-    characterHitbox = new FunkinSprite(0, 0);
-    characterHitbox.makeGraphic(300, 300, 0xFF000000);
-    characterHitbox.screenCenter();
-    characterHitbox.camera = uiCam;
-    characterHitbox.visible = false;
-
-    if (FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+    if (saveData.preferences.potatoMode)
     {
       lockedChill = new Lock(530, 270, FlxG.random.int(1, 9));
       lockedChill.onAnimationComplete.add(function(name) {
@@ -711,65 +766,55 @@ class FS_CharacterMenu extends MusicBeatSubState
       });
       lockedChill.playAnimation('selected');
       lockedChill.scale.set(2, 2);
-      lockedChill.camera = spriteCam;
+      lockedChill.camera = uiCamera;
+      lockedChill.zIndex = 300;
       lockedChill.visible = false;
+      lockedChill.updateHitbox();
+      add(lockedChill);
+    }
+    else
+    {
+      createIconGrid(150, 0.2);
+
+      characterWheel.zIndex = 250;
+      add(characterWheel);
+
+      loadingText = configureText(null, "LOADING\nPLEASE WAIT", [170, 10], 50, Paths.font("PhantomMuff.ttf"));
+      loadingText.screenCenter();
+      loadingText.camera = uiCamera;
+      loadingText.zIndex = 300;
+      loadingText.visible = false;
+      add(loadingText);
     }
 
     newGraphic = FunkinSprite.createSparrow(840, 460, 'freeplay/freeplayCapsule/new');
     newGraphic.animation.addByPrefix('new', 'NEW notif', 24);
     newGraphic.animation.play('new');
-    newGraphic.camera = uiCam;
+    newGraphic.camera = uiCamera;
     newGraphic.scale.set(1.8, 1.8);
     newGraphic.visible = false;
+    newGraphic.zIndex = 300;
+    add(newGraphic);
 
-    descBox = new FunkinSprite(0, 500);
-    descBox.makeSolidColor(850, 200, 0xFF000000);
-    descBox.camera = uiCam;
-    descBox.alpha = 0.6;
-    descBox.screenCenter(0x01);
+    descriptionBox = new FunkinSprite(0, 500);
+    descriptionBox.makeSolidColor(850, 200, 0xFF000000);
+    descriptionBox.camera = uiCamera;
+    descriptionBox.alpha = 0.6;
+    descriptionBox.screenCenter(0x01);
+    descriptionBox.zIndex = 350;
+    add(descriptionBox);
 
-    charIcon = new HealthIcon('dad', 0);
-    charIcon.camera = uiCam;
+    currentCharacterIcon = new HealthIcon('dad', 0);
+    currentCharacterIcon.camera = uiCamera;
+    currentCharacterIcon.zIndex = 300;
+    add(currentCharacterIcon);
 
     unlockSound = new FunkinSound();
     unlockSound.loadEmbedded(Paths.sound('funkerSelector/charUnlock'));
     unlockSound.volume = 1;
 
-    // UI Sprites
-    add(bg);
-
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"])) add(loadingText);
-
-    // Only add this if "Simplify UI" is turned off.
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"])) createIconGrid(150, 0.2);
-    add(leftDifficultyArrow);
-    add(rightDifficultyArrow);
-
-    // Only add this if "Simplify UI" is turned off.
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"])) add(characterWheel);
-
-    add(selectText);
-    add(numberThing);
-    add(selected);
-    add(hotkeyText);
-    add(charIcon);
-    add(charName);
-    add(variationText);
-
-    // Only add this if "Simplify UI" is turned on.
-    if (FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"])) add(lockedChill);
-
-    add(keyBox);
-    add(hotkeys);
-    add(newGraphic);
-    add(descBox);
-    add(charDesc);
-
-    // Adding the hitboxes for the arrows and the text.
-    add(leftDifficultyArrowHitbox);
-    add(rightDifficultyArrowHitbox);
-    add(characterHitbox);
-    add(topTextHitbox);
+    // Apply the zIndex
+    refresh();
 
     // Set the window title.
     WindowUtil.setWindowTitle('Friday Night Funkin\' - Funker Selector Menu');
@@ -783,21 +828,21 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function bopDaThing():Void
   {
-    if (charIcon != null)
+    if (currentCharacterIcon != null)
     {
-      if (charIcon.width > charIcon.height)
+      if (currentCharacterIcon.width > currentCharacterIcon.height)
       {
-        charIcon.setGraphicSize(Std.int(charIcon.width + (150 * charIcon.size.x * 0.2)), 0);
+        currentCharacterIcon.setGraphicSize(Std.int(currentCharacterIcon.width + (150 * currentCharacterIcon.size.x * 0.2)), 0);
       }
       else
       {
-        charIcon.setGraphicSize(0, Std.int(charIcon.height + (150 * charIcon.size.y * 0.2)));
+        currentCharacterIcon.setGraphicSize(0, Std.int(currentCharacterIcon.height + (150 * currentCharacterIcon.size.y * 0.2)));
       }
 
-      charIcon.angle += 1;
+      currentCharacterIcon.angle += 1;
 
-      charIcon.updateHitbox();
-      charIcon.updatePosition();
+      currentCharacterIcon.updateHitbox();
+      currentCharacterIcon.updatePosition();
     }
   }
 
@@ -815,7 +860,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     var white = new FunkinSprite(0, 0);
     white.makeSolidColor(FlxG.width, FlxG.height, color);
     white.alpha = 0;
-    white.camera = uiCam;
+    white.camera = uiCamera;
     this.add(white);
 
     FlxTween.tween(white, {alpha: alpha}, duration,
@@ -840,9 +885,10 @@ class FS_CharacterMenu extends MusicBeatSubState
   {
     if (controls.BACK)
     {
-      if (hotkeyCam.visible)
+      if (hotkeyBox.visible)
       {
-        hotkeyCam.visible = false;
+        hotkeyBox.visible = false;
+        hotkeyBoxText.visible = false;
       }
       else
       {
@@ -857,15 +903,14 @@ class FS_CharacterMenu extends MusicBeatSubState
         WindowUtil.setWindowTitle('Friday Night Funkin\'');
         ModuleHandler.callEvent(new ScriptEvent(FS_EXITED_SUBSTATE));
 
-        if (typewriterTimer != null) typewriterTimer.cancel();
         close();
       }
     }
 
-    if (!hotkeyCam.visible)
+    if (!hotkeyBox.visible)
     {
-      var leftPressed:Bool = controls.UI_LEFT || (mouseOverlaps(leftDifficultyArrowHitbox) && FlxG.mouse.pressed);
-      var rightPressed:Bool = controls.UI_RIGHT || (mouseOverlaps(rightDifficultyArrowHitbox) && FlxG.mouse.pressed);
+      var leftPressed:Bool = controls.UI_LEFT;
+      var rightPressed:Bool = controls.UI_RIGHT;
       var anyPressed:Bool = leftPressed || rightPressed;
 
       if (anyPressed)
@@ -903,10 +948,6 @@ class FS_CharacterMenu extends MusicBeatSubState
       {
         changePage(controls.FREEPLAY_LEFT ? -1 : 1);
       }
-      else if (mouseOverlaps(topTextHitbox) && FlxG.mouse.justPressed)
-      {
-        changePage(1);
-      }
 
       // Mouse scrolling:
       // Up = Left
@@ -920,9 +961,26 @@ class FS_CharacterMenu extends MusicBeatSubState
         changeCharacter(-1);
       }
 
+      if (controls.FREEPLAY_JUMP_TO_TOP)
+      {
+        changeCharacter(-currentCharacterIndex);
+      }
+
+      if (controls.FREEPLAY_JUMP_TO_BOTTOM)
+      {
+        if (!saveData.preferences.potatoMode)
+        {
+          changeCharacter(characterWheel.length - currentCharacterIndex);
+        }
+        else
+        {
+          changeCharacter(filteredKeys.indexOf(filteredKeys.length) - currentCharacterIndex);
+        }
+      }
+
       if (controls.FREEPLAY_CHAR_SELECT)
       {
-        if (FS_SaveDataHandler.scriptCall('getPreference', ["preferredSFX"]) == "charSelect")
+        if (saveData.preferences.preferredSFX == "charSelect")
         {
           FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
         }
@@ -957,13 +1015,6 @@ class FS_CharacterMenu extends MusicBeatSubState
           selected.visible = selectedTextVisibility();
           FS_SaveDataHandler.scriptCall('writeSaveData');
 
-          // Updating the array with the latest changes
-          characterIDsArray = [
-            FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf,
-            FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad,
-            FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf
-          ];
-
           // Jump to default.
           jumpToCurSelected();
         }
@@ -971,7 +1022,8 @@ class FS_CharacterMenu extends MusicBeatSubState
 
       if (controls.RESET)
       {
-        hotkeyCam.visible = true;
+        hotkeyBox.visible = true;
+        hotkeyBoxText.visible = true;
       }
 
       if (controls.DEBUG_MENU)
@@ -979,33 +1031,24 @@ class FS_CharacterMenu extends MusicBeatSubState
         showVariations(currentCharacterID);
       }
 
-      if (controls.ACCEPT || (mouseOverlaps(characterHitbox) && FlxG.mouse.justPressed))
+      if (controls.ACCEPT)
       {
+        var characterIDs:Dynamic = FS_SaveDataHandler.scriptGet('saveData').characterIDs;
+        var characterSlot:String = characterSlots[currentPageIndex][0];
+        var savedCharacterID:String = ReflectUtil.getAnonymousField(characterIDs, characterSlot);
         var shouldConfirm:Bool = false;
-        if (currentCharacterID != characterIDsArray[currentPageIndex])
+
+        if (currentCharacterID != savedCharacterID)
         {
           if (!lockedCharMap.exists(currentCharacterID))
           {
-            switch (currentPageIndex)
+            var characterIDs:Dynamic = FS_SaveDataHandler.scriptGet('saveData').characterIDs;
+            var characterSlot:String = characterSlots[currentPageIndex][0];
+
+            if (currentCharacterID != savedCharacterID)
             {
-              case 0:
-                if (FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf != currentCharacterID)
-                {
-                  FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf = currentCharacterID;
-                  shouldConfirm = true;
-                }
-              case 1:
-                if (FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad != currentCharacterID)
-                {
-                  FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad = currentCharacterID;
-                  shouldConfirm = true;
-                }
-              case 2:
-                if (FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf != currentCharacterID)
-                {
-                  FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf = currentCharacterID;
-                  shouldConfirm = true;
-                }
+              ReflectUtil.setAnonymousField(characterIDs, characterSlot, currentCharacterID);
+              shouldConfirm = true;
             }
           }
         }
@@ -1015,17 +1058,10 @@ class FS_CharacterMenu extends MusicBeatSubState
           selected.visible = selectedTextVisibility();
           newGraphic.visible = false;
           FS_SaveDataHandler.scriptCall('writeSaveData');
-
-          // Updating the array with the latest changes
-          characterIDsArray = [
-            FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf,
-            FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad,
-            FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf
-          ];
         }
         else
         {
-          if (FS_SaveDataHandler.scriptCall('getPreference', ["preferredSFX"]) == "charSelect")
+          if (saveData.preferences.preferredSFX == "charSelect")
           {
             FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
           }
@@ -1034,7 +1070,7 @@ class FS_CharacterMenu extends MusicBeatSubState
             FunkinSound.playOnce(Paths.sound('cancelMenu'));
           }
           flashScreen(0xFFFF0000, 0.03, 0.1);
-          if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+          if (!saveData.preferences.potatoMode)
           {
             for (index in 0...characterWheel.members.length)
             {
@@ -1056,31 +1092,21 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function jumpToCurSelected():Void
   {
+    var characterIDs:Dynamic = FS_SaveDataHandler.scriptGet('saveData').characterIDs;
+    var characterSlot:String = characterSlots[currentPageIndex][0];
+    var savedCharacterID:String = ReflectUtil.getAnonymousField(characterIDs, characterSlot);
+
     // In the event that the saved character ID no longer exists, we fallback to default.
-    if (!characterMap.exists(characterIDsArray[currentPageIndex]) && characterIDsArray[currentPageIndex] != 'default')
+    if (!characterMap.exists(savedCharacterID) && savedCharacterID != 'default')
     {
       trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
-      switch (currentPageIndex)
-      {
-        case 0:
-          FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf = 'default';
-        case 1:
-          FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad = 'default';
-        case 2:
-          FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf = 'default';
-      }
+      ReflectUtil.setAnonymousField(characterIDs, characterSlot, 'default');
+
       // Save everything
       FS_SaveDataHandler.scriptCall('writeSaveData');
-
-      // Updating the array with the latest changes
-      characterIDsArray = [
-        FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf,
-        FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad,
-        FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf
-      ];
     }
-    currentCharacterIndex = filteredKeys.indexOf(characterIDsArray[currentPageIndex]);
-    currentCharacterID = characterIDsArray[currentPageIndex];
+    currentCharacterIndex = filteredKeys.indexOf(savedCharacterID);
+    currentCharacterID = savedCharacterID;
     changeCharacter();
     updateCharInfo();
   }
@@ -1091,7 +1117,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function confirmThing():Void
   {
-    if (FS_SaveDataHandler.scriptCall('getPreference', ["preferredSFX"]) == "charSelect")
+    if (saveData.preferences.preferredSFX == "charSelect")
     {
       FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
     }
@@ -1099,22 +1125,34 @@ class FS_CharacterMenu extends MusicBeatSubState
     {
       FunkinSound.playOnce(Paths.sound('confirmMenu'));
     }
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]) && currentCharacterID != "default")
+
+    if (!saveData.preferences.potatoMode && currentCharacterID != "default")
     {
-      fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [currentCharacterID]);
-      var animation = fs_characterData.characterMenu.selectedAnim;
+      var fs_characterData:FS_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [currentCharacterID]);
+      var animation:String = fs_characterData.characterMenu.selectedAnim;
       var item:Dynamic = characterWheel.members[currentCharacterIndex - 1];
-      if (item != null && item is BaseCharacter) item.playAnimation(animation, true, true);
+
+      if (item != null)
+      {
+        if (item is Bopper)
+        {
+          item.playAnimation(animation, true, true);
+          item.animation.onFinish.addOnce(function() {
+            item.dance();
+          });
+        }
+      }
     }
-    if (charIcon.hasAnimation('winning'))
+
+    if (currentCharacterIcon.hasAnimation('winning'))
     {
       // Play the winning animation if it's available.
-      charIcon.playAnimation('winning');
+      currentCharacterIcon.playAnimation('winning');
 
       // I wanted this really cool effect where the icons in the icon grid would also
       // play the winning animation!
       // But let's not play that if "Simplify UI" is turned on.
-      if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]) && iconGrid != null)
+      if (!saveData.preferences.potatoMode && iconGrid != null)
       {
         for (i in 0...iconGrid.length)
         {
@@ -1145,26 +1183,33 @@ class FS_CharacterMenu extends MusicBeatSubState
   function showVariations(characterID:String):Void
   {
     var fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
-    var variationCount:Int = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID, 2]);
-    var alertBody = "";
+    var variationCount:Int = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID, 1]);
+    var alertBody:String = "";
 
     if (variationCount <= 0) return;
+    if (lockedCharMap.exists(characterID)) return;
+    if (characterID == 'default') return;
 
     for (variation in fs_characterData.characterVariations)
     {
-      var characterName = "";
-      var songNames = [];
+      var characterName:String = "";
+      var songNames:Array<String> = [];
 
       for (songID in variation.songID)
       {
-        var songData = SongRegistry.instance.parseEntryMetadata(songID, variation.songVariation);
-        var characterData = CharacterDataParser.parseCharacterData(variation.characterID);
-        characterName = characterData.name;
-        songNames.push(songData.songName);
+        var songData:SongMetadata = SongRegistry.instance.parseEntryMetadata(songID, variation.songVariation);
+        var characterData:CharacterData = CharacterDataParser.fetchCharacterData(variation.characterID);
+        characterName = characterData?.name ?? "NONEXISTENT CHARACTER ID (" + variation.characterID + ")";
+        songNames.push(songData?.songName ?? "NONEXISTENT SONG ID (" + songID + ")");
       }
 
       alertBody += "Name: " + characterName + "\n";
-      alertBody += "Songs: " + songNames.join(", ") + "\n\n";
+      alertBody += "Songs: " + songNames.join(", ");
+
+      if (fs_characterData.characterVariations.indexOf(variation) < fs_characterData.characterVariations.length - 1)
+      {
+        alertBody += "\n\n";
+      }
     }
 
     PolymodErrorHandler.showAlert("Available character variations", alertBody);
@@ -1175,7 +1220,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function doUnlockAnimation(?skip:Bool):Void
   {
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+    if (!saveData.preferences.potatoMode)
     {
       for (index in 0...characterWheel.members.length)
       {
@@ -1215,7 +1260,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (FlxG.sound.music != null) FlxG.sound.music.fadeOut();
 
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+    if (!saveData.preferences.potatoMode)
     {
       lockedChill.offset.set();
       lockedChill.animation.play('idle', true);
@@ -1225,13 +1270,13 @@ class FS_CharacterMenu extends MusicBeatSubState
       lockedChill.playAnimation('idle', true);
     }
 
-    FlxTween.tween(uiCam, {alpha: 0}, 1,
+    FlxTween.tween(uiCamera, {alpha: 0}, 1,
       {
         ease: FlxEase.quartOut,
         onComplete: function(twn:FlxTween) {
           unlockSound.play(true);
           new FlxTimer().start(1.45, function() {
-            if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+            if (!saveData.preferences.potatoMode)
             {
               lockedChill.offset.set(170, 220);
               lockedChill.animation.play('death');
@@ -1255,22 +1300,18 @@ class FS_CharacterMenu extends MusicBeatSubState
       updateCharInfo();
       if (selected.visible) selected.visible = false;
       newGraphic.visible = true;
-      uiCam.shake(0.01, 0.2);
-      spriteCam.shake(0.01, 0.2);
+      uiCamera.shake(0.01, 0.2);
       FlxG.state.subState.funnyCam.shake(0.01, 0.2);
     });
 
     if (!simplifyUI)
     {
-      var characterSprite:BaseCharacter = CharacterDataParser.fetchCharacter(currentCharacterID);
       fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [currentCharacterID]);
-      characterWheel.replace(lockedChill, characterSprite);
-      characterSprite.camera = spriteCam;
-      configureChar(characterSprite, fs_characterData?.characterMenu);
+      characterWheel.replace(lockedChill, buildCharacterSprite(fs_characterData));
     }
 
     busy = false;
-    uiCam.alpha = 1;
+    uiCamera.alpha = 1;
 
     if (FlxG.sound.music != null) FlxG.sound.music.fadeIn();
   }
@@ -1288,7 +1329,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       lockedChill.animation.curAnim.curFrame = 36;
       lockedChill.animation.resume();
 
-      if (FS_SaveDataHandler.scriptCall('getPreference', ["preferredSFX"]) == "charSelect")
+      if (saveData.preferences.preferredSFX == "charSelect")
       {
         FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
       }
@@ -1304,7 +1345,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       lockedChill.anim.curFrame = 34;
       lockedChill.anim.resume();
 
-      if (FS_SaveDataHandler.scriptCall('getPreference', ["preferredSFX"]) == "charSelect")
+      if (saveData.preferences.preferredSFX == "charSelect")
       {
         FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
       }
@@ -1317,18 +1358,19 @@ class FS_CharacterMenu extends MusicBeatSubState
 
   /**
    * Adjusts the description size relative to the description text box.
-   * @param charDesc The `charDesc` FlxText object.
+   * @param characterDescription The `characterDescription` FlxText object.
    */
-  function adjustFontSize(charDesc:FlxText):Void
+  function adjustFontSize(characterDescription:FlxText):Void
   {
-    var currentFontSize = charDesc.size;
-    var maxHeight = descBox.height - 10;
-    if (charDesc.fieldHeight > maxHeight)
+    if (characterDescription == null) return;
+    var currentFontSize = characterDescription.size;
+    var maxHeight = descriptionBox.height - 10;
+    if (characterDescription.fieldHeight > maxHeight)
     {
       currentFontSize--;
 
-      charDesc.size = currentFontSize;
-      charDesc.letterSpacing -= 0.16 * (currentFontSize / 10);
+      characterDescription.size = currentFontSize;
+      characterDescription.letterSpacing -= 0.16 * (currentFontSize / 10);
 
       if (currentFontSize <= 8) return;
     }
@@ -1339,6 +1381,8 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function updateCharInfo():Void
   {
+    var variationCount:Int = 0;
+
     selectText.text = topText[currentPageIndex];
     selectText.color = topTextColor[currentPageIndex];
     selectText.screenCenter(0x01);
@@ -1346,81 +1390,54 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     newGraphic.visible = false;
 
-    var descText:String;
-    var variationCount:Int = 0;
-
     if (currentCharacterID != 'default')
     {
       fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [currentCharacterID]);
-      characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [currentCharacterID, 1]);
-      variationCount = FS_CharacterDataHandler.scriptCall('getCharacterData', [currentCharacterID, 2]);
+      characterData = CharacterDataParser.fetchCharacterData(currentCharacterID);
+      variationCount = FS_CharacterDataHandler.scriptCall('getCharacterData', [currentCharacterID, 1]);
     }
 
     switch (currentCharacterID)
     {
       case 'default':
-        charIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-        charName.text = "DEFAULT";
-        descText = "This is the Default character defined by the song.";
+        currentCharacterIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+        characterName.text = "DEFAULT";
+        descriptionText = "This is the Default character defined by the song.";
       default:
         if (lockedCharMap.exists(currentCharacterID))
         {
-          charName.text = "LOCKED";
+          characterName.text = "LOCKED";
 
           var unlockHint = "\n\nUnlock Condition: " + fs_characterData.description.unlockCondition;
 
-          descText = "This character is locked! I wonder who it could be..." + unlockHint;
+          descriptionText = "This character is locked! I wonder who it could be..." + unlockHint;
         }
         else
         {
-          charName.text = characterData?.name;
-          charIcon.configure(characterData?.healthIcon);
-          charIcon.size.set(1, 1);
-          charIcon.setPosition(270, 380);
+          characterName.text = characterData?.name;
+          currentCharacterIcon.configure(characterData?.healthIcon);
+          currentCharacterIcon.size.set(1, 1);
+          currentCharacterIcon.setPosition(270, 380);
 
-          descText = fs_characterData.description.text;
+          descriptionText = fs_characterData.description.text;
         }
     }
-
-    if (typewriterTimer != null) typewriterTimer.cancel();
-
-    typewriterIndex = 0;
 
     // Reset the description size and letter spacing.
-    charDesc.size = 35;
-    charDesc.letterSpacing = 0;
+    characterDescription.size = 35;
+    characterDescription.letterSpacing = 0;
 
-    typewriterTimer = new FlxTimer();
-    typewriterTimer.start(0.01, function(timer:FlxTimer) {
-      if ((typewriterIndex + 1) <= descText.length)
-      {
-        charDesc.text = descText.substring(0, typewriterIndex + 1);
-        adjustFontSize(charDesc);
-        typewriterIndex++;
-      }
-      else
-      {
-        // Forcibly set the text if for some reason the text cuts off.
-        if (charDesc.text != descText)
-        {
-          trace("[Funker Selector] Description text doesn't match up!");
-          trace(charDesc.text);
-          trace(descText);
-          charDesc.text = descText;
-        }
-        timer.cancel();
-        typewriterIndex = 0;
-      }
-    }, descText.length * 2);
+    characterDescription.resetText(descriptionText);
+    characterDescription.start(0.01);
 
     // Making it not look so awkward when "Simplify UI" is turned on.
-    if (FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]) || currentCharacterID == 'default')
+    if (saveData.preferences.potatoMode || currentCharacterID == 'default')
     {
-      charIcon.setPosition(500, 230);
-      charIcon.size.set(1.7, 1.7);
+      currentCharacterIcon.setPosition(500, 230);
+      currentCharacterIcon.size.set(1.7, 1.7);
     }
 
-    if (!FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]))
+    if (!saveData.preferences.potatoMode)
     {
       for (icon in iconGrid)
       {
@@ -1435,23 +1452,33 @@ class FS_CharacterMenu extends MusicBeatSubState
       }
     }
 
-    if (lockedCharMap.exists(currentCharacterID))
-    {
-      if (charIcon != null) charIcon.visible = false;
-      if (FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"])) lockedChill.visible = true;
-    }
-    else
-    {
-      if (charIcon != null) charIcon.visible = true;
-      if (FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"])) lockedChill.visible = false;
-    }
-
-    charName.screenCenter(0x01);
-
     variationText.screenCenter(0x01);
     variationText.text = "This character has " + variationCount + " available " + (variationCount == 1 ? "variation" : "variations");
 
-    selected.y = charDesc.y - 60;
+    if (variationCount > 0 && !lockedCharMap.exists(currentCharacterID))
+    {
+      trace("[Funker Selector] Variations found for character ID " + currentCharacterID);
+      variationText.visible = true;
+    }
+    else
+    {
+      variationText.visible = false;
+    }
+
+    if (lockedCharMap.exists(currentCharacterID))
+    {
+      if (currentCharacterIcon != null) currentCharacterIcon.visible = false;
+      if (saveData.preferences.potatoMode) lockedChill.visible = true;
+    }
+    else
+    {
+      if (currentCharacterIcon != null) currentCharacterIcon.visible = true;
+      if (saveData.preferences.potatoMode) lockedChill.visible = false;
+    }
+
+    characterName.screenCenter(0x01);
+
+    selected.y = characterDescription.y - 60;
 
     // Do the unlock animation if we haven't seen it yet.
     if (lockedCharMap.exists(currentCharacterID)
@@ -1469,16 +1496,6 @@ class FS_CharacterMenu extends MusicBeatSubState
         doUnlockAnimation(FlxG.keys.pressed.SHIFT);
       }
     }
-
-    if (variationCount > 0)
-    {
-      trace("[Funker Selector] Variations found for character ID " + currentCharacterID);
-      variationText.visible = true;
-    }
-    else
-    {
-      variationText.visible = false;
-    }
   }
 
   /**
@@ -1491,27 +1508,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   public function isDebugBuild():Bool
   {
-    // Debug builds use a different background color.
-    return Application.current.window.context.attributes.background == 0xFFFF00FF;
-  }
-
-  /**
-   * Imitates null coalescing since HScript doesn't support it yet.
-   * @param value The value to check.
-   * @param fallback The fallback value.
-   * @return The value if it's not null, otherwise the fallback value.
-   */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
-  {
-    return value != null ? value : fallback;
-  }
-
-  /**
-   * Whether or not the mouse overlaps this sprite.
-   */
-  function mouseOverlaps(sprite:FunkinSprite):Bool
-  {
-    return sprite.pixelsOverlapPoint(FlxG.mouse.getScreenPosition());
+    return Constants.DEBUG_BUILD ?? false;
   }
 
   /**
@@ -1520,17 +1517,10 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function selectedTextVisibility():Bool
   {
-    switch (currentPageIndex)
-    {
-      case 0:
-        return currentCharacterID == FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf;
-      case 1:
-        return currentCharacterID == FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad;
-      case 2:
-        return currentCharacterID == FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf;
-      default:
-        return false;
-    }
+    var characterIDs:Dynamic = FS_SaveDataHandler.scriptGet('saveData').characterIDs;
+    var characterSlot:String = characterSlots[currentPageIndex][0];
+
+    return currentCharacterID == ReflectUtil.getAnonymousField(characterIDs, characterSlot);
   }
 
   /**
@@ -1542,12 +1532,22 @@ class FS_CharacterMenu extends MusicBeatSubState
    * @param font The font
    * @return A FlxText object
    */
-  function configureText(object:FlxText, ?text:String = "", ?offsets:Array<Int>, ?size:Int = 38, ?font:String = null):FlxText
+  function configureText(object:FlxText, ?text:String = "", ?offsets:Array<Int>, ?size:Int = 38, ?font:String = null, ?typeText:Bool = false):FlxText
   {
     if (text == null) text = "";
     if (offsets == null) offsets = [0, 0];
     if (size == null) size = 35;
-    if (object == null) object = new FlxText(0, 0, 0, "PLACEHOLDER");
+    if (object == null)
+    {
+      if (typeText)
+      {
+        object = new FlxTypeText(0, 0, 0, "PLACEHOLDER");
+      }
+      else
+      {
+        object = new FlxText(0, 0, 0, "PLACEHOLDER");
+      }
+    }
 
     object.text = text;
     object.x += offsets[0];
@@ -1559,12 +1559,12 @@ class FS_CharacterMenu extends MusicBeatSubState
 
   /**
    * Determines whether or not a sprite is visible on screen.
-   * @param sprite The `FlxSprite` to check.
+   * @param sprite The `FunkinSprite` to check.
    * @return Whether or not the sprite is visible.
    */
-  function isSpriteVisible(sprite:FlxSprite):Bool
+  function isSpriteVisible(sprite:FunkinSprite):Bool
   {
-    if (sprite == null) return;
+    if (sprite == null) return false;
     var bounds = sprite.getScreenBounds();
     return bounds.x + bounds.width > 0 && bounds.x < FlxG.width && bounds.y + bounds.height > 0 && bounds.y < FlxG.height;
   }

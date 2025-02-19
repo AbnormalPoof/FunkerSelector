@@ -1,0 +1,215 @@
+import funkin.modding.module.Module;
+import funkin.save.Save;
+import funkin.util.VersionUtil;
+import thx.Maps;
+import thx.Objects;
+
+/**
+ * A module that handles the migration of Funker Selector save data.
+ */
+class FS_SaveDataMigrator extends Module
+{
+  /**
+   * The version for save data.
+   */
+  var FS_SAVE_DATA_VERSION:String = "1.1.0";
+
+  public function new()
+  {
+    super('FS_SaveDataMigrator', 50);
+  }
+
+  /**
+   * Check if the save data is good. If not, migrate it.
+   * @param saveData The save data to check.
+   * @return The migrated save data, or the original save data if no migration was necessary.
+   */
+  function checkSaveData(saveData:Dynamic):Dynamic
+  {
+    if (!VersionUtil.validateVersionStr(saveData.version, FS_SAVE_DATA_VERSION))
+    {
+      trace('[Funker Selector] Save data is outdated! Migrating...');
+      trace("Save data version: " + saveData.version);
+      trace("Expected version: " + FS_SAVE_DATA_VERSION);
+      saveData = migrateSaveData(saveData);
+    }
+
+    trace('[Funker Selector] Save data is good!');
+    var updatedSaveData:Dynamic = Objects.deepCombine(getDefaultSaveData(), saveData);
+    return updatedSaveData;
+  }
+
+  /**
+   * Migrate the save data if necessary.
+   * @param saveData The save data to migrate.
+   */
+  function migrateSaveData(saveData:Dynamic):Dynamic
+  {
+    switch (saveData.version)
+    {
+      case null:
+        return migrateSaveData_Legacy(saveData);
+      case "1.0.0":
+        return migrateSaveData_1_0_0(saveData);
+      default:
+        saveData.version = FS_SAVE_DATA_VERSION;
+        return saveData;
+    }
+  }
+
+  /**
+   * Returns the default save data.
+   */
+  function getDefaultSaveData():FS_saveData
+  {
+    return {
+      version: FS_SAVE_DATA_VERSION,
+      characterIDs:
+        {
+          bf: 'default',
+          gf: 'default',
+          dad: 'default'
+        },
+      preferences:
+        {
+          potatoMode: false,
+          preloadSprites: true,
+          preferredSFX: "funkin",
+          djSwapping: true
+        },
+      seenUnlocks: []
+    };
+  }
+
+  /**
+   * Migrate the save data from legacy.
+   * @param saveData The save data to migrate.
+   */
+  function migrateSaveData_Legacy(saveData:Dynamic):Dynamic
+  {
+    var oldCharacterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
+    var oldPrefs:Dynamic = Save.instance.modOptions.get("FunkerSelectorSettings");
+    var oldSeenUnlocks:Array = Save.instance.modOptions.get("FunkerSelector-SeenChars");
+
+    var migratedSave:Dynamic =
+      {
+        version: FS_SAVE_DATA_VERSION,
+        characterIDs:
+          {
+            bf: oldCharacterIDs?.bf ?? 'default',
+            gf: oldCharacterIDs?.gf ?? 'default',
+            dad: oldCharacterIDs?.dad ?? 'default'
+          },
+        preferences:
+          {
+            potatoMode: oldPrefs?.potatoMode ?? false,
+            preloadSprites: oldPrefs?.preloadSprites ?? false,
+            preferredSFX: oldPrefs?.preferredSFX ?? 'funkin',
+            djSwapping: oldPrefs?.djSwapping ?? true
+          },
+        seenUnlocks: oldSeenUnlocks ?? []
+      };
+
+    // Clear out the old save data.
+    Save.instance.modOptions.remove("FunkerSelector");
+    Save.instance.modOptions.remove("FunkerSelectorSettings");
+    Save.instance.modOptions.remove("FunkerSelector-SeenChars");
+
+    // Save the new data.
+    Save.instance.modOptions.set("FunkerSelector", migratedSave);
+    Save.instance.flush();
+    return migratedSave;
+  }
+
+  /**
+   * Migrate the save data from 1.0.0.
+   * @param saveData The save data to migrate.
+   */
+  function migrateSaveData_1_0_0(saveData:Dynamic):Dynamic
+  {
+    var saveData:FS_saveData = Save.instance.modOptions.get("FunkerSelector");
+    var migratedSave:FS_saveData =
+      {
+        version: FS_SAVE_DATA_VERSION,
+        characterIDs:
+          {
+            bf: saveData.characterIDs.bf,
+            gf: saveData.characterIDs.gf,
+            dad: saveData.characterIDs.dad
+          },
+        preferences: Maps.toObject(saveData.preferences),
+        seenUnlocks: saveData.seenUnlocks
+      };
+
+    // Save the new data.
+    Save.instance.modOptions.set("FunkerSelector", migratedSave);
+    Save.instance.flush();
+    return migratedSave;
+  }
+}
+
+typedef FS_saveData =
+{
+  /**
+   * The version of the save data.
+   * Changing this will cause the save data to be migrated.
+   */
+  var version:String;
+
+  /**
+   * The saved character IDs.
+   */
+  var characterIDs:FS_savedCharacterIDs;
+
+  /**
+   * The saved preferences.
+   */
+  var preferences:FS_savedPreferences;
+
+  /**
+   * The unlock animations that we have seen.
+   */
+  var seenUnlocks:Array<String>;
+}
+
+typedef FS_savedCharacterIDs =
+{
+  /**
+   * The character ID for Boyfriend.
+   */
+  var bf:String;
+
+  /**
+   * The character ID for Girlfriend.
+   */
+  var gf:String;
+
+  /**
+   * The character ID for Dad.
+   */
+  var dad:String;
+}
+
+typedef FS_savedPreferences =
+{
+  /**
+   * If enabled, simplifies the UI and disables character sprite caching.
+   */
+  var potatoMode:Bool;
+
+  /**
+   * If disabled, character sparrows will not be cached when the game starts.
+   * This will cause stuttering when the Character Menu is opened for the first time.
+   */
+  var preloadSprites:Bool;
+
+  /**
+   * The preferred SFX for the Character Menu.
+   */
+  var preferredSFX:String;
+
+  /**
+   * If disabled, the Freeplay DJ will not be swapped out for the currently selected character's own DJ.
+   */
+  var djSwapping:Bool;
+}

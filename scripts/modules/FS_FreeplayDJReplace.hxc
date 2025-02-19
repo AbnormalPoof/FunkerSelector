@@ -28,7 +28,7 @@ class DJReplace extends Module
     super.onScriptEvent(event);
     if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState)
     {
-      var shouldSwap:Bool = ModuleHandler.getModule("FS_SaveDataHandler").scriptCall("getPreference", ["djSwapping"]);
+      var shouldSwap:Bool = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet("saveData").preferences.djSwapping;
       trace("[Funker Selector] Swapping DJ? " + shouldSwap);
       if (shouldSwap)
       {
@@ -52,7 +52,7 @@ class DJReplace extends Module
     super.onSubStateOpenEnd(event);
     if (event.targetState is FreeplayState)
     {
-      var shouldSwap:Bool = ModuleHandler.getModule("FS_SaveDataHandler").scriptCall("getPreference", ["djSwapping"]);
+      var shouldSwap:Bool = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet("saveData").preferences.djSwapping;
       if (shouldSwap)
       {
         trace("[Funker Selector] Switching out DJ...");
@@ -108,7 +108,7 @@ class DJReplace extends Module
     var freeplayDJ:FreeplayDJ = FlxG.state.subState.dj;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf) : FlxG.state.subState.currentCharacterId;
     var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(characterID);
-    var playableCharData:Dynamic = playableChar != null ? playableChar.getFreeplayDJData() : null;
+    var playableCharData:Dynamic = playableChar.getFreeplayDJData() ?? null;
 
     var fs_characterData:Dynamic = ModuleHandler.getModule("FS_CharacterDataHandler").scriptCall('getCharacterData', [saveData.characterIDs.bf]);
     var introFrame:Int = fs_characterData.introSwapFrame;
@@ -152,7 +152,7 @@ class DJReplace extends Module
     var freeplayDJ:FreeplayDJ = FlxG.state.subState.dj;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf) : FlxG.state.subState.currentCharacterId;
     var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(characterID);
-    var playableCharData:Dynamic = playableChar != null ? playableChar.getFreeplayDJData() : null;
+    var playableCharData:Dynamic = playableChar.getFreeplayDJData() ?? null;
 
     var startTime = TimerUtil.start();
 
@@ -253,20 +253,5 @@ class DJReplace extends Module
     }
 
     textObject.speed = speed;
-  }
-
-  /**
-   * HELPER FUNCTIONS
-   * These are functions that are simply nice to have. They make the code cleaner.
-   */
-  /**
-   * Imitates null coalescing since HScript doesn't support it yet.
-   * @param value The value to check.
-   * @param fallback The fallback value.
-   * @return The value if it's not null, otherwise the fallback value.
-   */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
-  {
-    return value != null ? value : fallback;
   }
 }

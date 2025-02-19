@@ -12,9 +12,8 @@
     "text": "The father of Girlfriend and an ex-rockstar, he is very disapproving of Girlfriend's relationship with Boyfriend.",
     "unlockCondition": "Beat Week 1 on Hard."
   },
-  "characterMenu":
-  {
-    "position": [100, 50],
+  "characterMenu": {
+    "position": [150, 50],
     "scale": 0.75
   }
 }

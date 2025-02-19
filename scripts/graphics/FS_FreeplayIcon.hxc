@@ -1,6 +1,7 @@
 import funkin.graphics.FunkinSprite;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
+import funkin.play.character.CharacterDataParser;
 import funkin.play.components.HealthIcon;
 import flixel.FlxG;
 
@@ -38,7 +39,7 @@ class FS_FreeplayIcon extends FunkinSprite
     if (currentCharacterIcon != null) FlxG.state.subState.remove(currentCharacterIcon);
 
     var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet('saveData');
-    var characterData:Dynamic = ModuleHandler.getModule("FS_CharacterDataHandler").scriptCall('getCharacterData', [saveData.characterIDs.bf, 1]);
+    var characterData:Dynamic = CharacterDataParser.fetchCharacterData(saveData.characterIDs.bf);
 
     currentCharacterIcon = new HealthIcon('dad', 0);
     currentCharacterIcon.configure(characterData?.healthIcon);

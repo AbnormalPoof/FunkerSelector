@@ -7,10 +7,12 @@ import funkin.modding.module.ModuleHandler;
 import funkin.play.character.CharacterDataParser;
 import funkin.save.Save;
 import funkin.util.MemoryUtil;
-import funkin.util.SerializerUtil;
 import funkin.util.assets.DataAssets;
 import haxe.ds.StringMap;
 import haxe.ds.Either;
+import hxjsonast.Parser;
+import hxjsonast.Tools;
+import thx.Objects;
 
 /**
  * A module responsible for handling character caches and data.
@@ -38,42 +40,6 @@ class FS_CharacterDataHandler extends Module
    * keep track of JSON characters in a separate map instead.
    */
   var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
-
-  /**
-   * The default character data. This is used as base.
-   *
-   * TODO: Use this in `parseJSONData()` when v0.6.0 is out.
-   */
-  var FS_DEFAULT_CHARACTER_DATA:FS_characterData =
-    {
-      version: "1.0.0",
-      characterID: "bf",
-      characterType: "bf",
-      mustUnlock: false,
-      voiceID: null,
-      introSwapFrame: 4,
-      unlockMethod: null,
-      description:
-        {
-          text: "This is placeholder data! If you're somehow reading this then you probably did something really wrong.",
-          unlockCondition: "This is placeholder data! If you're somehow reading this then you probably did something really wrong."
-        },
-      characterMenu:
-        {
-          position: [200, 0],
-          scale: 1.0,
-          isPixel: false,
-          flipX: false,
-          selectedAnim: null
-        },
-      suffixes:
-        {
-          gameOverMusic: null,
-          blueBall: null,
-          pauseMusic: null
-        },
-      characterVariations: []
-    };
 
   public function new()
   {
@@ -156,9 +122,6 @@ class FS_CharacterDataHandler extends Module
         }
       }
 
-      // Caching the character data.
-      charData = CharacterDataParser.parseCharacterData(data.characterID);
-
       var variationList:Array = [];
 
       for (variation in data.characterVariations)
@@ -170,7 +133,7 @@ class FS_CharacterDataHandler extends Module
       }
 
       // NOTE: `jsonCharacterCache` and `characterMap` serve 2 different purposes.
-      jsonCharacterCache.set(funker, [data, charData, variationList.length]);
+      jsonCharacterCache.set(funker, [data, variationList.length]);
       characterMap.set(data.characterID, [funker, data.characterType]);
 
       trace("[Funker Selector] " + funker + " has " + variationList.length + " available variation(s).");
@@ -189,7 +152,7 @@ class FS_CharacterDataHandler extends Module
     // Check if the file exists
     if (Assets.exists(filePath))
     {
-      var parsedData = SerializerUtil.fromJSON(Assets.getText(filePath));
+      var parsedData = Tools.getValue(Parser.parse(Assets.getText(filePath), filePath));
 
       if (parsedData == null)
       {
@@ -197,62 +160,13 @@ class FS_CharacterDataHandler extends Module
         return null;
       }
 
-      // I basically just put this all in one big object so that I don't have to do a bunch of null checks lol
-      var result:FS_characterData =
-        {
-          version: nullCoalesce(parsedData?.version, "1.0.0"),
-          characterID: nullCoalesce(parsedData?.characterID, null),
-          characterType: nullCoalesce(parsedData?.characterType, "bf"),
-          mustUnlock: nullCoalesce(parsedData?.mustUnlock, false),
-          voiceID: nullCoalesce(parsedData?.voiceID, parsedData?.characterID),
-          introSwapFrame: nullCoalesce(parsedData?.introSwapFrame, 3),
-          unlockMethod: nullCoalesce(parsedData?.unlockMethod, null),
-          description:
-            {
-              text: nullCoalesce(parsedData?.description?.text, "No description was specified in the JSON file."),
-              unlockCondition: nullCoalesce(parsedData?.description?.unlockCondition, "No unlock condition was specified in the JSON file.")
-            },
-          characterMenu:
-            {
-              position: nullCoalesce(parsedData?.characterMenu?.position, [0, 0]),
-              scale: calculateCharacterScale(parsedData.characterMenu?.scale, parsedData?.characterMenu?.isPixel),
-              isPixel: nullCoalesce(parsedData?.characterMenu?.isPixel, false),
-              flipX: nullCoalesce(parsedData?.characterMenu?.flipX, false),
-              selectedAnim: nullCoalesce(parsedData?.characterMenu?.selectedAnim, "hey")
-            },
-          // We still set suffixes to null to account for scripts.
-          suffixes:
-            {
-              gameOverMusic: nullCoalesce(parsedData?.suffixes?.gameOverMusic, null),
-              blueBall: nullCoalesce(parsedData?.suffixes?.blueBall, null),
-              pauseMusic: nullCoalesce(parsedData?.suffixes?.pauseMusic, null)
-            },
-          characterVariations: nullCoalesce(parsedData?.characterVariations, [])
-        };
+      // Merge the parsed data with the default character data, basically layering the parsed object on top of the default one.
+      var result:FS_characterData = Objects.deepCombine(getDefaultCharacterData(), parsedData);
 
       return result;
     }
 
     return null;
-  }
-
-  /**
-   * Calculates the scale of the character.
-   * @return The calculated scale value.
-   */
-  function calculateCharacterScale(scale:Float, isPixel:Bool):Float
-  {
-    if (scale == null)
-    {
-      return 1;
-    }
-
-    if (isPixel)
-    {
-      return scale * 6;
-    }
-
-    return scale;
   }
 
   /**
@@ -269,7 +183,7 @@ class FS_CharacterDataHandler extends Module
   function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool
   {
     trace("[Funker Selector] Checking unlock methods for ID " + characterID + " ...");
-    switch (unlockMethod?.type)
+    switch (unlockMethod.type)
     {
       case 'playableCharacter':
         if (PlayerRegistry.instance.isCharacterOwned(characterID))
@@ -290,8 +204,37 @@ class FS_CharacterDataHandler extends Module
       case "song":
         if (Save.instance.hasBeatenSong(unlockMethod.songID, unlockMethod.difficultyList))
         {
-          trace("[Funker Selector] Song ID " + unlockMethod.songID + " was beaten with difficulty list " + unlockMethod.difficultyList);
-          return true;
+          if (unlockMethod.minimumRequiredRank != null)
+          {
+            if (unlockMethod?.difficultyList == null)
+            {
+              trace("[Funker Selector] Difficulty list was not specified for song ID " + unlockMethod.songID);
+              return false;
+            }
+            for (difficulty in unlockMethod.difficultyList)
+            {
+              var savedRankValue:Int = getRankValue(Save.instance.getSongRank(unlockMethod.songID, difficulty));
+              var minimumRequiredRankValue:Int = getRankValue(unlockMethod?.minimumRequiredRank);
+
+              if (savedRankValue >= minimumRequiredRankValue)
+              {
+                trace("[Funker Selector] Song ID " + unlockMethod.songID + " was beaten with difficulty list " + unlockMethod.difficultyList
+                  + " with the minimum required rank.");
+                return true;
+              }
+              else
+              {
+                trace("[Funker Selector] Song ID " + unlockMethod.songID + " was beaten with difficulty list " + unlockMethod.difficultyList
+                  + ", but it was not the minimum required rank.");
+                return false;
+              }
+            }
+          }
+          else
+          {
+            trace("[Funker Selector] Song ID " + unlockMethod.songID + " was beaten with difficulty list " + unlockMethod.difficultyList);
+            return true;
+          }
         }
         else
         {
@@ -322,6 +265,47 @@ class FS_CharacterDataHandler extends Module
   }
 
   /**
+   * Returns the base character data.
+   */
+  function getDefaultCharacterData():FS_characterData
+  {
+    return {
+      version: "1.0.0",
+      characterID: "bf",
+      characterType: "bf",
+      mustUnlock: false,
+      voiceID: null,
+      introSwapFrame: 4,
+      unlockMethod:
+        {
+          type: null
+        },
+      description:
+        {
+          text: "No description was specified in the JSON file.",
+          unlockCondition: "No unlock condition was specified in the JSON file."
+        },
+      characterMenu:
+        {
+          position: [200, 0],
+          scale: 1.0,
+          isPixel: false,
+          flipX: false,
+          selectedAnim: "hey",
+          useCustomSprites: false,
+          customSpriteData: null
+        },
+      suffixes:
+        {
+          gameOverMusic: null,
+          blueBall: null,
+          pauseMusic: null
+        },
+      characterVariations: []
+    };
+  }
+
+  /**
    * Fetches the Character Data from the cache.
    * @param characterID The character ID we are using.
    * @param arrayNum The index specifying what part of the JSON cache to get.
@@ -329,13 +313,9 @@ class FS_CharacterDataHandler extends Module
    */
   function getCharacterData(characterID:String, ?arrayNum:Int = 0):FS_characterData
   {
-    var invalidCharacterID:Bool = false;
-
     characterInfo = characterMap[characterID];
 
-    if (characterInfo == null) invalidCharacterID = true;
-
-    if (!invalidCharacterID)
+    if (characterInfo != null)
     {
       ownerJSONname = characterInfo[0];
       jsonData = jsonCharacterCache[ownerJSONname];
@@ -350,7 +330,7 @@ class FS_CharacterDataHandler extends Module
     }
     else
     {
-      return FS_DEFAULT_CHARACTER_DATA;
+      return getDefaultCharacterData();
     }
   }
 
@@ -395,37 +375,42 @@ class FS_CharacterDataHandler extends Module
 
     for (funker in funkerJSONs)
     {
-      var funkerData:FS_characterData = jsonCharacterCache[funker];
-      var data:Dynamic = funkerData[0];
-      var charData:Dynamic = funkerData[1];
+      var funkerselector_characterData:FS_characterData = getCharacterData(funker);
+      var funkin_characterData:CharacterData = CharacterDataParser.fetchCharacterData(funkerselector_characterData.characterID);
 
-      if (data == null) continue;
+      if (funkerselector_characterData == null) continue;
 
-      if (data.characterID == null)
+      if (funkerselector_characterData.characterID == null)
       {
         trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '! The "characterID" field does not exist.');
         continue;
       }
 
-      if (!charJSONCheck(data.characterID))
+      if (!charJSONCheck(funkerselector_characterData.characterID))
       {
         trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
         continue;
       }
 
-      switch (charData.renderType)
+      if (funkerselector_characterData.characterMenu.useCustomSprites && funkerselector_characterData.characterMenu.customSpriteData != null)
+      {
+        spriteQueue.set(Paths.image(funkerselector_characterData.characterMenu.customSpriteData.assetPath), Paths.image(funkerselector_characterData.characterMenu.customSpriteData.assetPath));
+        continue;
+      }
+
+      switch (funkin_characterData.renderType)
       {
         case 'multisparrow':
-          for (anim in charData.animations)
+          for (anim in funkin_characterData.animations)
           {
             if (anim.assetPath != null) spriteQueue.set(Paths.image(anim.assetPath), Paths.image(anim.assetPath));
           }
         case 'animateatlas':
-          spriteQueue.set(Paths.image(charData.assetPath + '/spritemap1'), Paths.image(charData.assetPath + '/spritemap1'));
+          spriteQueue.set(Paths.image(funkin_characterData.assetPath + '/spritemap1'), Paths.image(funkin_characterData.assetPath + '/spritemap1'));
         case 'sparrow':
-          spriteQueue.set(Paths.image(charData.assetPath), Paths.image(charData.assetPath));
+          spriteQueue.set(Paths.image(funkin_characterData.assetPath), Paths.image(funkin_characterData.assetPath));
         default:
-          spriteQueue.set(Paths.image(charData.assetPath), Paths.image(charData.assetPath));
+          spriteQueue.set(Paths.image(funkin_characterData.assetPath), Paths.image(funkin_characterData.assetPath));
       }
     }
 
@@ -489,18 +474,27 @@ class FS_CharacterDataHandler extends Module
   }
 
   /**
-   * HELPER FUNCTIONS
-   * These are functions that are simply nice to have. They make the code cleaner.
+   * Returns a number based on rank.
    */
-  /**
-   * Imitates null coalescing since HScript doesn't support it yet.
-   * @param value The value to check.
-   * @param fallback The fallback value.
-   * @return The value if it's not null, otherwise the fallback value.
-   */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
+  function getRankValue(rank:String):Int
   {
-    return value != null ? value : fallback;
+    switch (rank)
+    {
+      case "PERFECT_GOLD":
+        return 5;
+      case "PERFECT":
+        return 4;
+      case "EXCELLENT":
+        return 3;
+      case "GREAT":
+        return 2;
+      case "GOOD":
+        return 1;
+      case "SHIT":
+        return 0;
+      default:
+        return -1;
+    }
   }
 }
 

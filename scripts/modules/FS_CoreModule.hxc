@@ -32,9 +32,10 @@ import String;
  * Save data and character data are handled by the `FS_SaveDataHandler` and `FS_CharacterDataHandler` modules respectively.
  *
  * Modules are loaded in the following order:
- * 1. `FS_CharacterDataHandler` and `FS_SaveDataHandler`
- * 2. `FS_FreeplayDJReplace` and `FS_ResultsHandler`
- * 3. `FS_CoreModule`
+ * 1. `FS_SaveDataMigrator`
+ * 2. `FS_CharacterDataHandler` and `FS_SaveDataHandler`
+ * 3. `FS_FreeplayDJReplace` and `FS_ResultsHandler`
+ * 4. `FS_CoreModule`
  *
  * The core module is loaded last to ensure that all the other modules can be accessed properly.
  * NOTE: `FS_FreeplayIcon` and `FS_CharacterMenu` are accessed on demand, so they don't need to be loaded in a specific order.
@@ -157,8 +158,7 @@ class FS_CoreModule extends Module
   {
     var fs_characterData:Dynamic = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
     var oldChar:BaseCharacter = null;
-
-    var voiceID:String = fs_characterData?.voiceID;
+    var voiceID:String = fs_characterData?.voiceID ?? characterID;
     var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
     var voiceFile:String = Paths.voices(PlayState.instance.currentSong.id, '-' + voiceID + variationSuffix);
 
@@ -224,12 +224,12 @@ class FS_CoreModule extends Module
         }
         else
         {
-          variationMatch = true; // Assume true if songVariation does not exist.
+          variationMatch = true; // Assume true if `songVariation` does not exist.
         }
 
         if (songMatch && variationMatch)
         {
-          fs_characterData = nullCoalesce(FS_CharacterDataHandler.scriptCall('getCharacterData', [variation.characterID]), fs_characterData);
+          fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [variation.characterID]) ?? fs_characterData;
 
           if (FS_CharacterDataHandler.scriptCall('charJSONCheck', [variation.characterID]))
           {
@@ -270,9 +270,9 @@ class FS_CoreModule extends Module
 
     if (characterType == CharacterType.BF)
     {
-      PauseSubState.musicSuffix = nullCoalesce(fs_characterData.suffixes.pauseMusic, PauseSubState.musicSuffix);
-      GameOverSubState.musicSuffix = nullCoalesce(fs_characterData.suffixes.gameOverMusic, GameOverSubState.musicSuffix);
-      GameOverSubState.blueBallSuffix = nullCoalesce(fs_characterData.suffixes.blueBall, GameOverSubState.blueBallSuffix);
+      PauseSubState.musicSuffix = fs_characterData?.suffixes?.pauseMusic ?? PauseSubState.musicSuffix;
+      GameOverSubState.musicSuffix = fs_characterData?.suffixes?.gameOverMusic ?? GameOverSubState.musicSuffix;
+      GameOverSubState.blueBallSuffix = fs_characterData?.suffixes?.blueBall ?? GameOverSubState.blueBallSuffix;
     }
 
     trace('[Funker Selector] Suffixes\n\nPause Music: ' + PauseSubState.musicSuffix + '\nGame Over Music: ' + GameOverSubState.musicSuffix
@@ -290,8 +290,8 @@ class FS_CoreModule extends Module
     var result:VoicesGroup = new VoicesGroup();
     var songVoices:Array<String> = currentChart.buildVoiceList();
 
-    result.addPlayerVoice(FunkinSound.load(nullCoalesce(voiceList[0], songVoices[0])));
-    result.addOpponentVoice(FunkinSound.load(nullCoalesce(voiceList[1], songVoices[1])));
+    result.addPlayerVoice(FunkinSound.load(voiceList[0] ?? songVoices[0]));
+    result.addOpponentVoice(FunkinSound.load(voiceList[1] ?? songVoices[1]));
 
     result.playerVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.player);
     result.opponentVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.opponent);
@@ -309,8 +309,8 @@ class FS_CoreModule extends Module
     super.onCreate(event);
     // Cache the sprites for JSON characters.
     // This is only done once.
-    if (FS_SaveDataHandler.scriptCall('getPreference', ["preloadSprites"])
-      && !FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"])) FS_CharacterDataHandler.scriptCall('cacheJSONSparrows');
+    if (FS_SaveDataHandler.scriptGet('saveData').preferences.preloadSprites
+      && !FS_SaveDataHandler.scriptGet('saveData').preferences.potatoMode) FS_CharacterDataHandler.scriptCall('cacheJSONSparrows');
   }
 
   override function onUpdate(event:UpdateScriptEvent):Void
@@ -426,15 +426,16 @@ class FS_CoreModule extends Module
       var prefs = event.targetState.pages.get("preferences");
       if (prefs != null)
       {
-        prefs.add(prefs.items.createItem(120, 120 * prefs.items.length + 30, "-- FUNKER SELECTOR --", "bold", () -> {})).fireInstantly = true;
-
-        prefs.createPrefItemCheckbox("Simplify UI", "Simplifies the UI and disables character sprite caching.", (value) -> {
-          FS_SaveDataHandler.scriptCall('setPreference', ["potatoMode", value]);
-        }, FS_SaveDataHandler.scriptCall('getPreference', ["potatoMode"]));
+        prefs.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI and disables character sprite caching.", (value) -> {
+          FS_SaveDataHandler.scriptGet('saveData').preferences.potatoMode = value;
+          FS_SaveDataHandler.scriptCall('writeSaveData');
+        }, FS_SaveDataHandler.scriptGet('saveData').preferences.potatoMode);
 
         prefs.createPrefItemCheckbox("Preload Sprites",
-          "Whether to preload the character sprites or not. Will cause lag on the Character Selection Menu if off!", (value) -> {
-            FS_SaveDataHandler.scriptCall('setPreference', ["preloadSprites", value]);
+          "If disabled, character sparrows will not be cached when the game starts. This will cause stuttering when the Character Menu is opened for the first time.",
+          (value) -> {
+            FS_SaveDataHandler.scriptGet('saveData').preferences.preloadSprites = value;
+            FS_SaveDataHandler.scriptCall('writeSaveData');
             if (value)
             {
               FS_CharacterDataHandler.scriptCall("cacheJSONSparrows");
@@ -444,11 +445,12 @@ class FS_CoreModule extends Module
               // Remove the JSON Characters from memory when the user disables the option.
               FS_CharacterDataHandler.scriptCall("purgeJSONSparrowCache");
             }
-          }, FS_SaveDataHandler.scriptCall('getPreference', ["preloadSprites"]));
+          }, FS_SaveDataHandler.scriptGet('saveData').preferences.preloadSprites);
 
         prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
           ["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
-            FS_SaveDataHandler.scriptCall('setPreference', ["preferredSFX", value]);
+            FS_SaveDataHandler.scriptGet('saveData').preferences.preferredSFX = value;
+            FS_SaveDataHandler.scriptCall('writeSaveData');
             if (value == "charSelect")
             {
               FunkinSound.playOnce(Paths.sound('CS_confirm'));
@@ -457,14 +459,13 @@ class FS_CoreModule extends Module
             {
               FunkinSound.playOnce(Paths.sound('confirmMenu'));
             }
-          }, FS_SaveDataHandler.scriptCall('getPreference', ["preferredSFX"]));
+          }, FS_SaveDataHandler.scriptGet('saveData').preferences.preferredSFX);
 
-        prefs.createPrefItemCheckbox("DJ Replacement", "When enabled, the Freeplay DJ can be swapped out for the currently selected character's own DJ.",
+        prefs.createPrefItemCheckbox("DJ Replacement", "If disabled, the Freeplay DJ will not be swapped out for the currently selected character's own DJ.",
           (value) -> {
-            FS_SaveDataHandler.scriptCall('setPreference', ["djSwapping", value]);
-          }, FS_SaveDataHandler.scriptCall('getPreference', ["djSwapping"]));
-
-        prefs.add(prefs.items.createItem(120, 120 * prefs.items.length, "-------------------", "bold", () -> {})).fireInstantly = true;
+            FS_SaveDataHandler.scriptGet('saveData').preferences.djSwapping = value;
+            FS_SaveDataHandler.scriptCall('writeSaveData');
+          }, FS_SaveDataHandler.scriptGet('saveData').preferences.djSwapping);
       }
     }
   }
@@ -479,7 +480,7 @@ class FS_CoreModule extends Module
 
       if (charSelectIcon != null)
       {
-        characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf, 1]);
+        characterData = CharacterDataParser.fetchCharacterData(FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf);
         currentCharacterIcon = charSelectIcon.scriptGet('currentCharacterIcon');
 
         if (currentCharacterIcon.characterId != characterData?.healthIcon?.id)
@@ -499,26 +500,16 @@ class FS_CoreModule extends Module
       || PlayState.instance.isMinimalMode
       || PlayState.instance.isChartingMode) return;
 
-    // Reset the voiceList, swap out the characters, and
-    // replace vocals if any are found.
-
-    // Setting voiceList to null in order to reset the voices,
-    // since module variables persist between state changes.
     voiceList = [null, null];
 
-    // Replace and swap out the characters.
     replaceChar(FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf, CharacterType.BF);
     replaceChar(FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf, CharacterType.GF);
     replaceChar(FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad, CharacterType.DAD);
     PlayState.instance.currentStage.refresh();
 
-    // If at least ONE of them was changed (means a vocal file was found), replace the vocals.
-    if (voiceList[0] != null || voiceList[1] != null)
-    {
-      trace('[Funker Selector] Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);
-      PlayState.instance.vocals.stop();
-      PlayState.instance.vocals = replaceVocals(voiceList);
-    }
+    trace('[Funker Selector] Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);
+    PlayState.instance.vocals.stop();
+    PlayState.instance.vocals = replaceVocals(voiceList);
   }
 
   /**
@@ -531,18 +522,6 @@ class FS_CoreModule extends Module
    */
   public function isDebugBuild():Bool
   {
-    // Debug builds use a different background color.
-    return Application.current.window.context.attributes.background == 0xFFFF00FF;
-  }
-
-  /**
-   * Imitates null coalescing since HScript doesn't support it yet.
-   * @param value The value to check.
-   * @param fallback The fallback value.
-   * @return The value if it's not null, otherwise the fallback value.
-   */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
-  {
-    return value != null ? value : fallback;
+    return Constants?.DEBUG_BUILD ?? false;
   }
 }

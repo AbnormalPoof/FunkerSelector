@@ -1,15 +1,19 @@
 import funkin.modding.module.Module;
+import funkin.modding.module.ModuleHandler;
 import funkin.save.Save;
 import funkin.util.FileUtil;
 import funkin.util.FileWriteMode;
 import funkin.util.MemoryUtil;
 import funkin.util.PlatformUtil;
-import funkin.util.ReflectUtil;
 import funkin.util.SerializerUtil;
 import haxe.ds.StringMap;
+import thx.Maps;
+import thx.Objects;
 
 /**
  * A module to handle the save data for Funker Selector.
+ * TODO: Rewrite this to be a singleton!
+ * (ex. FS_SaveData.instance)
  */
 class FS_SaveDataHandler extends Module
 {
@@ -20,9 +24,14 @@ class FS_SaveDataHandler extends Module
   public var saveData:Dynamic;
 
   /**
+   * The `FS_SaveDataMigrator` module.
+   */
+  var FS_SaveDataMigrator:Module = ModuleHandler.getModule("FS_SaveDataMigrator");
+
+  /**
    * The version for sava data.
    */
-  var FS_SAVE_DATA_VERSION:String = "1.0.0";
+  var FS_SAVE_DATA_VERSION:String = FS_SaveDataMigrator.scriptGet("FS_SAVE_DATA_VERSION");
 
   public function new()
   {
@@ -44,35 +53,10 @@ class FS_SaveDataHandler extends Module
    */
   function initializeSaveData():Void
   {
-    var defaultSaveData:Dynamic =
-      {
-        version: FS_SAVE_DATA_VERSION,
-        characterIDs:
-          {
-            bf: 'default',
-            gf: 'default',
-            dad: 'default'
-          },
-        preferences: new StringMap(),
-        seenUnlocks: []
-      };
-
-    var defaultSettings:Dynamic =
-      {
-        potatoMode: false,
-        preloadSprites: true,
-        preferredSFX: "funkin",
-        djSwapping: true
-      };
+    var defaultSaveData:Dynamic = FS_SaveDataMigrator.scriptCall("getDefaultSaveData");
 
     if (!Save.instance.modOptions.exists("FunkerSelector"))
     {
-      for (key in ReflectUtil.getAnonymousFieldsOf(defaultSettings))
-      {
-        var value = ReflectUtil.getAnonymousField(defaultSettings, key);
-        defaultSaveData.preferences.set(key, value);
-      };
-
       Save.instance.modOptions.set("FunkerSelector", defaultSaveData);
       Save.instance.flush();
       saveData = defaultSaveData;
@@ -84,46 +68,19 @@ class FS_SaveDataHandler extends Module
         + '\nOpponent: '
         + saveData.characterIDs.dad
         + '\n\n---Settings---\n\nSimplify UI: '
-        + getPreference("potatoMode")
+        + saveData.preferences.potatoMode
         + '\nPreload Sprites: '
-        + getPreference("preloadSprites")
+        + saveData.preferences.preloadSprites
         + '\nPreferred SFX: '
-        + getPreference("preferredSFX")
+        + saveData.preferences.preferredSFX
         + '\nDJ Replacement: '
-        + getPreference("djSwapping")
+        + saveData.preferences.djSwapping
         + '\n\n---Seen Unlock Animations---\n\n'
         + saveData.seenUnlocks);
     }
     else
     {
-      saveData = Save.instance.modOptions.get("FunkerSelector");
-
-      // Add new settings if they don't exist
-      for (key in ReflectUtil.getAnonymousFieldsOf(defaultSettings))
-      {
-        var value = ReflectUtil.getAnonymousField(defaultSettings, key);
-        if (!saveData.preferences.exists(key)) saveData.preferences.set(key, value);
-      };
-
-      if (saveData.version == null)
-      {
-        saveData.version = defaultSaveData.version;
-      }
-
-      // MIGRATION
-      // Check if save data uses the legacy system.
-      if (saveData.characterIDs == null && saveData.preferences == null && saveData.seenUnlocks == null)
-      {
-        trace('[Funker Selector] Save data needs migration!');
-        saveData = migrateSaveData("LEGACY");
-      }
-
-      // Check if the save data version is outdated.
-      if (saveData.version != defaultSaveData.version)
-      {
-        trace('[Funker Selector] Save data is outdated! Migrating...');
-        saveData = migrateSaveData(saveData.version);
-      }
+      saveData = ModuleHandler.getModule("FS_SaveDataMigrator").scriptCall("checkSaveData", [Save.instance.modOptions.get("FunkerSelector")]);
 
       trace('[Funker Selector] Successfully retrieved save data:\n\n---Character IDs---\n\nBoyfriend: '
         + saveData.characterIDs.bf
@@ -132,72 +89,16 @@ class FS_SaveDataHandler extends Module
         + '\nOpponent: '
         + saveData.characterIDs.dad
         + '\n\n---Settings---\n\nSimplify UI: '
-        + getPreference("potatoMode")
+        + saveData.preferences.potatoMode
         + '\nPreload Sprites: '
-        + getPreference("preloadSprites")
+        + saveData.preferences.preloadSprites
         + '\nPreferred SFX: '
-        + getPreference("preferredSFX")
+        + saveData.preferences.preferredSFX
         + '\nDJ Replacement: '
-        + getPreference("djSwapping")
+        + saveData.preferences.djSwapping
         + '\n\n---Seen Unlock Animations---\n\n'
         + saveData.seenUnlocks);
     }
-  }
-
-  /**
-   * Migrate the save data to the new format
-   * @param oldSave The old save data to use.
-   * @return The migrated save file.
-   */
-  function migrateSaveData(version:String):Dynamic
-  {
-    trace('[Funker Selector] Migrating save data...');
-
-    switch (version)
-    {
-      case "LEGACY":
-        var oldCharacterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
-        var oldPrefs:Dynamic = Save.instance.modOptions.get("FunkerSelectorSettings");
-        var oldSeenUnlocks:Array = Save.instance.modOptions.get("FunkerSelector-SeenChars");
-
-        var migratedSave:Dynamic =
-          {
-            version: FS_SAVE_DATA_VERSION,
-            characterIDs:
-              {
-                bf: nullCoalesce(oldCharacterIDs?.bf, 'default'),
-                gf: nullCoalesce(oldCharacterIDs?.gf, 'default'),
-                dad: nullCoalesce(oldCharacterIDs?.dad, 'default')
-              },
-            preferences: new StringMap(),
-            seenUnlocks: nullCoalesce(oldSeenUnlocks, [])
-          };
-
-        // Settings is a special case...
-        var settings:Dynamic =
-          {
-            potatoMode: nullCoalesce(oldPrefs?.potatoMode, false),
-            preloadSprites: nullCoalesce(oldPrefs?.preloadSprites, false),
-            preferredSFX: nullCoalesce(oldPrefs?.preferredSFX, 'funkin'),
-            djSwapping: nullCoalesce(oldPrefs?.djSwapping, true)
-          };
-
-        for (key in ReflectUtil.getAnonymousFieldsOf(settings))
-        {
-          var value = ReflectUtil.getAnonymousField(settings, key);
-          migratedSave.preferences.set(key, value);
-        };
-
-        // Clear out the old save data.
-        Save.instance.modOptions.remove("FunkerSelector");
-        Save.instance.modOptions.remove("FunkerSelectorSettings");
-        Save.instance.modOptions.remove("FunkerSelector-SeenChars");
-    }
-
-    // Save the new data.
-    Save.instance.modOptions.set("FunkerSelector", migratedSave);
-    Save.instance.flush();
-    return migratedSave;
   }
 
   /**
@@ -217,33 +118,13 @@ class FS_SaveDataHandler extends Module
       {
         characterIDs:
           {
-            bf: 'default',
-            gf: 'default',
-            dad: 'default'
+            bf: parsedData.characterIDs.bf ?? 'default',
+            gf: parsedData.characterIDs.gf ?? 'default',
+            dad: parsedData.characterIDs.dad ?? 'default'
           },
-        preferences: new StringMap(),
-        seenUnlocks: []
+        preferences: parsedData.preferences ?? {},
+        seenUnlocks: parsedData.seenUnlocks ?? []
       };
-
-    if (parsedData.characterIDs != null)
-    {
-      saveObject.characterIDs.bf = parsedData.characterIDs.bf;
-      saveObject.characterIDs.gf = parsedData.characterIDs.gf;
-      saveObject.characterIDs.dad = parsedData.characterIDs.dad;
-    }
-
-    if (parsedData.preferences != null)
-    {
-      for (key in ReflectUtil.getAnonymousFieldsOf(parsedData.preferences))
-      {
-        saveObject.preferences.set(key, ReflectUtil.getAnonymousField(parsedData.preferences, key));
-      }
-    }
-
-    if (parsedData.seenUnlocks != null)
-    {
-      saveObject.seenUnlocks = parsedData.seenUnlocks;
-    }
 
     saveData = saveObject;
 
@@ -256,13 +137,13 @@ class FS_SaveDataHandler extends Module
       + '\nOpponent: '
       + saveData.characterIDs.dad
       + '\n\n---Settings---\n\nSimplify UI: '
-      + getPreference("potatoMode")
+      + saveData.preferences.potatoMode
       + '\nPreload Sprites: '
-      + getPreference("preloadSprites")
+      + saveData.preferences.preloadSprites
       + '\nPreferred SFX: '
-      + getPreference("preferredSFX")
+      + saveData.preferences.preferredSFX
       + '\nDJ Replacement: '
-      + getPreference("djSwapping")
+      + saveData.preferences.djSwapping
       + '\n\n---Seen Unlock Animations---\n\n'
       + saveData.seenUnlocks);
   }
@@ -278,38 +159,5 @@ class FS_SaveDataHandler extends Module
     FileUtil.writeStringToPath(filePath, SerializerUtil.toJSON(saveData, true), FileWriteMode.Force);
 
     trace("[Funker Selector] DEBUG: Wrote save data to " + filePath);
-  }
-
-  /**
-   * HELPER FUNCTIONS
-   * These are functions that are simply nice to have. They make the code cleaner.
-   */
-  /**
-   * Retrieves a setting from the save data.
-   */
-  function getPreference(key:String):Dynamic
-  {
-    return saveData.preferences[key];
-  }
-
-  /**
-   * Apply a given value to a setting in the save data.
-   * @param value The value to apply.
-   */
-  function setPreference(key:String, value:Dynamic):Void
-  {
-    saveData.preferences[key] = value;
-    writeSaveData();
-  }
-
-  /**
-   * Imitates null coalescing since HScript doesn't support it yet.
-   * @param value The value to check.
-   * @param fallback The fallback value.
-   * @return The value if it's not null, otherwise the fallback value.
-   */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
-  {
-    return value != null ? value : fallback;
   }
 }

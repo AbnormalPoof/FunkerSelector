@@ -1,0 +1,12 @@
+[
+  {
+    "op": "replace",
+    "path": "/characters/bf/zIndex",
+    "value": 150
+  },
+  {
+    "op": "replace",
+    "path": "/characters/dad/zIndex",
+    "value": 150
+  }
+]

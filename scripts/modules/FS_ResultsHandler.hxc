@@ -90,7 +90,7 @@ class ResultsHandler extends Module
   function isVariation(currentID:String, savedID:String):Bool
   {
     var fs_characterData:Dynamic = ModuleHandler.getModule('FS_CharacterDataHandler').scriptCall('getCharacterData', [savedID]);
-    if (fs_characterData?.characterVariations.length > 0)
+    if (fs_characterData.characterVariations.length > 0)
     {
       for (variation in fs_characterData.characterVariations)
       {

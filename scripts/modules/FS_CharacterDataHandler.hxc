@@ -200,34 +200,34 @@ class FS_CharacterDataHandler extends Module
       // I basically just put this all in one big object so that I don't have to do a bunch of null checks lol
       var result:FS_characterData =
         {
-          version: nullCoalesce(parsedData?.version, "1.0.0"),
-          characterID: nullCoalesce(parsedData?.characterID, null),
-          characterType: nullCoalesce(parsedData?.characterType, "bf"),
-          mustUnlock: nullCoalesce(parsedData?.mustUnlock, false),
-          voiceID: nullCoalesce(parsedData?.voiceID, parsedData?.characterID),
-          introSwapFrame: nullCoalesce(parsedData?.introSwapFrame, 3),
-          unlockMethod: nullCoalesce(parsedData?.unlockMethod, null),
+          version: parsedData?.version ?? "1.0.0",
+          characterID: parsedData?.characterID ?? null,
+          characterType: parsedData?.characterType ?? "bf",
+          mustUnlock: parsedData?.mustUnlock ?? false,
+          voiceID: parsedData?.voiceID ?? parsedData?.characterID,
+          introSwapFrame: parsedData?.introSwapFrame ?? 3,
+          unlockMethod: parsedData?.unlockMethod ?? null,
           description:
             {
-              text: nullCoalesce(parsedData?.description?.text, "No description was specified in the JSON file."),
-              unlockCondition: nullCoalesce(parsedData?.description?.unlockCondition, "No unlock condition was specified in the JSON file.")
+              text: parsedData?.description?.text ?? "No description was specified in the JSON file.",
+              unlockCondition: parsedData?.description?.unlockCondition ?? "No unlock condition was specified in the JSON file."
             },
           characterMenu:
             {
-              position: nullCoalesce(parsedData?.characterMenu?.position, [0, 0]),
-              scale: calculateCharacterScale(parsedData.characterMenu?.scale, parsedData?.characterMenu?.isPixel),
-              isPixel: nullCoalesce(parsedData?.characterMenu?.isPixel, false),
-              flipX: nullCoalesce(parsedData?.characterMenu?.flipX, false),
-              selectedAnim: nullCoalesce(parsedData?.characterMenu?.selectedAnim, "hey")
+              position: parsedData?.characterMenu?.position ?? [0, 0],
+              scale: calculateCharacterScale(parsedData.characterMenu?.scale ?? 1, parsedData?.characterMenu?.isPixel ?? false),
+              isPixel: parsedData?.characterMenu?.isPixel ?? false,
+              flipX: parsedData?.characterMenu?.flipX ?? false,
+              selectedAnim: parsedData?.characterMenu?.selectedAnim ?? "hey"
             },
           // We still set suffixes to null to account for scripts.
           suffixes:
             {
-              gameOverMusic: nullCoalesce(parsedData?.suffixes?.gameOverMusic, null),
-              blueBall: nullCoalesce(parsedData?.suffixes?.blueBall, null),
-              pauseMusic: nullCoalesce(parsedData?.suffixes?.pauseMusic, null)
+              gameOverMusic: parsedData?.suffixes?.gameOverMusic ?? null,
+              blueBall: parsedData?.suffixes?.blueBall ?? null,
+              pauseMusic: parsedData?.suffixes?.pauseMusic ?? null
             },
-          characterVariations: nullCoalesce(parsedData?.characterVariations, [])
+          characterVariations: parsedData?.characterVariations ?? []
         };
 
       return result;
@@ -486,21 +486,6 @@ class FS_CharacterDataHandler extends Module
       cachedJSONSparrows.remove(graphicKey);
     }
     MemoryUtil.collect(true);
-  }
-
-  /**
-   * HELPER FUNCTIONS
-   * These are functions that are simply nice to have. They make the code cleaner.
-   */
-  /**
-   * Imitates null coalescing since HScript doesn't support it yet.
-   * @param value The value to check.
-   * @param fallback The fallback value.
-   * @return The value if it's not null, otherwise the fallback value.
-   */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
-  {
-    return value != null ? value : fallback;
   }
 }
 

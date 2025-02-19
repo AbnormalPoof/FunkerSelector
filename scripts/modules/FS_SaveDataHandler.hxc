@@ -165,21 +165,21 @@ class FS_SaveDataHandler extends Module
             version: FS_SAVE_DATA_VERSION,
             characterIDs:
               {
-                bf: nullCoalesce(oldCharacterIDs?.bf, 'default'),
-                gf: nullCoalesce(oldCharacterIDs?.gf, 'default'),
-                dad: nullCoalesce(oldCharacterIDs?.dad, 'default')
+                bf: oldCharacterIDs?.bf ?? 'default',
+                gf: oldCharacterIDs?.gf ?? 'default',
+                dad: oldCharacterIDs?.dad ?? 'default'
               },
             preferences: new StringMap(),
-            seenUnlocks: nullCoalesce(oldSeenUnlocks, [])
+            seenUnlocks: oldSeenUnlocks ?? []
           };
 
         // Settings is a special case...
         var settings:Dynamic =
           {
-            potatoMode: nullCoalesce(oldPrefs?.potatoMode, false),
-            preloadSprites: nullCoalesce(oldPrefs?.preloadSprites, false),
-            preferredSFX: nullCoalesce(oldPrefs?.preferredSFX, 'funkin'),
-            djSwapping: nullCoalesce(oldPrefs?.djSwapping, true)
+            potatoMode: oldPrefs?.potatoMode ?? false,
+            preloadSprites: oldPrefs?.preloadSprites ?? false,
+            preferredSFX: oldPrefs?.preferredSFX ?? 'funkin',
+            djSwapping: oldPrefs?.djSwapping ?? true
           };
 
         for (key in ReflectUtil.getAnonymousFieldsOf(settings))
@@ -300,16 +300,5 @@ class FS_SaveDataHandler extends Module
   {
     saveData.preferences[key] = value;
     writeSaveData();
-  }
-
-  /**
-   * Imitates null coalescing since HScript doesn't support it yet.
-   * @param value The value to check.
-   * @param fallback The fallback value.
-   * @return The value if it's not null, otherwise the fallback value.
-   */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
-  {
-    return value != null ? value : fallback;
   }
 }

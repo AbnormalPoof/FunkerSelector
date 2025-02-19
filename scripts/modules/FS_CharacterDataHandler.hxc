@@ -7,10 +7,14 @@ import funkin.modding.module.ModuleHandler;
 import funkin.play.character.CharacterDataParser;
 import funkin.save.Save;
 import funkin.util.MemoryUtil;
+import funkin.util.ReflectUtil;
 import funkin.util.SerializerUtil;
 import funkin.util.assets.DataAssets;
 import haxe.ds.StringMap;
 import haxe.ds.Either;
+import thx.Dynamics;
+import thx.Objects;
+import thx.Types;
 
 /**
  * A module responsible for handling character caches and data.
@@ -41,8 +45,6 @@ class FS_CharacterDataHandler extends Module
 
   /**
    * The default character data. This is used as base.
-   *
-   * TODO: Use this in `parseJSONData()` when v0.6.0 is out.
    */
   var FS_DEFAULT_CHARACTER_DATA:FS_characterData =
     {
@@ -55,8 +57,8 @@ class FS_CharacterDataHandler extends Module
       unlockMethod: null,
       description:
         {
-          text: "This is placeholder data! If you're somehow reading this then you probably did something really wrong.",
-          unlockCondition: "This is placeholder data! If you're somehow reading this then you probably did something really wrong."
+          text: "No description was specified in the JSON file.",
+          unlockCondition: "No unlock condition was specified in the JSON file."
         },
       characterMenu:
         {
@@ -64,7 +66,7 @@ class FS_CharacterDataHandler extends Module
           scale: 1.0,
           isPixel: false,
           flipX: false,
-          selectedAnim: null
+          selectedAnim: "hey"
         },
       suffixes:
         {
@@ -197,38 +199,8 @@ class FS_CharacterDataHandler extends Module
         return null;
       }
 
-      // I basically just put this all in one big object so that I don't have to do a bunch of null checks lol
-      var result:FS_characterData =
-        {
-          version: parsedData?.version ?? "1.0.0",
-          characterID: parsedData?.characterID ?? null,
-          characterType: parsedData?.characterType ?? "bf",
-          mustUnlock: parsedData?.mustUnlock ?? false,
-          voiceID: parsedData?.voiceID ?? parsedData?.characterID,
-          introSwapFrame: parsedData?.introSwapFrame ?? 3,
-          unlockMethod: parsedData?.unlockMethod ?? null,
-          description:
-            {
-              text: parsedData?.description?.text ?? "No description was specified in the JSON file.",
-              unlockCondition: parsedData?.description?.unlockCondition ?? "No unlock condition was specified in the JSON file."
-            },
-          characterMenu:
-            {
-              position: parsedData?.characterMenu?.position ?? [0, 0],
-              scale: calculateCharacterScale(parsedData.characterMenu?.scale ?? 1, parsedData?.characterMenu?.isPixel ?? false),
-              isPixel: parsedData?.characterMenu?.isPixel ?? false,
-              flipX: parsedData?.characterMenu?.flipX ?? false,
-              selectedAnim: parsedData?.characterMenu?.selectedAnim ?? "hey"
-            },
-          // We still set suffixes to null to account for scripts.
-          suffixes:
-            {
-              gameOverMusic: parsedData?.suffixes?.gameOverMusic ?? null,
-              blueBall: parsedData?.suffixes?.blueBall ?? null,
-              pauseMusic: parsedData?.suffixes?.pauseMusic ?? null
-            },
-          characterVariations: parsedData?.characterVariations ?? []
-        };
+      // Merge the parsed data with the default character data, basically layering the parsed object on top of the default one.
+      var result = mergeStructures(Objects.clone(FS_DEFAULT_CHARACTER_DATA), parsedData);
 
       return result;
     }
@@ -237,16 +209,41 @@ class FS_CharacterDataHandler extends Module
   }
 
   /**
+   * Merges two structures together.
+   * I would use `Objects.deepCombine` instead, but it doesn't do null-checking.
+   *
+   * @param source The source structure. This is the "base", so to speak.
+   * @param target The target structure. This is overlayed on top of `source`.
+   * @return The merged structure.
+   */
+  function mergeStructures(source:Dynamic, target:Dynamic):Dynamic
+  {
+    var mergedObject:Dynamic = Objects.clone(source);
+
+    for (field in ReflectUtil.getAnonymousFieldsOf(mergedObject))
+    {
+      var sourceValue = ReflectUtil.getAnonymousField(source, field);
+      var targetValue = ReflectUtil.getAnonymousField(target, field);
+
+      if (Types.isAnonymousObject(sourceValue) && Types.isAnonymousObject(targetValue))
+      {
+        ReflectUtil.setAnonymousField(mergedObject, field, mergeStructures(sourceValue, targetValue));
+      }
+      else if (targetValue != null)
+      {
+        ReflectUtil.setAnonymousField(mergedObject, field, targetValue);
+      }
+    }
+
+    return mergedObject;
+  }
+
+  /**
    * Calculates the scale of the character.
    * @return The calculated scale value.
    */
   function calculateCharacterScale(scale:Float, isPixel:Bool):Float
   {
-    if (scale == null)
-    {
-      return 1;
-    }
-
     if (isPixel)
     {
       return scale * 6;
@@ -316,7 +313,7 @@ class FS_CharacterDataHandler extends Module
           return false;
         }
       default:
-        trace("[Funker Selector] Unlock Method " + unlockMethod.type + " not recognized.");
+        trace("[Funker Selector] Unlock Method " + unlockMethod?.type + " not recognized.");
         return false;
     }
   }

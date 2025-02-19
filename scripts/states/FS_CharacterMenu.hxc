@@ -141,7 +141,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   /**
    * Character slots in the order of "PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", and "SPEAKER CHARACTERS".
    * These are an array of arrays, they can have multiple aliases for better flexibility.
-   * 
+   *
    * `pageIndex` uses this to determine which page is currently selected.
    */
   var characterSlots:Array<String> = [['bf', 'player'], ['dad', 'opponent'], ['gf', 'speaker']];
@@ -546,9 +546,9 @@ class FS_CharacterMenu extends MusicBeatSubState
             var icon = new HealthIcon('dad', 0);
             icon.x = xStart + (j * 2 + k) * spacing;
             icon.y = yStart + (i * 2 + l) * spacing;
-            icon.alpha = nullCoalesce(alpha, 0.2);
+            icon.alpha = alpha ?? 0.2;
 
-            icon.configure(nullCoalesce(characterData?.healthIcon, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'));
+            icon.configure(characterData?.healthIcon ?? 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 
             add(icon);
             iconGrid.push(icon);

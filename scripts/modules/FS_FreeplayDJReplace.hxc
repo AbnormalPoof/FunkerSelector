@@ -152,7 +152,7 @@ class DJReplace extends Module
     var freeplayDJ:FreeplayDJ = FlxG.state.subState.dj;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf) : FlxG.state.subState.currentCharacterId;
     var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(characterID);
-    var playableCharData:Dynamic = playableChar != null ? playableChar.getFreeplayDJData() : null;
+    var playableCharData:Dynamic = playableChar.getFreeplayDJData() ?? null;
 
     var startTime = TimerUtil.start();
 

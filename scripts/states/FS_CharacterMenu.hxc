@@ -26,6 +26,7 @@ import funkin.save.Save;
 import funkin.ui.MusicBeatSubState;
 import funkin.ui.charSelect.Lock;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
+import funkin.util.Constants;
 import funkin.util.MathUtil;
 import funkin.util.SortUtil;
 import funkin.util.WindowUtil;
@@ -140,7 +141,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   /**
    * Character slots in the order of "PLAYABLE CHARACTERS", "OPPONENT CHARACTERS", and "SPEAKER CHARACTERS".
    * These are an array of arrays, they can have multiple aliases for better flexibility.
-   * 
+   *
    * `pageIndex` uses this to determine which page is currently selected.
    */
   var characterSlots:Array<String> = [['bf', 'player'], ['dad', 'opponent'], ['gf', 'speaker']];
@@ -545,9 +546,9 @@ class FS_CharacterMenu extends MusicBeatSubState
             var icon = new HealthIcon('dad', 0);
             icon.x = xStart + (j * 2 + k) * spacing;
             icon.y = yStart + (i * 2 + l) * spacing;
-            icon.alpha = nullCoalesce(alpha, 0.2);
+            icon.alpha = alpha ?? 0.2;
 
-            icon.configure(nullCoalesce(characterData?.healthIcon, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'));
+            icon.configure(characterData?.healthIcon ?? 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 
             add(icon);
             iconGrid.push(icon);
@@ -1492,18 +1493,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   public function isDebugBuild():Bool
   {
     // Debug builds use a different background color.
-    return Application.current.window.context.attributes.background == 0xFFFF00FF;
-  }
-
-  /**
-   * Imitates null coalescing since HScript doesn't support it yet.
-   * @param value The value to check.
-   * @param fallback The fallback value.
-   * @return The value if it's not null, otherwise the fallback value.
-   */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
-  {
-    return value != null ? value : fallback;
+    return Constants.DEBUG_BUILD;
   }
 
   /**

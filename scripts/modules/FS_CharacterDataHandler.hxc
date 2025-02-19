@@ -7,10 +7,14 @@ import funkin.modding.module.ModuleHandler;
 import funkin.play.character.CharacterDataParser;
 import funkin.save.Save;
 import funkin.util.MemoryUtil;
+import funkin.util.ReflectUtil;
 import funkin.util.SerializerUtil;
 import funkin.util.assets.DataAssets;
 import haxe.ds.StringMap;
 import haxe.ds.Either;
+import thx.Dynamics;
+import thx.Objects;
+import thx.Types;
 
 /**
  * A module responsible for handling character caches and data.
@@ -41,8 +45,6 @@ class FS_CharacterDataHandler extends Module
 
   /**
    * The default character data. This is used as base.
-   *
-   * TODO: Use this in `parseJSONData()` when v0.6.0 is out.
    */
   var FS_DEFAULT_CHARACTER_DATA:FS_characterData =
     {
@@ -55,8 +57,8 @@ class FS_CharacterDataHandler extends Module
       unlockMethod: null,
       description:
         {
-          text: "This is placeholder data! If you're somehow reading this then you probably did something really wrong.",
-          unlockCondition: "This is placeholder data! If you're somehow reading this then you probably did something really wrong."
+          text: "No description was specified in the JSON file.",
+          unlockCondition: "No unlock condition was specified in the JSON file."
         },
       characterMenu:
         {
@@ -64,7 +66,7 @@ class FS_CharacterDataHandler extends Module
           scale: 1.0,
           isPixel: false,
           flipX: false,
-          selectedAnim: null
+          selectedAnim: "hey"
         },
       suffixes:
         {
@@ -197,38 +199,11 @@ class FS_CharacterDataHandler extends Module
         return null;
       }
 
-      // I basically just put this all in one big object so that I don't have to do a bunch of null checks lol
-      var result:FS_characterData =
-        {
-          version: nullCoalesce(parsedData?.version, "1.0.0"),
-          characterID: nullCoalesce(parsedData?.characterID, null),
-          characterType: nullCoalesce(parsedData?.characterType, "bf"),
-          mustUnlock: nullCoalesce(parsedData?.mustUnlock, false),
-          voiceID: nullCoalesce(parsedData?.voiceID, parsedData?.characterID),
-          introSwapFrame: nullCoalesce(parsedData?.introSwapFrame, 3),
-          unlockMethod: nullCoalesce(parsedData?.unlockMethod, null),
-          description:
-            {
-              text: nullCoalesce(parsedData?.description?.text, "No description was specified in the JSON file."),
-              unlockCondition: nullCoalesce(parsedData?.description?.unlockCondition, "No unlock condition was specified in the JSON file.")
-            },
-          characterMenu:
-            {
-              position: nullCoalesce(parsedData?.characterMenu?.position, [0, 0]),
-              scale: calculateCharacterScale(parsedData.characterMenu?.scale, parsedData?.characterMenu?.isPixel),
-              isPixel: nullCoalesce(parsedData?.characterMenu?.isPixel, false),
-              flipX: nullCoalesce(parsedData?.characterMenu?.flipX, false),
-              selectedAnim: nullCoalesce(parsedData?.characterMenu?.selectedAnim, "hey")
-            },
-          // We still set suffixes to null to account for scripts.
-          suffixes:
-            {
-              gameOverMusic: nullCoalesce(parsedData?.suffixes?.gameOverMusic, null),
-              blueBall: nullCoalesce(parsedData?.suffixes?.blueBall, null),
-              pauseMusic: nullCoalesce(parsedData?.suffixes?.pauseMusic, null)
-            },
-          characterVariations: nullCoalesce(parsedData?.characterVariations, [])
-        };
+      // Merge the parsed data with the default character data, basically layering the parsed object on top of the default one.
+      var result = mergeStructures(Objects.clone(FS_DEFAULT_CHARACTER_DATA), parsedData);
+
+      // Manually calculate the scale of the character.
+      result.characterMenu.scale = calculateCharacterScale(result.characterMenu.scale, result.characterMenu.isPixel);
 
       return result;
     }
@@ -237,22 +212,42 @@ class FS_CharacterDataHandler extends Module
   }
 
   /**
+   * Merges two structures together.
+   * I would use `Objects.deepCombine` instead, but it doesn't do null-checking.
+   *
+   * @param source The source structure. This is the "base", so to speak.
+   * @param target The target structure. This is overlayed on top of `source`.
+   * @return The merged structure.
+   */
+  function mergeStructures(source:Dynamic, target:Dynamic):Dynamic
+  {
+    var mergedObject:Dynamic = Objects.clone(source);
+
+    for (field in ReflectUtil.getAnonymousFieldsOf(mergedObject))
+    {
+      var sourceValue = ReflectUtil.getAnonymousField(source, field);
+      var targetValue = ReflectUtil.getAnonymousField(target, field);
+
+      if (Types.isAnonymousObject(sourceValue) && Types.isAnonymousObject(targetValue))
+      {
+        ReflectUtil.setAnonymousField(mergedObject, field, mergeStructures(sourceValue, targetValue));
+      }
+      else if (targetValue != null)
+      {
+        ReflectUtil.setAnonymousField(mergedObject, field, targetValue);
+      }
+    }
+
+    return mergedObject;
+  }
+
+  /**
    * Calculates the scale of the character.
    * @return The calculated scale value.
    */
   function calculateCharacterScale(scale:Float, isPixel:Bool):Float
   {
-    if (scale == null)
-    {
-      return 1;
-    }
-
-    if (isPixel)
-    {
-      return scale * 6;
-    }
-
-    return scale;
+    return isPixel ? (scale * 6) : scale;
   }
 
   /**
@@ -316,7 +311,7 @@ class FS_CharacterDataHandler extends Module
           return false;
         }
       default:
-        trace("[Funker Selector] Unlock Method " + unlockMethod.type + " not recognized.");
+        trace("[Funker Selector] Unlock Method " + unlockMethod?.type + " not recognized.");
         return false;
     }
   }
@@ -486,21 +481,6 @@ class FS_CharacterDataHandler extends Module
       cachedJSONSparrows.remove(graphicKey);
     }
     MemoryUtil.collect(true);
-  }
-
-  /**
-   * HELPER FUNCTIONS
-   * These are functions that are simply nice to have. They make the code cleaner.
-   */
-  /**
-   * Imitates null coalescing since HScript doesn't support it yet.
-   * @param value The value to check.
-   * @param fallback The fallback value.
-   * @return The value if it's not null, otherwise the fallback value.
-   */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
-  {
-    return value != null ? value : fallback;
   }
 }
 

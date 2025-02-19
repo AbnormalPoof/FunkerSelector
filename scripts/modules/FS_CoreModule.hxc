@@ -229,7 +229,7 @@ class FS_CoreModule extends Module
 
         if (songMatch && variationMatch)
         {
-          fs_characterData = nullCoalesce(FS_CharacterDataHandler.scriptCall('getCharacterData', [variation.characterID]), fs_characterData);
+          fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [variation.characterID]) ?? fs_characterData;
 
           if (FS_CharacterDataHandler.scriptCall('charJSONCheck', [variation.characterID]))
           {
@@ -270,9 +270,9 @@ class FS_CoreModule extends Module
 
     if (characterType == CharacterType.BF)
     {
-      PauseSubState.musicSuffix = nullCoalesce(fs_characterData.suffixes.pauseMusic, PauseSubState.musicSuffix);
-      GameOverSubState.musicSuffix = nullCoalesce(fs_characterData.suffixes.gameOverMusic, GameOverSubState.musicSuffix);
-      GameOverSubState.blueBallSuffix = nullCoalesce(fs_characterData.suffixes.blueBall, GameOverSubState.blueBallSuffix);
+      PauseSubState.musicSuffix = fs_characterData?.suffixes?.pauseMusic ?? PauseSubState.musicSuffix;
+      GameOverSubState.musicSuffix = fs_characterData?.suffixes?.gameOverMusic ?? GameOverSubState.musicSuffix;
+      GameOverSubState.blueBallSuffix = fs_characterData?.suffixes?.blueBall ?? GameOverSubState.blueBallSuffix;
     }
 
     trace('[Funker Selector] Suffixes\n\nPause Music: ' + PauseSubState.musicSuffix + '\nGame Over Music: ' + GameOverSubState.musicSuffix
@@ -290,8 +290,8 @@ class FS_CoreModule extends Module
     var result:VoicesGroup = new VoicesGroup();
     var songVoices:Array<String> = currentChart.buildVoiceList();
 
-    result.addPlayerVoice(FunkinSound.load(nullCoalesce(voiceList[0], songVoices[0])));
-    result.addOpponentVoice(FunkinSound.load(nullCoalesce(voiceList[1], songVoices[1])));
+    result.addPlayerVoice(FunkinSound.load(voiceList[0] ?? songVoices[0]));
+    result.addOpponentVoice(FunkinSound.load(voiceList[1] ?? songVoices[1]));
 
     result.playerVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.player);
     result.opponentVoicesOffset = currentChart.offsets.getVocalOffset(currentChart.characters.opponent);
@@ -532,17 +532,6 @@ class FS_CoreModule extends Module
   public function isDebugBuild():Bool
   {
     // Debug builds use a different background color.
-    return Application.current.window.context.attributes.background == 0xFFFF00FF;
-  }
-
-  /**
-   * Imitates null coalescing since HScript doesn't support it yet.
-   * @param value The value to check.
-   * @param fallback The fallback value.
-   * @return The value if it's not null, otherwise the fallback value.
-   */
-  public function nullCoalesce(value:Dynamic, fallback:Dynamic):Dynamic
-  {
-    return value != null ? value : fallback;
+    return Constants.DEBUG_BUILD;
   }
 }

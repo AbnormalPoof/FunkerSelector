@@ -392,9 +392,11 @@ class FS_CharacterDataHandler extends Module
         continue;
       }
 
-      if (funkerselector_characterData.characterMenu.useCustomSprites && funkerselector_characterData.characterMenu.customSpriteData != null)
+      if (funkerselector_characterData.characterMenu.useCustomSprites
+        && funkerselector_characterData.characterMenu.customSpriteData != null)
       {
-        spriteQueue.set(Paths.image(funkerselector_characterData.characterMenu.customSpriteData.assetPath), Paths.image(funkerselector_characterData.characterMenu.customSpriteData.assetPath));
+        spriteQueue.set(Paths.image(funkerselector_characterData.characterMenu.customSpriteData.assetPath),
+          Paths.image(funkerselector_characterData.characterMenu.customSpriteData.assetPath));
         continue;
       }
 

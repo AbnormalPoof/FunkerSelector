@@ -154,7 +154,7 @@ class FS_CoreModule extends Module
    * @param characterType The character type we're using.
    *
    */
-  function replaceChar(characterID:String = 'bf', characterType:CharacterType = null):Void
+  function replaceCharacter(characterID:String = 'bf', characterType:CharacterType = null):Void
   {
     var fs_characterData:Dynamic = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
     var oldChar:BaseCharacter = null;
@@ -494,17 +494,16 @@ class FS_CoreModule extends Module
   override function onCountdownStart(event:CountdownScriptEvent):Void
   {
     super.onCountdownStart(event);
-    if (PlayState.instance == null
-      || PlayState.instance.currentStage == null
+    if (PlayState.instance?.currentStage == null
       || PlayStatePlaylist.isStoryMode
       || PlayState.instance.isMinimalMode
       || PlayState.instance.isChartingMode) return;
 
     voiceList = [null, null];
 
-    replaceChar(FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf, CharacterType.BF);
-    replaceChar(FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf, CharacterType.GF);
-    replaceChar(FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad, CharacterType.DAD);
+    replaceCharacter(FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf, CharacterType.BF);
+    replaceCharacter(FS_SaveDataHandler.scriptGet('saveData').characterIDs.gf, CharacterType.GF);
+    replaceCharacter(FS_SaveDataHandler.scriptGet('saveData').characterIDs.dad, CharacterType.DAD);
     PlayState.instance.currentStage.refresh();
 
     trace('[Funker Selector] Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);

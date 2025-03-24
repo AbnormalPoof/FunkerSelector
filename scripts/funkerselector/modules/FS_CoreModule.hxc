@@ -325,7 +325,7 @@ class FS_CoreModule extends Module
         if (charSelect == null)
         {
           freeplayBPM = getFreeplayCapsuleBPM((FlxG.state.subState));
-          charSelect = ScriptedMusicBeatSubState.init("funkerselector.states.FS_CharacterMenu");
+          charSelect = ScriptedMusicBeatSubState.init('FS_CharacterMenu');
           charSelect.camera = FlxG.state.subState.funnyCam;
           FlxG.state.subState.persistentUpdate = false;
           trace("[Funker Selector] Opening the Character Select SubState...");

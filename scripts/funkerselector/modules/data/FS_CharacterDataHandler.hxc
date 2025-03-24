@@ -43,7 +43,7 @@ class FS_CharacterDataHandler extends Module
 
   public function new()
   {
-    super("FS_CharacterDataHandler", 100);
+    super('FS_CharacterDataHandler', 100);
   }
 
   /**

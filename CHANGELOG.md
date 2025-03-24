@@ -9,17 +9,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Nene joins the cast. Now selectable as a Speaker Character in the menu!
 - HOME and END now jump to the far left and far right of the menu respectively.
 - Added a `perfectRank` variable to the JSON data's unlock method.
-- Added support for custom sprite data in the menu, please see the JSON documentation on how to do this.
+- Added support for using custom sprites in the menu instead of character sprites.
   - Nene is literally the only reason this is a thing since her normal character sprite doesn't display correctly.
 ### Changed
-- Complete refactor of the code for better readability.
-  - All scripts now follow a naming scheme, using a `FS_` prefix.
-  - A good portion of the code has been split into smaller modules.
+- Complete refactor of the code for future-proofing.
+  - All scripts now use an `FS_` prefix and have been moved to subfolders for organization.
   - This should hopefully make the code a lot easier to go through, since it isn't so convoluted anymore.
-- Optimized JSON parsing, the code for that should be a lot cleaner!
+- Optimized JSON parsing.
+- Reworked how the save data handles preferences and overhauled migration.
 ### Fixed
 - Fixed an issue where Girlfriend was layered on top of the opponent and player if you had a speaker character selected in the Tankman Battlefield stage.
-- Fixed an issue where the character got stuck on their confirm animation if you selected them and then quickly moved away.
+- Fixed an issue where characters got stuck on their confirm animation if you selected them and then quickly moved away.
 - Fixed an issue where the character descriptions cut off abruptly.
 
 ## [2.0.0] - 2024-12-17

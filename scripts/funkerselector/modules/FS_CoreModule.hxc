@@ -82,7 +82,7 @@ class FS_CoreModule extends Module
   /**
    * The `FS_SaveDataHandler` module.
    */
-  var FS_SaveDataHandler:Module = ModuleHandler.getModule("FS_SaveDataHandler");
+  var FS_SaveDataHandler:Module = ModuleHandler.getModule('FS_SaveDataHandler');
 
   /**
    * The `FS_CharacterDataHandler` module.
@@ -94,7 +94,7 @@ class FS_CoreModule extends Module
    */
   function new()
   {
-    super("FS_CoreModule", 1000);
+    super('FS_CoreModule', 1000);
 
     // The FIRST thing we check is the game version.
     // We use `lime.app.Application` instead of `Constants.VERSION` because the latter
@@ -325,7 +325,7 @@ class FS_CoreModule extends Module
         if (charSelect == null)
         {
           freeplayBPM = getFreeplayCapsuleBPM((FlxG.state.subState));
-          charSelect = ScriptedMusicBeatSubState.init("FS_CharacterMenu");
+          charSelect = ScriptedMusicBeatSubState.init("funkerselector.states.FS_CharacterMenu");
           charSelect.camera = FlxG.state.subState.funnyCam;
           FlxG.state.subState.persistentUpdate = false;
           trace("[Funker Selector] Opening the Character Select SubState...");

@@ -16,7 +16,7 @@ class ResultsHandler extends Module
 
   function new()
   {
-    super('FS_ResultsHandler', 300);
+    super('FS_ResultsHandler', 100);
   }
 
   /**

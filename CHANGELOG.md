@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 - v0.6.0 support.
 - Nene joins the cast. Now selectable as a Speaker Character in the menu!
+  - Unlock her by getting a PERFECT rank or higher on Darnell (BF Mix)
 - HOME and END now jump to the far left and far right of the menu respectively.
 - Added a `perfectRank` variable to the JSON data's unlock method.
 - Added support for using custom sprites in the menu instead of character sprites.

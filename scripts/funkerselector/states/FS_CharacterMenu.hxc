@@ -442,12 +442,12 @@ class FS_CharacterMenu extends MusicBeatSubState
       }
       bopperCharacterIDs.set(characterSprite, data.characterID);
       characterSprite.playAnimation(data.characterMenu.customSpriteData?.startingAnimation ?? 'idle');
-      configureChar(characterSprite, data.characterMenu);
+      configureCharacterSprite(characterSprite, data.characterMenu);
       return characterSprite;
     }
     else if (baseCharacter != null)
     {
-      configureChar(baseCharacter, data.characterMenu);
+      configureCharacterSprite(baseCharacter, data.characterMenu);
       return baseCharacter;
     }
     else
@@ -631,19 +631,20 @@ class FS_CharacterMenu extends MusicBeatSubState
    * @param data The character data to use.
    * @return The configured BaseCharacter.
    */
-  function configureChar(characterSprite:FunkinSprite, data:Dynamic):FunkinSprite
+  function configureCharacterSprite(characterSprite:FunkinSprite, data:Dynamic):FunkinSprite
   {
     if (data == null)
     {
       trace('[Funker Selector] ERROR: Data is null! Can\'t configure characterSprite.');
       return;
     }
+    var funkin_characterData:CharacterData = CharacterDataParser.fetchCharacterData(data.characterID);
 
     characterSprite.y += data.position[1];
     characterSprite.flipX = data.flipX;
-    characterSprite.scale.set((data.isPixel ? data.scale * 6 : data.scale), (data.isPixel ? data.scale * 6 : data.scale));
-    characterSprite.antialiasing = !data.isPixel ? true : false;
-    characterSprite.pixelPerfectRender = data.isPixel;
+    characterSprite.scale.set((funkin_characterData?.isPixel ? data.scale * 6 : data.scale), (funkin_characterData?.isPixel ? data.scale * 6 : data.scale));
+    characterSprite.antialiasing = !funkin_characterData?.isPixel ? true : false;
+    characterSprite.pixelPerfectRender = funkin_characterData?.isPixel;
     characterSprite.camera = uiCamera;
 
     return characterSprite;

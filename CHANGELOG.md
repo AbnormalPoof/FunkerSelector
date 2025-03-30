@@ -1,4 +1,4 @@
-# Changelog
+## Changelog
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Fixed an issue where Girlfriend was layered on top of the opponent and player if you had a speaker character selected in the Tankman Battlefield stage.
 - Fixed an issue where characters got stuck on their confirm animation if you selected them and then quickly moved away.
 - Fixed an issue where the character descriptions cut off abruptly.
+### Removed
+- The `isPixel` property has been removed from the character sprite data in the JSON format. The value is now determined by the character's base game data.
 
 ## [2.0.0] - 2024-12-17
 ### Added

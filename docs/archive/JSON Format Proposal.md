@@ -1,5 +1,3 @@
-# This is the original proposal I wrote when developing the JSON system. I left it here in the mod for fun. This has some stuff that was never implemented.
-
 ## Proposal: New JSON format.
 
 One of the things in the TODO is to replace charSelectList.txt with a fresh JSON format system.
@@ -10,7 +8,7 @@ This can go in `[Mod Folder Name]/data/funkerSelect/`
 
 Additional behavior to animations can be added through HScript.
 
-``` json
+```json
 {
   "version": "1.0.0",
   "characterID": "bf",

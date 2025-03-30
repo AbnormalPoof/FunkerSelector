@@ -118,9 +118,14 @@ class FS_CharacterMenu extends MusicBeatSubState
   var unlockSound:FunkinSound;
 
   /**
-   * The camera for the entire UI.
+   * The camera for certain UI elements.
    */
   var uiCamera:FunkinCamera;
+
+  /**
+   * The camera for sprites.
+   */
+  var spriteCamera:FunkinCamera;
 
   /**
    * A map containing every character.
@@ -233,16 +238,6 @@ class FS_CharacterMenu extends MusicBeatSubState
   var ICON_SCROLL_SPEED:Float = 0.3;
 
   /**
-   * Stuff related to the typewriter effect for the character description.
-   */
-  var typewriterTimer:FlxTimer = null;
-
-  /**
-   * An index for the typewriter effect.
-   */
-  var typewriterIndex:Int = 0;
-
-  /**
    * Stolen from `FreeplayState`.
    */
   var spamTimer:Float = 0;
@@ -286,6 +281,7 @@ class FS_CharacterMenu extends MusicBeatSubState
         {
           ease: FlxEase.quartOut,
           onComplete: function(twn:FlxTween) {
+            createIconGrid(150, 0.2);
             buildCharacterWheel();
             jumpToCurSelected();
           }
@@ -375,9 +371,6 @@ class FS_CharacterMenu extends MusicBeatSubState
   {
     characterWheel.clear();
 
-    loadingText.visible = true;
-    uiCamera.visible = false;
-
     for (characterIndex in 0...filteredKeys.length)
     {
       var characterID:String = filteredKeys[characterIndex];
@@ -404,7 +397,7 @@ class FS_CharacterMenu extends MusicBeatSubState
             lockedChill.animation.play('idle');
           };
           lockedChill.scale.set(1.2, 1.2);
-          lockedChill.camera = uiCamera;
+          lockedChill.camera = spriteCamera;
           characterWheel.add(lockedChill);
         }
         else
@@ -442,12 +435,12 @@ class FS_CharacterMenu extends MusicBeatSubState
       }
       bopperCharacterIDs.set(characterSprite, data.characterID);
       characterSprite.playAnimation(data.characterMenu.customSpriteData?.startingAnimation ?? 'idle');
-      configureCharacterSprite(characterSprite, data.characterMenu);
+      configureCharacterSprite(characterSprite, data);
       return characterSprite;
     }
     else if (baseCharacter != null)
     {
-      configureCharacterSprite(baseCharacter, data.characterMenu);
+      configureCharacterSprite(baseCharacter, data);
       return baseCharacter;
     }
     else
@@ -618,7 +611,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
             add(icon);
             iconGrid.push(icon);
-            icon.camera = uiCamera;
+            icon.camera = spriteCamera;
           }
         }
       }
@@ -639,13 +632,14 @@ class FS_CharacterMenu extends MusicBeatSubState
       return;
     }
     var funkin_characterData:CharacterData = CharacterDataParser.fetchCharacterData(data.characterID);
+    var scaleFactor:Float = data.characterMenu.scale * (funkin_characterData?.isPixel ? 6 : 1);
 
-    characterSprite.y += data.position[1];
-    characterSprite.flipX = data.flipX;
-    characterSprite.scale.set((funkin_characterData?.isPixel ? data.scale * 6 : data.scale), (funkin_characterData?.isPixel ? data.scale * 6 : data.scale));
+    characterSprite.y += data.characterMenu.position[1];
+    characterSprite.flipX = data.characterMenu.flipX;
+    characterSprite.scale.set(scaleFactor, scaleFactor);
     characterSprite.antialiasing = !funkin_characterData?.isPixel ? true : false;
     characterSprite.pixelPerfectRender = funkin_characterData?.isPixel;
-    characterSprite.camera = uiCamera;
+    characterSprite.camera = spriteCamera;
 
     return characterSprite;
   }
@@ -655,6 +649,10 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function setupUIStuff():Void
   {
+    spriteCamera = new FunkinCamera('UISprites');
+    FlxG.cameras.add(spriteCamera, false);
+    spriteCamera.bgColor = 0x0;
+
     uiCamera = new FunkinCamera('UIElements');
     FlxG.cameras.add(uiCamera, false);
     uiCamera.bgColor = 0x0;
@@ -663,7 +661,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
     bg.alpha = 0;
     bg.zIndex = 100;
-    bg.camera = uiCamera;
+    bg.camera = spriteCamera;
     add(bg);
 
     selectText = configureText(null, null, [170, 10], 50, Paths.font("PhantomMuff.ttf"));
@@ -775,14 +773,12 @@ class FS_CharacterMenu extends MusicBeatSubState
     }
     else
     {
-      createIconGrid(150, 0.2);
-
       characterWheel.zIndex = 250;
       add(characterWheel);
 
       loadingText = configureText(null, "LOADING\nPLEASE WAIT", [170, 10], 50, Paths.font("PhantomMuff.ttf"));
       loadingText.screenCenter();
-      loadingText.camera = uiCamera;
+      loadingText.camera = spriteCamera;
       loadingText.zIndex = 300;
       loadingText.visible = false;
       add(loadingText);

@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Fixed an issue where characters got stuck on their confirm animation if you selected them and then quickly moved away.
 - Fixed an issue where the character descriptions cut off abruptly.
 ### Removed
-- The `isPixel` property has been removed from the character sprite data in the JSON format. The value is now determined by the character's base game data.
+- Removed the `isPixel` property from the character sprite data in the JSON format. The value is now determined by the character's base game character data.
 
 ## [2.0.0] - 2024-12-17
 ### Added

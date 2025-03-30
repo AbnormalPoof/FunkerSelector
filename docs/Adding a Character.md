@@ -76,3 +76,24 @@ Character variation data (`characterVariations`) is structured like so:
   - `songID`: The song ID to target. Can either be an array of multiple IDs or a single string.
   - `characterID`: The character ID of the variation.
   - `songVariation`: The song variation to target. Optional, defaults to `"default"`.
+
+## Vocal Replacement
+> [!NOTE]
+> This has only been tested with split vocals; it’s very likely it might not work properly for songs with single vocal tracks.
+
+You can add character specific vocals for existing songs.
+
+1. In your mod, create a new folder named `songs`.
+2. Inside the `songs` folder, create another folder named after the song's ID you want to replace vocals for (e.g., `satin-panties`).
+3. Inside this folder, drop your vocal file in `.ogg` format.
+   - The naming scheme should follow this format: `Voices-characterID-variation.ogg`. Only add `-variation` if the vocals are for a song variation like Erect.
+     - If you set a `voiceID` in the JSON data, use that instead of the character ID!
+
+The file hierarchy should look like this:
+```
+|- My Funker Selector Mod
+  |-songs
+    |-tutorial
+      |-Voices-characterID.ogg
+  |-_polymod_metadata.json
+```

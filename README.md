@@ -6,7 +6,6 @@ Funker Selector is a mod for Friday Night Funkin' Base Game (V-Slice) that adds 
 
 ## Documentation
 - [Adding a character to Funker Selector](./docs/Adding%20a%20Character.md)
-- [Adding character-specific vocals](./docs/Vocal%20Replacement.md)
 
 ## Credits
 - AbnormalPoof - Basically everything.

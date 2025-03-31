@@ -342,22 +342,11 @@ class FS_CharacterMenu extends MusicBeatSubState
         var item:Dynamic = characterWheel.members[index];
         var characterID:String = bopperCharacterIDs.exists(item) ? bopperCharacterIDs.get(item) : item.characterId;
         if (item == null) continue;
-        if (!isSpriteVisible(item) && item.alive)
-        {
-          item.kill();
-        }
-        else
-        {
-          if (!item.alive)
-          {
-            item.revive();
-          }
-          fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
+        fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
 
-          var xOffset:Float = fs_characterData.characterMenu.position[0];
+        var xOffset:Float = fs_characterData.characterMenu.position[0];
 
-          item.x = MathUtil.smoothLerp(item.x, ((index - (currentCharacterIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.20);
-        }
+        item.x = MathUtil.smoothLerp(item.x, ((index - (currentCharacterIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.20);
       }
     }
 
@@ -471,12 +460,12 @@ class FS_CharacterMenu extends MusicBeatSubState
         if (index == currentCharacterIndex - 1)
         {
           item.alpha = 1.0;
-          if (item.animation.paused) item.animation.resume();
+          if (item.animation?.paused) item.animation.resume();
         }
         else
         {
           item.alpha = 0.5;
-          if (item.animation.curAnim.looped) item.animation.pause();
+          if (item.animation?.curAnim?.looped) item.animation.pause();
         }
       }
     }
@@ -1552,17 +1541,5 @@ class FS_CharacterMenu extends MusicBeatSubState
     if (font != null) object.setFormat(font, size, null, 'center');
 
     return object;
-  }
-
-  /**
-   * Determines whether or not a sprite is visible on screen.
-   * @param sprite The `FunkinSprite` to check.
-   * @return Whether or not the sprite is visible.
-   */
-  function isSpriteVisible(sprite:FunkinSprite):Bool
-  {
-    if (sprite == null) return false;
-    var bounds = sprite.getScreenBounds();
-    return bounds.x + bounds.width > 0 && bounds.x < FlxG.width && bounds.y + bounds.height > 0 && bounds.y < FlxG.height;
   }
 }

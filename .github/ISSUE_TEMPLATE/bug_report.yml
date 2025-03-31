@@ -1,13 +1,13 @@
-name: Bug
+name: Bug Report
 description: Report a bug with Funker Selector.
 labels: ["status: pending triage", "type: minor bug"]
-title: "Bug: "
+title: "Bug Report: "
 body:
   - type: input
     attributes:
       label: Version
-      description: What version of Friday Night Funkin' are you using?
-      placeholder: ex. 0.4.1
+      description: What version of Funker Selector are you using?
+      placeholder: ex. 2.1.0
     validations:
       required: true
 
@@ -16,8 +16,6 @@ body:
       label: Issue Checklist
       options:
         - label: Have you checked the Issues/Discussions to see if this hasn't been reported yet?
-        - label: Have you tried reinstalling the mod?
-        - label: Have you tried disabling every mod except Funker Selector?
         - label: Have you tried reproducing this issue on a fresh install of FNF?
 
   - type: markdown

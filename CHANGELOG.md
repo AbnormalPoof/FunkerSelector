@@ -12,8 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added a `perfectRank` variable to the JSON data's unlock method.
 - Added support for using custom sprites in the menu instead of character sprites.
   - Nene is literally the only reason this is a thing since her normal character sprite doesn't display correctly.
+- Added a new (primitive) loading screen when opening the character menu.
 ### Changed
-- Complete refactor of the code for future-proofing.
+- Complete refactor of all the code for future-proofing.
   - All scripts now use an `FS_` prefix and have been moved to subfolders for organization.
   - This should hopefully make the code a lot easier to go through, since it isn't so convoluted anymore.
 - Optimized JSON parsing.

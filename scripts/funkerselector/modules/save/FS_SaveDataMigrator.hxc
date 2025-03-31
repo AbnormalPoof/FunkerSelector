@@ -48,9 +48,14 @@ class FS_SaveDataMigrator extends Module
     switch (saveData.version)
     {
       case null:
-        return migrateSaveData_Legacy(saveData);
-      case "1.0.0":
-        return migrateSaveData_1_0_0(saveData);
+        if (saveData.characterIDs == null && saveData.preferences == null && saveData.seenUnlocks == null)
+        {
+          return migrateSaveData_Legacy(saveData);
+        }
+        else
+        {
+          return migrateSaveData_1_0_0(saveData);
+        }
       default:
         saveData.version = FS_SAVE_DATA_VERSION;
         return saveData;

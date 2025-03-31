@@ -48,6 +48,7 @@ class ResultsHandler extends Module
   {
     if (event.targetState is ResultState)
     {
+      if (PlayState.instance?.currentStage == null) return;
       shouldReplace = false;
       replaced = false;
 

@@ -59,7 +59,7 @@ class ResultsHandler extends Module
       // Save the original ID.
       // We manually retrieve the owner ID since the character ID specified in `params` is NOT the
       // playable character ID we want.
-      originalPlayerID = PlayerRegistry.instance.getCharacterOwnerId(event.targetState.params.characterId);
+      originalPlayerID = correctCharacterID(event.targetState.params.characterId);
       trace("[Funker Selector] Original character ID: " + originalPlayerID);
 
       // Check if the saved character is owned, then check if we're ACTUALLY playing as them.
@@ -101,5 +101,32 @@ class ResultsHandler extends Module
       }
     }
     return false;
+  }
+
+  /**
+   * Attempt to correct the character ID.
+   * @param characterID The character ID to use.
+   * @return The owner ID.
+   */
+  function correctCharacterID(name:String):String
+  {
+    // If the owner exists, we're all good!
+    var ownerID = PlayerRegistry.instance.getCharacterOwnerId(name);
+    if (ownerID != null) return ownerID;
+
+    trace('[Funker Selector] Character has an owner ID of null, stripping suffixes...');
+
+    while (name.lastIndexOf('-') != -1)
+    {
+      name = name.substring(0, name.lastIndexOf('-'));
+      ownerID = PlayerRegistry.instance.getCharacterOwnerId(name);
+      if (ownerID != null)
+      {
+        return ownerID;
+      }
+    }
+
+    trace('[Funker Selector] Character has an owner ID of null! This is bad!');
+    return null;
   }
 }

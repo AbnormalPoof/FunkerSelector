@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Nene joins the cast. Now selectable as a Speaker Character in the menu!
   - Unlock her by getting a PERFECT rank or higher on Darnell (BF Mix)
 - HOME and END now jump to the far left and far right of the menu respectively.
-- Added a `perfectRank` variable to the JSON data's unlock method.
+- Added a `minimumRequiredRank` variable to the JSON data's unlock method.
 - Added support for using custom sprites in the menu instead of character sprites.
   - Nene is literally the only reason this is a thing since her normal character sprite doesn't display correctly.
 - Added a new (primitive) loading screen when opening the character menu.
@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - This should hopefully make the code a lot easier to go through, since it isn't so convoluted anymore.
 - Optimized JSON parsing.
 - Reworked how the save data handles preferences and overhauled migration.
+- Rewrote all the JSON documentation.
 ### Fixed
 - Fixed an issue where Girlfriend was layered on top of the opponent and player if you had a speaker character selected in the Tankman Battlefield stage.
 - Fixed an issue where characters got stuck on their confirm animation if you selected them and then quickly moved away.

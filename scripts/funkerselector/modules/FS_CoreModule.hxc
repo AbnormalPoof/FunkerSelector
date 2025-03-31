@@ -403,7 +403,7 @@ class FS_CoreModule extends Module
     // Options Menu stuff
     if (event.targetState is OptionsState)
     {
-      var prefs = event.targetState.pages.get("preferences");
+      var prefs = event.targetState.optionsCodex.pages.get("preferences");
       if (prefs != null)
       {
         prefs.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI and disables character sprite caching.", (value) -> {

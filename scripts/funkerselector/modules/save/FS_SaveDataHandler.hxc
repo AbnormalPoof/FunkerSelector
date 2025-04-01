@@ -116,6 +116,7 @@ class FS_SaveDataHandler extends Module
 
     var saveObject:Dynamic =
       {
+        version: FS_SAVE_DATA_VERSION,
         characterIDs:
           {
             bf: parsedData.characterIDs.bf ?? 'default',

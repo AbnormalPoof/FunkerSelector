@@ -202,7 +202,7 @@ class FS_CharacterDataHandler extends Module
           }
         }
       case "song":
-        if (Save.instance.hasBeatenSong(unlockMethod.songID, unlockMethod.difficultyList))
+        if (Save.instance.hasBeatenSong(unlockMethod.songID, unlockMethod.difficultyList, unlockMethod.songVariation))
         {
           if (unlockMethod.minimumRequiredRank != null)
           {
@@ -213,7 +213,7 @@ class FS_CharacterDataHandler extends Module
             }
             for (difficulty in unlockMethod.difficultyList)
             {
-              var savedRankValue:Int = getRankValue(Save.instance.getSongRank(unlockMethod.songID, difficulty));
+              var savedRankValue:Int = getRankValue(Save.instance.getSongRank(unlockMethod.songID, difficulty, unlockMethod.songVariation));
               var minimumRequiredRankValue:Int = getRankValue(unlockMethod?.minimumRequiredRank);
 
               if (savedRankValue >= minimumRequiredRankValue)

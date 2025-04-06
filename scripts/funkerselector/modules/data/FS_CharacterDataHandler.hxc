@@ -433,7 +433,7 @@ class FS_CharacterDataHandler extends Module
   }
 
   /**
-   * Stolen from FunkinSprite.
+   * Caches all the sprites in the supplied queue, asynchronously.
    *
    * @param spriteQueue The sprite queue.
    */

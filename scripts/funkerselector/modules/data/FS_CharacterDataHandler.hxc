@@ -12,6 +12,8 @@ import haxe.ds.StringMap;
 import haxe.ds.Either;
 import hxjsonast.Parser;
 import hxjsonast.Tools;
+import hxvlc.openfl.Video;
+import lime.system.ThreadPool;
 import thx.Objects;
 
 /**
@@ -40,6 +42,16 @@ class FS_CharacterDataHandler extends Module
    * keep track of JSON characters in a separate map instead.
    */
   var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
+
+  /**
+   * We hijack `hxvlc`'s `mediaMutex` for our own custom sprite caching!
+   */
+  var cacheMutex:Mutex = new Video().mediaMutex;
+
+  /**
+   * The `ThreadPool` for caching sprites.
+   */
+  var cacheThreadPool:ThreadPool = new ThreadPool();
 
   public function new()
   {
@@ -427,29 +439,42 @@ class FS_CharacterDataHandler extends Module
    */
   function cacheSprites(spriteQueue:StringMap<String>):Void
   {
-    for (sprite in spriteQueue.keys())
-    {
-      if (cachedJSONSparrows.exists(sprite))
+    var spriteQueue_persist:StringMap<String> = spriteQueue.copy();
+    cacheThreadPool.run(function():Void {
+      for (sprite in spriteQueue_persist.keys())
       {
-        trace('[Funker Selector] Graphic is already cached: ' + sprite);
-        continue;
-      }
+        cacheMutex.acquire();
 
-      trace('[Funker Selector] Caching sprite: ' + sprite);
+        if (cachedJSONSparrows.exists(sprite))
+        {
+          cacheMutex.release();
+          continue;
+        }
 
-      var graphic:FlxGraphic = FlxGraphic.fromAssetKey(sprite, false, null, true);
-      if (graphic == null)
-      {
-        trace('[Funker Selector] Failed to cache graphic: ' + sprite);
+        if (cachedJSONSparrows.exists(sprite))
+        {
+          trace('[Funker Selector] Graphic is already cached: ' + sprite);
+          cacheMutex.release();
+          continue;
+        }
+
+        trace('[Funker Selector] Caching sprite: ' + sprite);
+        var graphic:FlxGraphic = FlxGraphic.fromAssetKey(sprite, false, null, true);
+        if (graphic == null)
+        {
+          trace('[Funker Selector] Failed to cache graphic: ' + sprite);
+        }
+        else
+        {
+          trace('[Funker Selector] Successfully cached graphic: ' + sprite);
+          graphic.persist = true;
+          graphic.destroyOnNoUse = false;
+          cachedJSONSparrows.set(sprite, graphic);
+        }
+        cacheMutex.release();
       }
-      else
-      {
-        trace('[Funker Selector] Successfully cached graphic: ' + sprite);
-        graphic.persist = true;
-        graphic.destroyOnNoUse = false;
-        cachedJSONSparrows.set(sprite, graphic);
-      }
-    }
+      cacheThreadPool.sendComplete();
+    });
   }
 
   /**
@@ -457,6 +482,7 @@ class FS_CharacterDataHandler extends Module
    */
   function purgeJSONSparrowCache():Void
   {
+    cacheThreadPool.cancel();
     for (graphicKey in cachedJSONSparrows.keys())
     {
       trace("[Funker Selector] Clearing from memory: " + graphicKey);

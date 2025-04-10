@@ -237,6 +237,27 @@ class FS_CoreModule extends Module
         oldChar.destroy();
         character.zIndex = charZIndex;
         PlayState.instance.currentStage.addCharacter(character, characterType);
+
+        // fix for pixel pico and nene
+        // really dont wanna do this but i have no other choice lol
+        // TODO: pr a fix to funkin.assets or something idk
+        if (PlayState.instance.currentStageId != 'schoolPico')
+        {
+          switch (characterID)
+          {
+            case 'nene-pixel':
+              character.x -= 22;
+              character.y -= 153;
+              character.originalPosition.set(character.x, character.y);
+              if (PlayState.instance.currentStageId == 'schoolErect') character.scriptCall('addSunsetShaders');
+            case 'pico-pixel':
+              character.x -= -90;
+              character.y -= -18;
+              character.cameraFocusPoint.x -= 50;
+              character.cameraFocusPoint.y += 10;
+              character.originalPosition.set(character.x, character.y);
+          }
+        }
       }
       else
       {

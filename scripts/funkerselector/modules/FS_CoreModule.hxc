@@ -73,12 +73,12 @@ class FS_CoreModule extends Module
   /**
    * The `FS_SaveDataHandler` module.
    */
-  var FS_SaveDataHandler:Module = ModuleHandler.getModule('FS_SaveDataHandler');
+  var FS_SaveDataHandler:Module;
 
   /**
    * The `FS_CharacterDataHandler` module.
    */
-  var FS_CharacterDataHandler:Module = ModuleHandler.getModule("FS_CharacterDataHandler");
+  var FS_CharacterDataHandler:Module;
 
   /**
    * Check the game version, initialize save data, and build the JSON character cache.
@@ -86,21 +86,6 @@ class FS_CoreModule extends Module
   function new()
   {
     super('FS_CoreModule', 1000);
-
-    // Initialize the save data.
-    FS_SaveDataHandler.scriptCall('initializeSaveData');
-
-    // Initialize the JSON cache.
-    FS_CharacterDataHandler.scriptCall('loadJSONDataCache');
-
-    if (isDebugBuild())
-    {
-      trace("[Funker Selector] Game is a debug build.");
-    }
-    else
-    {
-      trace("[Funker Selector] Game is a release build.");
-    }
   }
 
   /**
@@ -308,10 +293,29 @@ class FS_CoreModule extends Module
   override function onCreate(event:ScriptEvent):Void
   {
     super.onCreate(event);
+
+    FS_SaveDataHandler = ModuleHandler.getModule('FS_SaveDataHandler');
+    FS_CharacterDataHandler = ModuleHandler.getModule("FS_CharacterDataHandler");
+
+    // Initialize the save data.
+    FS_SaveDataHandler.scriptCall('initializeSaveData');
+
+    // Initialize the JSON cache.
+    FS_CharacterDataHandler.scriptCall('loadJSONDataCache');
+
     // Cache the sprites for JSON characters.
     // This is only done once.
     if (FS_SaveDataHandler.scriptGet('saveData').preferences.preloadSprites
       && !FS_SaveDataHandler.scriptGet('saveData').preferences.potatoMode) FS_CharacterDataHandler.scriptCall('cacheJSONSparrows');
+
+    if (isDebugBuild())
+    {
+      trace("[Funker Selector] Game is a debug build.");
+    }
+    else
+    {
+      trace("[Funker Selector] Game is a release build.");
+    }
   }
 
   override function onUpdate(event:UpdateScriptEvent):Void

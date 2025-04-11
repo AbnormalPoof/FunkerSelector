@@ -26,27 +26,16 @@ class FS_SaveDataHandler extends Module
   /**
    * The `FS_SaveDataMigrator` module.
    */
-  var FS_SaveDataMigrator:Module;
+  var FS_SaveDataMigrator:Module = ModuleHandler.getModule("FS_SaveDataMigrator");
 
   /**
    * The version for sava data.
    */
-  var FS_SAVE_DATA_VERSION:String;
+  var FS_SAVE_DATA_VERSION:String = FS_SaveDataMigrator.scriptGet("FS_SAVE_DATA_VERSION");
 
   public function new()
   {
     super('FS_SaveDataHandler', 100);
-  }
-
-  /**
-   * Initialize variables
-   */
-  override function onCreate(event:ScriptEvent):Void
-  {
-    super.onCreate(event);
-
-    FS_SaveDataMigrator = ModuleHandler.getModule("FS_SaveDataMigrator");
-    FS_SAVE_DATA_VERSION = FS_SaveDataMigrator.scriptGet("FS_SAVE_DATA_VERSION");
   }
 
   /**

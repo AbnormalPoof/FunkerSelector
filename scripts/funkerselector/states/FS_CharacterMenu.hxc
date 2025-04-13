@@ -629,6 +629,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     characterSprite.antialiasing = !funkin_characterData?.isPixel ? true : false;
     characterSprite.pixelPerfectRender = funkin_characterData?.isPixel;
     characterSprite.camera = spriteCamera;
+    characterSprite.updateHitbox();
 
     return characterSprite;
   }

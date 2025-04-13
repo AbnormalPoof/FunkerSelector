@@ -247,7 +247,7 @@ class FS_CoreModule extends Module
           {
             case 'nene-pixel':
               character.x -= 22;
-              character.y -= 153;
+              character.y -= PlayState.instance.currentStageId != 'schoolErect' ? 203 : 153;
               character.originalPosition.set(character.x, character.y);
               if (PlayState.instance.currentStageId == 'schoolErect') character.scriptCall('addSunsetShaders');
             case 'pico-pixel':

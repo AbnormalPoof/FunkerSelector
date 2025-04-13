@@ -19,6 +19,7 @@ import funkin.ui.AtlasText;
 import funkin.ui.MusicBeatSubState;
 import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.options.OptionsState;
+import funkin.ui.options.PreferencesMenu;
 import funkin.util.Constants;
 import String;
 
@@ -424,50 +425,59 @@ class FS_CoreModule extends Module
     // Options Menu stuff
     if (event.targetState is OptionsState)
     {
-      var prefs = event.targetState.optionsCodex.pages.get("preferences");
-      if (prefs != null)
-      {
-        prefs.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI and disables character sprite caching.", (value) -> {
-          FS_SaveDataHandler.scriptGet('saveData').preferences.potatoMode = value;
+      var fs_preferencePage:PreferencesMenu = event.targetState.optionsCodex.addPage('funkerselector', new PreferencesMenu());
+      fs_preferencePage.onExit.add(function() {
+        FlxG.state.optionsCodex.switchPage('options');
+      });
+
+      var menuItem:TextMenuItem = event.targetState.optionsCodex.pages.get('options')
+        .createItem("FUNKER SELECTOR", function() FlxG.state.optionsCodex.switchPage('funkerselector'));
+      menuItem.y -= 80;
+
+      fs_preferencePage.preferenceDesc = [];
+      fs_preferencePage.items.clear();
+      fs_preferencePage.preferenceItems.clear();
+
+      fs_preferencePage.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI and disables character sprite caching.", (value) -> {
+        FS_SaveDataHandler.scriptGet('saveData').preferences.potatoMode = value;
+        FS_SaveDataHandler.scriptCall('writeSaveData');
+      }, FS_SaveDataHandler.scriptGet('saveData').preferences.potatoMode);
+
+      fs_preferencePage.createPrefItemCheckbox("Preload Sprites",
+        "If disabled, character sparrows will not be cached when the game starts. This will cause stuttering when the Character Menu is opened for the first time.",
+        (value) -> {
+          FS_SaveDataHandler.scriptGet('saveData').preferences.preloadSprites = value;
           FS_SaveDataHandler.scriptCall('writeSaveData');
-        }, FS_SaveDataHandler.scriptGet('saveData').preferences.potatoMode);
+          if (value)
+          {
+            FS_CharacterDataHandler.scriptCall("cacheJSONSparrows");
+          }
+          else
+          {
+            // Remove the JSON Characters from memory when the user disables the option.
+            FS_CharacterDataHandler.scriptCall("purgeJSONSparrowCache");
+          }
+        }, FS_SaveDataHandler.scriptGet('saveData').preferences.preloadSprites);
 
-        prefs.createPrefItemCheckbox("Preload Sprites",
-          "If disabled, character sparrows will not be cached when the game starts. This will cause stuttering when the Character Menu is opened for the first time.",
-          (value) -> {
-            FS_SaveDataHandler.scriptGet('saveData').preferences.preloadSprites = value;
-            FS_SaveDataHandler.scriptCall('writeSaveData');
-            if (value)
-            {
-              FS_CharacterDataHandler.scriptCall("cacheJSONSparrows");
-            }
-            else
-            {
-              // Remove the JSON Characters from memory when the user disables the option.
-              FS_CharacterDataHandler.scriptCall("purgeJSONSparrowCache");
-            }
-          }, FS_SaveDataHandler.scriptGet('saveData').preferences.preloadSprites);
+      fs_preferencePage.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
+        ["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
+          FS_SaveDataHandler.scriptGet('saveData').preferences.preferredSFX = value;
+          FS_SaveDataHandler.scriptCall('writeSaveData');
+          if (value == "charSelect")
+          {
+            FunkinSound.playOnce(Paths.sound('CS_confirm'));
+          }
+          else
+          {
+            FunkinSound.playOnce(Paths.sound('confirmMenu'));
+          }
+        }, FS_SaveDataHandler.scriptGet('saveData').preferences.preferredSFX);
 
-        prefs.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
-          ["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
-            FS_SaveDataHandler.scriptGet('saveData').preferences.preferredSFX = value;
-            FS_SaveDataHandler.scriptCall('writeSaveData');
-            if (value == "charSelect")
-            {
-              FunkinSound.playOnce(Paths.sound('CS_confirm'));
-            }
-            else
-            {
-              FunkinSound.playOnce(Paths.sound('confirmMenu'));
-            }
-          }, FS_SaveDataHandler.scriptGet('saveData').preferences.preferredSFX);
-
-        prefs.createPrefItemCheckbox("DJ Replacement", "If disabled, the Freeplay DJ will not be swapped out for the currently selected character's own DJ.",
-          (value) -> {
-            FS_SaveDataHandler.scriptGet('saveData').preferences.djSwapping = value;
-            FS_SaveDataHandler.scriptCall('writeSaveData');
-          }, FS_SaveDataHandler.scriptGet('saveData').preferences.djSwapping);
-      }
+      fs_preferencePage.createPrefItemCheckbox("DJ Replacement",
+        "If disabled, the Freeplay DJ will not be swapped out for the currently selected character's own DJ.", (value) -> {
+          FS_SaveDataHandler.scriptGet('saveData').preferences.djSwapping = value;
+          FS_SaveDataHandler.scriptCall('writeSaveData');
+        }, FS_SaveDataHandler.scriptGet('saveData').preferences.djSwapping);
     }
   }
 

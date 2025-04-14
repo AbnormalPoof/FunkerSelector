@@ -430,13 +430,13 @@ class FS_CoreModule extends Module
         FlxG.state.optionsCodex.switchPage('options');
       });
 
-      var menuItem:TextMenuItem = event.targetState.optionsCodex.pages.get('options')
-        .createItem("FUNKER SELECTOR", function() FlxG.state.optionsCodex.switchPage('funkerselector'));
-      menuItem.y -= 80;
-
       fs_preferencePage.preferenceDesc = [];
       fs_preferencePage.items.clear();
       fs_preferencePage.preferenceItems.clear();
+
+      var menuItem:TextMenuItem = event.targetState.optionsCodex.pages.get('options')
+        .createItem("FUNKER SELECTOR", function() FlxG.state.optionsCodex.switchPage('funkerselector'));
+      menuItem.y -= 80;
 
       fs_preferencePage.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI and disables character sprite caching.", (value) -> {
         FS_SaveDataHandler.scriptGet('saveData').preferences.potatoMode = value;

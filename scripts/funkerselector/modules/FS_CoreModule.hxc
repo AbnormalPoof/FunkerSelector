@@ -94,7 +94,7 @@ class FS_CoreModule extends Module
     // Initialize the JSON cache.
     FS_CharacterDataHandler.scriptCall('loadJSONDataCache');
 
-    if (isDebugBuild())
+    if (Constants.DEBUG_BUILD)
     {
       trace("[Funker Selector] Game is a debug build.");
     }
@@ -344,7 +344,7 @@ class FS_CoreModule extends Module
     // These are functions that are only available
     // on debug builds.
 
-    if (isDebugBuild())
+    if (Constants.DEBUG_BUILD)
     {
       // Force reload the JSON cache with F6.
       if (FlxG.keys.justPressed.F6)
@@ -520,18 +520,5 @@ class FS_CoreModule extends Module
     trace('[Funker Selector] Voice List:\n\nPlayer: ' + voiceList[0] + '\nOpponent: ' + voiceList[1]);
     PlayState.instance.vocals.stop();
     PlayState.instance.vocals = replaceVocals(voiceList);
-  }
-
-  /**
-   * HELPER FUNCTIONS
-   * These are functions that are simply nice to have. They make the code cleaner.
-   */
-  /**
-   * Whether or not the game is a debug build.
-   * @return Bool
-   */
-  public function isDebugBuild():Bool
-  {
-    return Constants?.DEBUG_BUILD ?? false;
   }
 }

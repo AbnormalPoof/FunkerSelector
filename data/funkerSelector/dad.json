@@ -13,7 +13,7 @@
     "unlockCondition": "Beat Week 1 on Hard."
   },
   "characterMenu": {
-    "position": [150, 50],
+    "position": [200, -50],
     "scale": 0.75
   }
 }

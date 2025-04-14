@@ -6,7 +6,7 @@
     "text": "The Girlfriend of... well... Boyfriend. She is also the daughter of the Dearest family!"
   },
   "characterMenu": {
-    "position": [30, 100],
+    "position": [140, 10],
     "scale": 0.7,
     "selectedAnim": "cheer"
   }

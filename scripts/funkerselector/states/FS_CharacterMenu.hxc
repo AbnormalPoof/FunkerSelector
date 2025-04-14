@@ -304,7 +304,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     adjustFontSize(characterDescription ?? null);
 
     // Adding some useful stuff to the variable watch window.
-    if (isDebugBuild())
+    if (Constants.DEBUG_BUILD)
     {
       FlxG.watch.addQuick("currentPageIndex", currentPageIndex);
       FlxG.watch.addQuick("currentCharacterIndex", currentCharacterIndex);
@@ -345,14 +345,16 @@ class FS_CharacterMenu extends MusicBeatSubState
         fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
 
         var xOffset:Float = fs_characterData.characterMenu.position[0];
+        var baseX:Float = (index - (currentCharacterIndex - 1)) * 550;
+        var targetX:Float = baseX + xOffset + 250;
 
-        item.x = MathUtil.smoothLerp(item.x, ((index - (currentCharacterIndex - 1)) * 500) + xOffset + 250, FlxG.elapsed, 0.20);
+        item.x = MathUtil.smoothLerp(item.x, targetX, elapsed, 0.20);
       }
     }
 
     if (uiCamera != null)
     {
-      uiCamera.zoom = MathUtil.smoothLerp(uiCamera.zoom, 1, FlxG.elapsed, 0.45);
+      uiCamera.zoom = MathUtil.smoothLerp(uiCamera.zoom, 1, elapsed, 0.45);
     }
   }
 
@@ -625,7 +627,14 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     characterSprite.y += data.characterMenu.position[1];
     characterSprite.flipX = data.characterMenu.flipX;
-    characterSprite.scale.set(scaleFactor, scaleFactor);
+    if (characterSprite is BaseCharacter)
+    {
+      characterSprite.setScale(scaleFactor);
+    }
+    else
+    {
+      characterSprite.scale.set(scaleFactor, scaleFactor);
+    }
     characterSprite.antialiasing = !funkin_characterData?.isPixel ? true : false;
     characterSprite.pixelPerfectRender = funkin_characterData?.isPixel;
     characterSprite.camera = spriteCamera;
@@ -1488,15 +1497,6 @@ class FS_CharacterMenu extends MusicBeatSubState
    * HELPER FUNCTIONS
    * These are functions that are simply nice to have. They make the code cleaner.
    */
-  /**
-   * Whether or not the game is a debug build.
-   * @return Bool
-   */
-  public function isDebugBuild():Bool
-  {
-    return Constants.DEBUG_BUILD ?? false;
-  }
-
   /**
    * Something.
    * @return Whether it's the selected character.

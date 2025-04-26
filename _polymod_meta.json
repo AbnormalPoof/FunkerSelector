@@ -1,8 +1,8 @@
 {
-  "title": "[V-Slice] Funker Selector",
-  "description": "Adds a Character Select in Freeplay! No more needing to replace Boyfriend or Pico for reskins.",
-  "author": "kagaminerinlen",
-  "api_version": "0.5.0",
-  "mod_version": "2.1.1",
-  "license": "MIT"
+    "title": "[V-Slice] Funker Selector",
+    "description": "Adds a Character Select in Freeplay! No more needing to replace Boyfriend or Pico for reskins.",
+    "author": "kagaminerinlen",
+    "api_version": "0.6.3",
+    "mod_version": "2.1.1",
+    "license": "MIT"
 }

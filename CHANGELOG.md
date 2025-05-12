@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - v0.6.3 support.
 - Story Mode support! Play through any story week as your selected character.
   - NOTE: Cutscenes and other stuff may not work properly for certain weeks, proceed with caution.
+- Psych Engine """""support""""". *wink wink*
 ### Changed
 - Moved the options to a separate page in the Options Menu.
   - This comes with a module to add scrolling, which works for other mods that add custom options pages.

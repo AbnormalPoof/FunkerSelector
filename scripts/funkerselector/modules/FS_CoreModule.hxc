@@ -2,22 +2,16 @@ import Array;
 import flixel.FlxG;
 import funkin.audio.FunkinSound;
 import funkin.audio.VoicesGroup;
-import funkin.data.song.SongRegistry;
 import funkin.graphics.FunkinSprite;
 import funkin.modding.PolymodErrorHandler;
-import funkin.modding.base.ScriptedFunkinSprite;
-import funkin.modding.base.ScriptedMusicBeatSubState;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.GameOverSubState;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
-import funkin.play.PlayStatePlaylist;
 import funkin.play.character.CharacterDataParser;
 import funkin.play.character.CharacterType;
-import funkin.ui.AtlasText;
 import funkin.ui.MusicBeatSubState;
-import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.options.OptionsState;
 import funkin.ui.options.PreferencesMenu;
 import funkin.util.Constants;
@@ -35,6 +29,7 @@ import String;
  * 2. `FS_CharacterDataHandler` and `FS_SaveDataHandler`
  * 3. `FS_FreeplayDJReplace` and `FS_ResultsHandler`
  * 4. `FS_CoreModule`
+ * 5. `FS_SubStateIconHandler`
  *
  * The core module is loaded last to ensure that all the other modules can be accessed properly.
  * NOTE: `FS_FreeplayIcon` and `FS_CharacterMenu` are accessed on demand, so they don't need to be loaded in a specific order.
@@ -45,27 +40,6 @@ class FS_CoreModule extends Module
    * The current voice list, used for vocal replacement.
    */
   var voiceList:Array<String>;
-
-  /**
-   * Some janky shit for passing the BPM through CharacterMenu don't worry about it.
-   */
-  var freeplayBPM:Float = null;
-
-  /**
-   * The current Character Select SubState.
-   * This is set to `null` when not in use.
-   */
-  var charSelect:MusicBeatSubState = null;
-
-  /**
-   * An `AtlasText` object, used for the Character Select button.
-   */
-  var charText:AtlasText;
-
-  /**
-   * The Icon as a `FunkinSprite`.
-   */
-  var charSelectIcon:FunkinSprite;
 
   /**
    * MODULES
@@ -102,27 +76,6 @@ class FS_CoreModule extends Module
     {
       trace("[Funker Selector] Game is a release build.");
     }
-  }
-
-  /**
-   * Gets the BPM of the currently selected song in Freeplay.
-   * @param freeplay The Freeplay SubState to use as a dynamic object.
-   * @return The BPM.
-   */
-  function getFreeplayCapsuleBPM(freeplay:Dynamic):Float
-  {
-    var daSongCapsule:SongMenuItem = freeplay.grpCapsules.members[freeplay.curSelected];
-    var songBPM:Float = daSongCapsule?.freeplayData?.songStartingBpm;
-
-    if (daSongCapsule.songText.text == 'Random' && songBPM == null)
-    {
-      var songMusicData:Null<SongMusicData> = SongRegistry.instance.parseMusicData('freeplayRandom');
-      songBPM = songMusicData.timeChanges[0].bpm;
-    }
-
-    if (songBPM == null) songBPM = 120;
-
-    return songBPM;
   }
 
   /**
@@ -318,27 +271,6 @@ class FS_CoreModule extends Module
   override function onUpdate(event:UpdateScriptEvent):Void
   {
     super.onUpdate(event);
-    if (FlxG.state.subState is FreeplayState)
-    {
-      // Open the CharacterMenu substate.
-      // We need to make a new one everytime since it gets destroyed when it's closed.
-      if (FlxG.keys.justPressed.G && charText.visible && !FlxG.state.subState.busy)
-      {
-        if (charSelect == null)
-        {
-          freeplayBPM = getFreeplayCapsuleBPM((FlxG.state.subState));
-          charSelect = ScriptedMusicBeatSubState.init('FS_CharacterMenu');
-          charSelect.camera = FlxG.state.subState.funnyCam;
-          FlxG.state.subState.persistentUpdate = false;
-          trace("[Funker Selector] Opening the Character Select SubState...");
-          FlxG.state.subState.openSubState(charSelect);
-        }
-        else
-        {
-          trace("[Funker Selector] The Character Select SubState is already open!");
-        }
-      }
-    }
 
     // DEBUG FEATURES
     // These are functions that are only available
@@ -366,42 +298,6 @@ class FS_CoreModule extends Module
         trace("[Funker Selector] Loading save data from JSON...");
         FS_SaveDataHandler.scriptCall("debug_loadSaveFromJSON");
       }
-    }
-  }
-
-  override function onSubStateOpenEnd(event:SubStateScriptEvent):Void
-  {
-    super.onSubStateOpenEnd(event);
-    var state = event.targetState;
-    // Set up the Character Select button.
-    if (state is FreeplayState)
-    {
-      if (charSelect != null)
-      {
-        trace("[Funker Selector] Character SubState still exists! Resetting...");
-        charSelect = null;
-      }
-
-      charSelectIcon = ScriptedFunkinSprite.init('FS_FreeplayIcon');
-      charSelectIcon.camera = state.funnyCam;
-      charSelectIcon.visible = false;
-
-      charText = new AtlasText(170, 300, 'G', 'bold');
-      charText.visible = false;
-      charText.zIndex = 1001;
-      charText.camera = state.funnyCam;
-
-      state.add(charSelectIcon);
-      state.add(charText);
-
-      state.dj.onIntroDone.add(function() {
-        charSelectIcon.visible = true;
-        charSelectIcon.animation.play('intro');
-        charSelectIcon.animation.finishCallback = function(_) {
-          charSelectIcon.animation.play('idle');
-          charText.visible = true;
-        };
-      });
     }
   }
 
@@ -481,34 +377,10 @@ class FS_CoreModule extends Module
     }
   }
 
-  override function onScriptEvent(event:ScriptEvent):Void
-  {
-    super.onScriptEvent(event);
-    // Update the Health Icon in the Character Menu button.
-    if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState)
-    {
-      charSelect = null;
-
-      if (charSelectIcon != null)
-      {
-        characterData = CharacterDataParser.fetchCharacterData(FS_SaveDataHandler.scriptGet('saveData').characterIDs.bf);
-        currentCharacterIcon = charSelectIcon.scriptGet('currentCharacterIcon');
-
-        if (currentCharacterIcon.characterId != characterData?.healthIcon?.id)
-        {
-          charSelectIcon.scriptCall('spawnIcon');
-        }
-      }
-    }
-  }
-
   override function onCountdownStart(event:CountdownScriptEvent):Void
   {
     super.onCountdownStart(event);
-    if (PlayState.instance?.currentStage == null
-      || PlayStatePlaylist.isStoryMode
-      || PlayState.instance.isMinimalMode
-      || PlayState.instance.isChartingMode) return;
+    if (PlayState.instance?.currentStage == null || PlayState.instance.isMinimalMode || PlayState.instance.isChartingMode) return;
 
     voiceList = [null, null];
 

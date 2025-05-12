@@ -1,9 +1,10 @@
+import flixel.FlxG;
 import funkin.graphics.FunkinSprite;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.character.CharacterDataParser;
 import funkin.play.components.HealthIcon;
-import flixel.FlxG;
+import funkin.ui.freeplay.FreeplayState;
 
 class FS_FreeplayIcon extends FunkinSprite
 {
@@ -15,7 +16,7 @@ class FS_FreeplayIcon extends FunkinSprite
 
   public function new()
   {
-    super(-20, 60);
+    super();
 
     zIndex = 900;
 
@@ -36,20 +37,43 @@ class FS_FreeplayIcon extends FunkinSprite
 
   function spawnIcon():Void
   {
-    if (currentCharacterIcon != null) FlxG.state.subState.remove(currentCharacterIcon);
+    if (currentCharacterIcon != null)
+    {
+      if (FlxG.state.subState is FreeplayState)
+      {
+        FlxG.state.subState.remove(currentCharacterIcon);
+      }
+      else
+      {
+        FlxG.state.remove(currentCharacterIcon);
+      }
+    }
 
     var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet('saveData');
     var characterData:Dynamic = CharacterDataParser.fetchCharacterData(saveData.characterIDs.bf);
 
     currentCharacterIcon = new HealthIcon('dad', 0);
     currentCharacterIcon.configure(characterData?.healthIcon);
-    currentCharacterIcon.x = 125;
-    currentCharacterIcon.y = 195;
-    currentCharacterIcon.camera = FlxG.state.subState.funnyCam;
+    currentCharacterIcon.x = this.x + 145;
+    currentCharacterIcon.y = this.y + 135;
+
+    if (FlxG.state?.subState is FreeplayState)
+    {
+      currentCharacterIcon.camera = FlxG.state.subState.funnyCam;
+    }
+
     currentCharacterIcon.zIndex = 1000;
 
-    FlxG.state.subState.add(currentCharacterIcon);
-    FlxG.state.subState.refresh();
+    if (FlxG.state.subState is FreeplayState)
+    {
+      FlxG.state.subState.add(currentCharacterIcon);
+      FlxG.state.subState.refresh();
+    }
+    else
+    {
+      FlxG.state.add(currentCharacterIcon);
+      FlxG.state.refresh();
+    }
 
     if (currentCharacterIcon.width > currentCharacterIcon.height)
     {

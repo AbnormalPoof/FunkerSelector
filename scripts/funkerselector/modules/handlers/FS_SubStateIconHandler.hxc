@@ -1,0 +1,223 @@
+import flixel.FlxG;
+import flixel.text.FlxText;
+import funkin.data.song.SongRegistry;
+import funkin.modding.base.ScriptedFunkinSprite;
+import funkin.modding.base.ScriptedMusicBeatSubState;
+import funkin.modding.module.Module;
+import funkin.modding.module.ModuleHandler;
+import funkin.play.character.CharacterDataParser;
+import funkin.ui.AtlasText;
+import funkin.ui.freeplay.FreeplayState;
+import funkin.ui.story.StoryMenuState;
+
+/**
+ * Handles the character select icon for either Freeplay or Story Mode.
+ */
+class FS_SubStateIconHandler extends Module
+{
+  /**
+   * The current Character Select SubState.
+   * This is set to `null` when not in use.
+   */
+  var characterMenuState:MusicBeatSubState = null;
+
+  /**
+   * An `AtlasText` object, used for the Character Select button.
+   */
+  var characterMenuHotkey:AtlasText;
+
+  /**
+   * The Icon as a `FunkinSprite`.
+   */
+  var characterMenuIcon:FunkinSprite;
+
+  /**
+   * The position of the icon for Freeplay.
+   */
+  var ICON_DATA:Dynamic =
+    {
+      FREEPLAY:
+        {
+          scale: 0.65,
+          position: [-20, 60]
+        }
+    }
+
+  function new()
+  {
+    super('FS_SubStateIconHandler', 1500);
+  }
+
+  override function onScriptEvent(event:ScriptEvent):Void
+  {
+    super.onScriptEvent(event);
+    // Update the Health Icon in the Character Menu button.
+    if (event.type == "FS_EXITED_SUBSTATE")
+    {
+      characterMenuState = null;
+
+      if (characterMenuIcon != null)
+      {
+        characterData = CharacterDataParser.fetchCharacterData(ModuleHandler.getModule("FS_SaveDataHandler").scriptGet('saveData').characterIDs.bf);
+        currentCharacterIcon = characterMenuIcon.scriptGet('currentCharacterIcon');
+
+        if (currentCharacterIcon.characterId != characterData?.healthIcon?.id)
+        {
+          characterMenuIcon.scriptCall('spawnIcon');
+        }
+      }
+    }
+  }
+
+  override function onUpdate(event:UpdateScriptEvent):Void
+  {
+    super.onUpdate(event);
+    if ((FlxG.state.subState is FreeplayState) || (FlxG.state is StoryMenuState))
+    {
+      // Open the CharacterMenu substate.
+      // We need to make a new one everytime since it gets destroyed when it's closed.
+      if (FlxG.keys.justPressed.G && (characterMenuHotkey?.visible ?? true) && !(FlxG.state?.subState?.busy ?? false))
+      {
+        if (characterMenuState == null)
+        {
+          var freeplayBPM:Float = null;
+
+          if (FlxG.state.subState is FreeplayState)
+          {
+            freeplayBPM = getFreeplayCapsuleBPM((FlxG.state.subState));
+          }
+          else
+          {
+            freeplayBPM = 120;
+          }
+
+          characterMenuState = ScriptedMusicBeatSubState.init('FS_CharacterMenu', [freeplayBPM]);
+
+          if (FlxG.state.subState is FreeplayState)
+          {
+            FlxG.state.subState.persistentUpdate = false;
+            trace("[Funker Selector] Opening the Character Select SubState...");
+            characterMenuState.camera = FlxG.state.subState.funnyCam;
+            FlxG.state.subState.openSubState(characterMenuState);
+          }
+          else
+          {
+            FlxG.state.persistentUpdate = false;
+            trace("[Funker Selector] Opening the Character Select SubState...");
+            FlxG.state.openSubState(characterMenuState);
+          }
+        }
+        else
+        {
+          trace("[Funker Selector] The Character Select SubState is already open!");
+        }
+      }
+    }
+  }
+
+  override function onSubStateOpenEnd(event:SubStateScriptEvent):Void
+  {
+    super.onSubStateOpenEnd(event);
+
+    // Set up the Character Select button.
+    if (event.targetState is FreeplayState)
+    {
+      if (characterMenuState != null)
+      {
+        trace("[Funker Selector] Character SubState still exists! Resetting...");
+        characterMenuState = null;
+      }
+
+      characterMenuIcon = ScriptedFunkinSprite.init('FS_FreeplayIcon');
+      characterMenuIcon.camera = event.targetState.funnyCam;
+      characterMenuIcon.visible = false;
+
+      characterMenuIcon.x = ICON_DATA.FREEPLAY.position[0];
+      characterMenuIcon.y = ICON_DATA.FREEPLAY.position[1];
+      characterMenuIcon.scale.set(ICON_DATA.FREEPLAY.scale, ICON_DATA.FREEPLAY.scale);
+
+      characterMenuHotkey = new AtlasText(characterMenuIcon.x + 190, characterMenuIcon.y + 250, 'G', 'bold');
+      characterMenuHotkey.visible = false;
+      characterMenuHotkey.zIndex = 1001;
+      characterMenuHotkey.camera = event.targetState.funnyCam;
+
+      event.targetState.add(characterMenuIcon);
+      event.targetState.add(characterMenuHotkey);
+
+      event.targetState.dj.onIntroDone.add(function() {
+        characterMenuIcon.visible = true;
+        characterMenuIcon.animation.play('intro');
+        characterMenuIcon.animation.onFinish.add(function(_) {
+          characterMenuIcon.animation.play('idle');
+          characterMenuHotkey.visible = true;
+        });
+      });
+    }
+  }
+
+  override function onStateChangeEnd(event:StateChangeScriptEvent):Void
+  {
+    super.onStateChangeEnd(event);
+    if (event.targetState is StoryMenuState)
+    {
+      if (characterMenuState != null)
+      {
+        trace("[Funker Selector] Character SubState still exists! Resetting...");
+        characterMenuState = null;
+      }
+
+      // Character Menu icon doesn't show properly in Story Mode, so we just use text instead!
+      var characterMenuText:FlxText = configureText(null, "Press G to open\nthe Funker Selector\nMenu!", [890, 575], 35, Paths.font("PhantomMuff.ttf"));
+
+      event.targetState.add(characterMenuText);
+    }
+  }
+
+  /**
+   * Gets the BPM of the currently selected song in Freeplay.
+   * @param freeplay The Freeplay SubState to use as a dynamic object.
+   * @return The BPM.
+   */
+  function getFreeplayCapsuleBPM(freeplay:Dynamic):Float
+  {
+    var daSongCapsule:SongMenuItem = freeplay.grpCapsules.members[freeplay.curSelected];
+    var songBPM:Float = daSongCapsule?.freeplayData?.songStartingBpm;
+
+    if (daSongCapsule.songText.text == 'Random' && songBPM == null)
+    {
+      var songMusicData:Null<SongMusicData> = SongRegistry.instance.parseMusicData('freeplayRandom');
+      songBPM = songMusicData.timeChanges[0].bpm;
+    }
+
+    if (songBPM == null) songBPM = 120;
+
+    return songBPM;
+  }
+
+  /**
+   * Helper function for configuring a FlxText
+   * @param object The FlxText object
+   * @param text The text itself
+   * @param offsets The offsets as an array
+   * @param size The size of the text
+   * @param font The font
+   * @return A FlxText object
+   */
+  function configureText(object:FlxText, ?text:String = "", ?offsets:Array<Int>, ?size:Int = 38, ?font:String = null):FlxText
+  {
+    if (text == null) text = "";
+    if (offsets == null) offsets = [0, 0];
+    if (size == null) size = 35;
+    if (object == null)
+    {
+      object = new FlxText(0, 0, 0, "PLACEHOLDER");
+    }
+
+    object.text = text;
+    object.x += offsets[0];
+    object.y += offsets[1];
+    if (font != null) object.setFormat(font, size, null, 'center');
+
+    return object;
+  }
+}

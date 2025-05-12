@@ -209,7 +209,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   /**
    * The current song BPM in Freeplay.
    */
-  var songBPM:Float = ModuleHandler.getModule("FS_CoreModule").scriptGet('freeplayBPM');
+  var songBPM:Float = null;
 
   /**
    * The current character ID.
@@ -261,9 +261,11 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   var FS_SaveDataHandler:Module = ModuleHandler.getModule("FS_SaveDataHandler");
 
-  public function new()
+  public function new(songBPM:Float)
   {
     super();
+
+    this.songBPM = songBPM;
   }
 
   public override function create():Void
@@ -319,7 +321,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     for (icon in iconGrid)
     {
-      var speedFactor:Float = (Math.min(songBPM, 300) / 60) * (FlxG.elapsed / (1 / FlxG.drawFramerate));
+      var speedFactor:Float = (Math.min(conductorInUse.bpm, 300) / 60) * (FlxG.elapsed / (1 / FlxG.drawFramerate));
 
       icon.x -= ICON_SCROLL_SPEED * speedFactor;
       icon.y += (ICON_SCROLL_SPEED * speedFactor) / 2; // Vertical speed is halved.

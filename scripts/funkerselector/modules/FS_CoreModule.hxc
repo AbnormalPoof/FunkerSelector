@@ -356,7 +356,7 @@ class FS_CoreModule extends Module
         }, FS_SaveDataHandler.scriptGet('saveData').preferences.preloadSprites);
 
       fs_preferencePage.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
-        ["funkin" => "Funkin' Main Menu", "charSelect" => "Funkin' Character Select"], (value) -> {
+        ["Funkin' Main Menu" => "funkin", "Funkin' Character Select" => "charSelect"], (key, value) -> {
           FS_SaveDataHandler.scriptGet('saveData').preferences.preferredSFX = value;
           FS_SaveDataHandler.scriptCall('writeSaveData');
           if (value == "charSelect")

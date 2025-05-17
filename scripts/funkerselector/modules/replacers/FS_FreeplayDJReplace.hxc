@@ -28,12 +28,12 @@ class DJReplace extends Module
     super.onScriptEvent(event);
     if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState)
     {
-      var shouldSwap:Bool = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet("saveData").preferences.djSwapping;
+      var shouldSwap:Bool = ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData').preferences.djSwapping;
       trace("[Funker Selector] Swapping DJ? " + shouldSwap);
       if (shouldSwap)
       {
         trace("[Funker Selector] Switching out DJ...");
-        var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet("saveData");
+        var saveData:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData');
         transitionToNewDJ(FlxG.state.subState, saveData);
       }
       else
@@ -52,11 +52,11 @@ class DJReplace extends Module
     super.onSubStateOpenEnd(event);
     if (event.targetState is FreeplayState)
     {
-      var shouldSwap:Bool = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet("saveData").preferences.djSwapping;
+      var shouldSwap:Bool = ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData').preferences.djSwapping;
       if (shouldSwap)
       {
         trace("[Funker Selector] Switching out DJ...");
-        var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet("saveData");
+        var saveData:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData');
         transitionToNewDJ(FlxG.state.subState, saveData, true);
       }
     }

@@ -58,7 +58,7 @@ class FS_SubStateIconHandler extends Module
 
       if (characterMenuIcon != null)
       {
-        characterData = CharacterDataParser.fetchCharacterData(ModuleHandler.getModule("FS_SaveDataHandler").scriptGet('saveData').characterIDs.bf);
+        characterData = CharacterDataParser.fetchCharacterData(ModuleHandler.getModule("FS_SaveDataHandler").scriptCall('getSaveData').characterIDs.bf);
         currentCharacterIcon = characterMenuIcon.scriptGet('currentCharacterIcon');
 
         if (currentCharacterIcon.characterId != characterData?.healthIcon?.id)

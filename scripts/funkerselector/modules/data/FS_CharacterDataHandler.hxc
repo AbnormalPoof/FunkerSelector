@@ -44,6 +44,8 @@ class FS_CharacterDataHandler extends Module
   public function new()
   {
     super('FS_CharacterDataHandler', 100);
+
+    loadJSONDataCache();
   }
 
   /**
@@ -115,7 +117,7 @@ class FS_CharacterDataHandler extends Module
           trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
           lockedCharMap.set(data.characterID, data);
         }
-        else if (!ModuleHandler.getModule('FS_SaveDataHandler').scriptGet('saveData').seenUnlocks.contains(data.characterID))
+        else if (!getSaveData().seenUnlocks.contains(data.characterID))
         {
           trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
           lockedCharMap.set(data.characterID, data);
@@ -358,6 +360,11 @@ class FS_CharacterDataHandler extends Module
       return characterFiles.contains(string);
     }
     return false;
+  }
+
+  function getSaveData():Dynamic
+  {
+    return Save.instance.modOptions.get("FunkerSelector");
   }
 
   /**

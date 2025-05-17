@@ -49,7 +49,7 @@ class FS_FreeplayIcon extends FunkinSprite
       }
     }
 
-    var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler").scriptGet('saveData');
+    var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler").scriptCall('getSaveData');
     var characterData:Dynamic = CharacterDataParser.fetchCharacterData(saveData.characterIDs.bf);
 
     currentCharacterIcon = new HealthIcon('dad', 0);

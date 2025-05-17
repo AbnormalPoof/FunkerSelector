@@ -54,7 +54,7 @@ class ResultsHandler extends Module
 
       if (PlayState.instance.currentStage?.getBoyfriend() == null) return;
 
-      var saveData:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler').scriptGet('saveData');
+      var saveData:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData');
       var currentCharacterID:String = PlayState.instance.currentStage.getBoyfriend().characterId;
 
       // Save the original ID.

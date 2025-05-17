@@ -18,30 +18,25 @@ import thx.Objects;
 class FS_SaveDataHandler extends Module
 {
   /**
-   * The save data for Funker Selector.
-   * This holds Character IDs, Preferences and some other stuff.
+   * The version for save data.
    */
-  public var saveData:Dynamic;
-
-  /**
-   * The `FS_SaveDataMigrator` module.
-   */
-  var FS_SaveDataMigrator:Module = ModuleHandler.getModule("FS_SaveDataMigrator");
-
-  /**
-   * The version for sava data.
-   */
-  var FS_SAVE_DATA_VERSION:String = FS_SaveDataMigrator.scriptGet("FS_SAVE_DATA_VERSION");
+  var FS_SAVE_DATA_VERSION:String = "1.1.0";
 
   public function new()
   {
     super('FS_SaveDataHandler', 100);
   }
 
+  override function onCreate(event:ScriptEvent):Void
+  {
+    super.onCreate(event);
+    initializeSaveData();
+  }
+
   /**
    * Write save data to disk.
    */
-  function writeSaveData():Void
+  function writeSaveData(saveData:Dynamic):Void
   {
     Save.instance.modOptions.set("FunkerSelector", saveData);
     Save.instance.flush();
@@ -53,13 +48,14 @@ class FS_SaveDataHandler extends Module
    */
   function initializeSaveData():Void
   {
-    var defaultSaveData:Dynamic = FS_SaveDataMigrator.scriptCall("getDefaultSaveData");
+    var defaultSaveData:Dynamic = ModuleHandler.getModule("FS_SaveDataMigrator").scriptCall("getDefaultSaveData");
 
     if (!Save.instance.modOptions.exists("FunkerSelector"))
     {
       Save.instance.modOptions.set("FunkerSelector", defaultSaveData);
       Save.instance.flush();
-      saveData = defaultSaveData;
+
+      var saveData:Dynamic = defaultSaveData;
 
       trace('[Funker Selector] Successfully created save data:\n\n---Character IDs---\n\nBoyfriend: '
         + saveData.characterIDs.bf
@@ -80,9 +76,9 @@ class FS_SaveDataHandler extends Module
     }
     else
     {
-      saveData = ModuleHandler.getModule("FS_SaveDataMigrator").scriptCall("checkSaveData", [Save.instance.modOptions.get("FunkerSelector")]);
+      var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataMigrator").scriptCall("checkSaveData", [Save.instance.modOptions.get("FunkerSelector")]);
 
-      trace('[Funker Selector] Successfully retrieved save data:\n\n---Character IDs---\n\nBoyfriend: '
+      trace('[Funker Selector] Successfully validated save data:\n\n---Character IDs---\n\nBoyfriend: '
         + saveData.characterIDs.bf
         + '\nGirlfriend: '
         + saveData.characterIDs.gf
@@ -127,9 +123,7 @@ class FS_SaveDataHandler extends Module
         seenUnlocks: parsedData.seenUnlocks ?? []
       };
 
-    saveData = saveObject;
-
-    writeSaveData();
+    writeSaveData(saveObject);
 
     trace('[Funker Selector] DEBUG: Loaded save data from JSON:\n\n---Character IDs---\n\nBoyfriend: '
       + saveData.characterIDs.bf
@@ -150,6 +144,30 @@ class FS_SaveDataHandler extends Module
   }
 
   /**
+   * Returns the default save data.
+   */
+  function getDefaultSaveData():FS_saveData
+  {
+    return {
+      version: FS_SAVE_DATA_VERSION,
+      characterIDs:
+        {
+          bf: 'default',
+          gf: 'default',
+          dad: 'default'
+        },
+      preferences:
+        {
+          potatoMode: false,
+          preloadSprites: true,
+          preferredSFX: "funkin",
+          djSwapping: true
+        },
+      seenUnlocks: []
+    };
+  }
+
+  /**
    * DEBUG: Writes Funker Selector save data to a JSON file.
    */
   function debug_dumpSave():Void
@@ -160,5 +178,10 @@ class FS_SaveDataHandler extends Module
     FileUtil.writeStringToPath(filePath, SerializerUtil.toJSON(saveData, true), FileWriteMode.Force);
 
     trace("[Funker Selector] DEBUG: Wrote save data to " + filePath);
+  }
+
+  function getSaveData():Dynamic
+  {
+    return Save.instance.modOptions.get("FunkerSelector");
   }
 }

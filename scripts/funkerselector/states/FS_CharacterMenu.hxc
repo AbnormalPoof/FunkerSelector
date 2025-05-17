@@ -30,6 +30,7 @@ import funkin.save.Save;
 import funkin.ui.MusicBeatSubState;
 import funkin.ui.charSelect.Lock;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
+import funkin.ui.story.StoryMenuState;
 import funkin.util.Constants;
 import funkin.util.MathUtil;
 import funkin.util.ReflectUtil;
@@ -275,15 +276,24 @@ class FS_CharacterMenu extends MusicBeatSubState
     setupUIStuff();
     updateFilteredKeys();
 
+    var BG_ALPHA:Float = 0.5;
+
     if (!saveData.preferences.potatoMode)
     {
       loadingText.visible = true;
       uiCamera.visible = false;
-      FlxTween.tween(bg, {alpha: 0.5}, 0.05,
+
+      // make the bg more visible in story mode
+      if (_parentState is StoryMenuState)
+      {
+        BG_ALPHA = 0.65;
+      }
+
+      FlxTween.tween(bg, {alpha: BG_ALPHA}, 0.1,
         {
           ease: FlxEase.quartOut,
           onComplete: function(twn:FlxTween) {
-            createIconGrid(150, 0.2);
+            createIconGrid(150, 0.15);
             buildCharacterWheel();
             jumpToCurSelected();
           }

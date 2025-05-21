@@ -150,12 +150,6 @@ class FS_CharacterMenu extends MusicBeatSubState
   var lockedCharMap:StringMap<String> = ModuleHandler.getModule("FS_CharacterDataHandler").scriptGet('lockedCharMap');
 
   /**
-   * A map of `Boppers`.
-   * This is used for the character wheel.
-   */
-  var bopperCharacterIDs:ObjectMap<Bopper, String> = new ObjectMap();
-
-  /**
    * The JSON character cache, which is retrieved from `FS_CoreModule`.
    */
   var jsonCharacterCache:StringMap<String, Array<Dynamic, Dynamic>, Array> = ModuleHandler.getModule("FS_CharacterDataHandler")
@@ -352,8 +346,8 @@ class FS_CharacterMenu extends MusicBeatSubState
       for (index in 0...characterWheel.members.length)
       {
         var item:Dynamic = characterWheel.members[index];
-        var characterID:String = bopperCharacterIDs.exists(item) ? bopperCharacterIDs.get(item) : item.characterId;
-        if (item == null) continue;
+        var characterID:String = item?.characterId ?? (item?.name ?? null);
+        if (item == null || characterID == null) continue;
         fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
 
         var xOffset:Float = fs_characterData.characterMenu.position[0];
@@ -436,7 +430,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       {
         characterSprite.setAnimationOffsets(animation.name, animation.offsets[0], animation.offsets[1]);
       }
-      bopperCharacterIDs.set(characterSprite, data.characterID);
+      characterSprite.name = data.characterID;
       characterSprite.playAnimation(data.characterMenu.customSpriteData?.startingAnimation ?? 'idle');
       configureCharacterSprite(characterSprite, data);
       return characterSprite;

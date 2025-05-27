@@ -8,6 +8,7 @@ import flixel.FlxG;
 import flixel.addons.text.FlxTypeText;
 import flixel.group.FlxTypedGroup;
 import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
@@ -1556,7 +1557,11 @@ class FS_CharacterMenu extends MusicBeatSubState
     object.text = text;
     object.x += offsets[0];
     object.y += offsets[1];
-    if (font != null) object.setFormat(font, size, null, 'center');
+    if (font != null)
+    {
+      object.setFormat(font, size, null, 'center', FlxTextBorderStyle.OUTLINE, 0xFF000000);
+      object.borderSize = 2.5;
+    }
 
     return object;
   }

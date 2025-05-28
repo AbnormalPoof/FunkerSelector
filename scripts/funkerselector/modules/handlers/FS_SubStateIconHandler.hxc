@@ -1,5 +1,9 @@
 import flixel.FlxG;
 import flixel.text.FlxText;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxTimer;
+import funkin.audio.FunkinSound;
 import funkin.data.song.SongRegistry;
 import funkin.modding.base.ScriptedFunkinSprite;
 import funkin.modding.base.ScriptedMusicBeatSubState;
@@ -9,6 +13,7 @@ import funkin.play.character.CharacterDataParser;
 import funkin.ui.AtlasText;
 import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.story.StoryMenuState;
+import haxe.ds.ObjectMap;
 
 /**
  * Handles the character select icon for either Freeplay or Story Mode.
@@ -32,6 +37,11 @@ class FS_SubStateIconHandler extends Module
   var characterMenuIcon:FunkinSprite;
 
   /**
+   * Original positions of the sprites for the transition.
+   */
+  var originalExitMovers:ObjectMap<Array<FunkinSprite>, MoveData> = new ObjectMap();
+
+  /**
    * The position of the icon for Freeplay.
    */
   var ICON_DATA:Dynamic =
@@ -41,7 +51,7 @@ class FS_SubStateIconHandler extends Module
           scale: 0.65,
           position: [-20, 60]
         }
-    }
+    };
 
   function new()
   {
@@ -56,14 +66,58 @@ class FS_SubStateIconHandler extends Module
     {
       characterMenuState = null;
 
-      if (characterMenuIcon != null)
+      if (FlxG.state?.subState is FreeplayState)
       {
-        characterData = CharacterDataParser.fetchCharacterData(ModuleHandler.getModule("FS_SaveDataHandler").scriptCall('getSaveData').characterIDs.bf);
-        currentCharacterIcon = characterMenuIcon.scriptGet('currentCharacterIcon');
+        FlxG.state.subState.busy = false;
+        FlxG.state.subState.ostName.text = "OFFICIAL OST";
 
-        if (currentCharacterIcon.characterId != characterData?.healthIcon?.id)
+        if (characterMenuIcon != null)
         {
-          characterMenuIcon.scriptCall('spawnIcon');
+          var characterData:FS_CharacterData = CharacterDataParser.fetchCharacterData(ModuleHandler.getModule("FS_SaveDataHandler")
+            .scriptCall('getSaveData')
+            .characterIDs.bf);
+          currentCharacterIcon = characterMenuIcon.scriptGet('currentCharacterIcon');
+
+          if (currentCharacterIcon.characterId != characterData?.healthIcon?.id)
+          {
+            currentCharacterIcon.configure(characterData?.healthIcon);
+          }
+        }
+
+        for (grpSpr in originalExitMovers.keys())
+        {
+          var moveData:Null<MoveData> = originalExitMovers.get(grpSpr);
+          if (moveData == null) continue;
+
+          for (spr in grpSpr)
+          {
+            if (spr == null) continue;
+
+            var funnyMoveShit:MoveData = moveData;
+
+            var moveDataX = funnyMoveShit.x ?? spr.x;
+            var moveDataY = funnyMoveShit.y ?? spr.y;
+            var moveDataSpeed = funnyMoveShit.speed ?? 0.2;
+            var moveDataWait = funnyMoveShit.wait ?? 0.0;
+            var capsule = funnyMoveShit.capsule ?? false;
+
+            if (capsule)
+            {
+              FlxTween.tween(spr.targetPos,
+                {
+                  y: moveDataY,
+                  x: moveDataX
+                }, moveDataSpeed, {ease: FlxEase.backOut});
+            }
+            else
+            {
+              FlxTween.tween(spr,
+                {
+                  y: moveDataY,
+                  x: moveDataX
+                }, moveDataSpeed, {ease: FlxEase.backOut});
+            }
+          }
         }
       }
     }
@@ -93,12 +147,11 @@ class FS_SubStateIconHandler extends Module
 
           characterMenuState = ScriptedMusicBeatSubState.init('FS_CharacterMenu', [freeplayBPM]);
 
+          FunkinSound.playOnce(Paths.sound('confirmMenu'));
+
           if (FlxG.state.subState is FreeplayState)
           {
-            FlxG.state.subState.persistentUpdate = false;
-            trace("[Funker Selector] Opening the Character Select SubState...");
-            characterMenuState.camera = FlxG.state.subState.funnyCam;
-            FlxG.state.subState.openSubState(characterMenuState);
+            doTransition();
           }
           else
           {
@@ -113,6 +166,191 @@ class FS_SubStateIconHandler extends Module
         }
       }
     }
+  }
+
+  function doTransition():Void
+  {
+    var exitMovers:ObjectMap = new ObjectMap();
+
+    originalExitMovers.clear();
+
+    FlxG.state.subState.busy = true;
+
+    exitMovers.set([FlxG.state.subState.dj],
+      {
+        x: -FlxG.state.subState.dj.x,
+        y: 0,
+        speed: 0.4,
+        wait: 0
+      });
+
+    for (i in 0...FlxG.state.subState.grpCapsules.length)
+    {
+      var spr = FlxG.state.subState.grpCapsules.members[i];
+      if (spr == null) continue;
+
+      exitMovers.set([spr],
+        {
+          x: 0,
+          y: FlxG.height - spr.y,
+          speed: 0.4,
+          capsule: true
+        });
+    }
+
+    exitMovers.set([FlxG.state.subState.albumRoll, FlxG.state.subState.fp],
+      {
+        x: 2000,
+        y: 0,
+        speed: 0.4,
+        wait: 0
+      });
+
+    exitMovers.set([FlxG.state.subState.letterSort],
+      {
+        x: 0,
+        y: -FlxG.state.subState.letterSort.y,
+        speed: 0.65,
+        wait: 0
+      });
+
+    // FIND THE FUCKING HIGHSCORE GRAPHIC
+    for (spr in FlxG.state.subState.members)
+    {
+      if (spr == null) continue;
+
+      if (spr.animation != null && spr.animation.getByName('highscore') != null)
+      {
+        exitMovers.set([spr],
+          {
+            x: spr.x,
+            y: 0,
+            speed: 0.55,
+            wait: 0
+          });
+        break;
+      }
+    }
+
+    // FIND THE FUCKING CLEAR BOX
+    for (spr in FlxG.state.subState.members)
+    {
+      if (spr == null) continue;
+
+      if (spr.x == 1165)
+      {
+        exitMovers.set([spr, FlxG.state.subState.txtCompletion],
+          {
+            x: 0,
+            y: -spr.y,
+            speed: 0.65,
+            wait: 0
+          });
+        break;
+      }
+    }
+
+    var diffSelLeft:DifficultySelector = null;
+    var diffSelRight:DifficultySelector = null;
+
+    // FIND THE FUCKING DIFFICULTY SELECTORS
+    for (spr in FlxG.state.subState.members)
+    {
+      if (spr == null) continue;
+
+      if (spr.x == 20 && spr.y == (FlxG.state.subState.grpDifficulties.y - 10))
+      {
+        diffSelLeft = spr;
+        break;
+      }
+    }
+    for (spr in FlxG.state.subState.members)
+    {
+      if (spr == null) continue;
+
+      if (spr.x == 325 && spr.y == (FlxG.state.subState.grpDifficulties.y - 10))
+      {
+        diffSelRight = spr;
+        break;
+      }
+    }
+
+    exitMovers.set([diffSelLeft, diffSelRight, FlxG.state.subState.grpDifficulties],
+      {
+        x: -1000,
+        y: 0,
+        speed: 0.55,
+        wait: 0
+      });
+
+    exitMovers.set([
+      characterMenuIcon,
+      characterMenuIcon.scriptGet('currentCharacterIcon'),
+      characterMenuHotkey
+    ],
+      {
+        x: -1000,
+        y: 0,
+        speed: 0.5,
+        wait: 0
+      });
+
+    var longestTimer:Float = 0;
+
+    for (grpSpr in exitMovers.keys())
+    {
+      var moveData:Null<MoveData> = exitMovers.get(grpSpr);
+      if (moveData == null) continue;
+
+      for (spr in grpSpr)
+      {
+        if (spr == null) continue;
+
+        var funnyMoveShit:MoveData = moveData;
+
+        var moveDataX = funnyMoveShit.x ?? spr.x;
+        var moveDataY = funnyMoveShit.y ?? spr.y;
+        var moveDataSpeed = funnyMoveShit.speed ?? 0.2;
+        var moveDataWait = funnyMoveShit.wait ?? 0.0;
+        var capsule = funnyMoveShit.capsule ?? false;
+
+        originalExitMovers.set([spr],
+          {
+            x: spr.x,
+            y: spr.y,
+            speed: moveDataSpeed,
+            wait: moveDataWait,
+            capsule: capsule
+          });
+
+        longestTimer = Math.max(longestTimer, moveDataSpeed + moveDataWait);
+
+        if (capsule)
+        {
+          FlxTween.tween(spr.targetPos,
+            {
+              y: moveDataY + spr.y,
+              x: moveDataX + spr.x
+            }, moveDataSpeed, {ease: FlxEase.backIn});
+        }
+        else
+        {
+          FlxTween.tween(spr,
+            {
+              y: moveDataY + spr.y,
+              x: moveDataX + spr.x
+            }, moveDataSpeed, {ease: FlxEase.backIn});
+        }
+      }
+    }
+
+    new FlxTimer().start(longestTimer - 0.3, (_) -> {
+      FlxG.state.subState.persistentUpdate = true;
+      FlxG.state.subState.persistentDraw = true;
+      trace("[Funker Selector] Opening the Character Select SubState...");
+      characterMenuState.camera = FlxG.state.subState.funnyCam;
+      FlxG.state.subState.openSubState(characterMenuState);
+    });
   }
 
   override function onSubStateOpenEnd(event:SubStateScriptEvent):Void

@@ -3,21 +3,25 @@ import Std;
 import haxe.Json;
 import haxe.ds.ObjectMap;
 import haxe.ds.StringMap;
+import haxe.ds.IntMap;
 import lime.app.Application;
 import flixel.FlxG;
 import flixel.addons.text.FlxTypeText;
-import flixel.group.FlxTypedGroup;
+import flixel.group.FlxTypedSpriteGroup;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
+import flixel.util.FlxSpriteUtil;
+import funkin.util.FlxColorUtil;
 import funkin.audio.FunkinSound;
 import funkin.data.animation.AnimationDataUtil;
 import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.data.song.SongRegistry;
 import funkin.graphics.FunkinCamera;
 import funkin.graphics.FunkinSprite;
+import funkin.graphics.shaders.AngleMask;
 import funkin.modding.PolymodErrorHandler;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
@@ -30,6 +34,7 @@ import funkin.play.stage.Bopper;
 import funkin.save.Save;
 import funkin.ui.MusicBeatSubState;
 import funkin.ui.charSelect.Lock;
+import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
 import funkin.ui.story.StoryMenuState;
 import funkin.util.Constants;
@@ -40,6 +45,8 @@ import funkin.util.WindowUtil;
 import funkin.util.assets.DataAssets;
 import funkin.util.assets.FlxAnimationUtil;
 import funkin.util.tools.IteratorTools;
+import openfl.display.BitmapData;
+import openfl.geom.Matrix;
 
 /**
  * This is a substate that acts as a Character Selection screen.
@@ -68,13 +75,8 @@ class FS_CharacterMenu extends MusicBeatSubState
   var characterCount:FlxText;
 
   /**
-   * The text used in the loading screen.
-   */
-  var loadingText:FlxText;
-
-  /**
    * The character's description. This is a `FlxTypeText` for the typewriter effect.
-   * This is automatically resized to fit inside `descriptionBox`.
+   * This is automatically resized to fit inside `blackBack`.
    */
   var characterDescription:FlxTypeText;
 
@@ -89,6 +91,11 @@ class FS_CharacterMenu extends MusicBeatSubState
   var hotkeyBox:FunkinSprite;
 
   /**
+   * The graphic that overlays the backing card.
+   */
+  var blackBack:FunkinSprite;
+
+  /**
    * The left difficulty arrow.
    */
   var leftDifficultyArrow:FunkinSprite;
@@ -99,20 +106,19 @@ class FS_CharacterMenu extends MusicBeatSubState
   var rightDifficultyArrow:FunkinSprite;
 
   /**
-   * A box where the character description is displayed.
-   */
-  var descriptionBox:FunkinSprite;
-
-  /**
    * Stolen from `FreeplayState` LMAO
    */
   var newGraphic:FunkinSprite;
 
   /**
-   * NOTE: This is either a `FunkinSprite`, or a `Lock`
-   * depending on if "Simplify UI" is enabled or not.
+   * Again, stolen from `FreeplayState` LOL
    */
-  var lockedChill:Null;
+  var overlayShit:FunkinSprite;
+
+  /**
+   * A lock for Simplify UI.
+   */
+  var lockedChill:Lock;
 
   /**
    * The unlock sound that plays during the unlock animation.
@@ -141,6 +147,16 @@ class FS_CharacterMenu extends MusicBeatSubState
   var filteredKeys:Array<String> = [];
 
   /**
+   * The 1st icon grid that scrolls to the left at the top.
+   */
+  var iconGridTop:FlxTypedSpriteGroup<HealthIcon> = null;
+
+  /**
+   * The 2nd icon grid that scrolls to the right at the bottom.
+   */
+  var iconGridBottom:FlxTypedSpriteGroup<HealthIcon> = null;
+
+  /**
    * The save data for Funker Selector.
    */
   var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler").scriptCall('getSaveData');
@@ -149,12 +165,6 @@ class FS_CharacterMenu extends MusicBeatSubState
    * A map of all the locked characters.
    */
   var lockedCharMap:StringMap<String> = ModuleHandler.getModule("FS_CharacterDataHandler").scriptGet('lockedCharMap');
-
-  /**
-   * A map of `Boppers`.
-   * This is used for the character wheel.
-   */
-  var bopperCharacterIDs:ObjectMap<Bopper, String> = new ObjectMap();
 
   /**
    * The JSON character cache, which is retrieved from `FS_CoreModule`.
@@ -188,11 +198,6 @@ class FS_CharacterMenu extends MusicBeatSubState
   var currentCharacterIcon:HealthIcon;
 
   /**
-   * An array of `HealthIcon`s used for the icon grid.
-   */
-  var iconGrid:Array<HealthIcon> = [];
-
-  /**
    * The index of the currently selected character.
    */
   var currentCharacterIndex:Int = 0;
@@ -203,10 +208,10 @@ class FS_CharacterMenu extends MusicBeatSubState
   var currentPageIndex:Int = 0;
 
   /**
-   * This is a `FlxTypedGroup` for the character wheel.
+   * This is a `FlxTypedSpriteGroup` for the character wheel.
    * This is a bit janky but it works so whatever.
    */
-  var characterWheel:FlxTypedGroup<BaseCharacter> = new FlxTypedGroup();
+  var characterWheel:FlxTypedSpriteGroup<BaseCharacter> = new FlxTypedSpriteGroup();
 
   /**
    * The current song BPM in Freeplay.
@@ -250,6 +255,11 @@ class FS_CharacterMenu extends MusicBeatSubState
   var spamming:Bool = false;
 
   /**
+   * Stolen from `FreeplayState`.
+   */
+  var angleMaskShader:AngleMask = new AngleMask();
+
+  /**
    * MODULES
    * These are modules that are called throughout the menu.
    */
@@ -277,34 +287,6 @@ class FS_CharacterMenu extends MusicBeatSubState
     setupUIStuff();
     updateFilteredKeys();
 
-    var BG_ALPHA:Float = 0.5;
-
-    if (!saveData.preferences.potatoMode)
-    {
-      loadingText.visible = true;
-      uiCamera.visible = false;
-
-      // make the bg more visible in story mode
-      if (_parentState is StoryMenuState)
-      {
-        BG_ALPHA = 0.65;
-      }
-
-      FlxTween.tween(bg, {alpha: BG_ALPHA}, 0.1,
-        {
-          ease: FlxEase.quartOut,
-          onComplete: function(twn:FlxTween) {
-            createIconGrid(150, 0.15);
-            buildCharacterWheel();
-            jumpToCurSelected();
-          }
-        });
-    }
-    else
-    {
-      FlxTween.tween(bg, {alpha: 0.5}, 0.05, {ease: FlxEase.quartOut});
-      jumpToCurSelected();
-    }
     ModuleHandler.callEvent(new ScriptEvent(FS_OPENED_SUBSTATE));
   }
 
@@ -315,6 +297,30 @@ class FS_CharacterMenu extends MusicBeatSubState
     conductorInUse.update();
 
     adjustFontSize(characterDescription ?? null);
+
+    for (icon in iconGridTop)
+    {
+      var speedFactor:Float = (Math.min(conductorInUse.bpm, 300) / 60) * (FlxG.elapsed / (1 / FlxG.drawFramerate));
+
+      icon.x -= ICON_SCROLL_SPEED * speedFactor;
+
+      if (icon.x < -icon.width)
+      {
+        icon.x += (FlxG.width + icon.width) + 70;
+      }
+    }
+
+    for (icon in iconGridBottom)
+    {
+      var speedFactor:Float = (Math.min(conductorInUse.bpm, 300) / 60) * (FlxG.elapsed / (1 / FlxG.drawFramerate));
+
+      icon.x += ICON_SCROLL_SPEED * speedFactor;
+
+      if (icon.x > FlxG.width)
+      {
+        icon.x -= (FlxG.width + icon.width) + 70;
+      }
+    }
 
     // Adding some useful stuff to the variable watch window.
     if (Constants.DEBUG_BUILD)
@@ -330,44 +336,50 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (!busy) handleKeyShit();
 
-    for (icon in iconGrid)
-    {
-      var speedFactor:Float = (Math.min(conductorInUse.bpm, 300) / 60) * (FlxG.elapsed / (1 / FlxG.drawFramerate));
-
-      icon.x -= ICON_SCROLL_SPEED * speedFactor;
-      icon.y += (ICON_SCROLL_SPEED * speedFactor) / 2; // Vertical speed is halved.
-
-      if (icon.x < -icon.width)
-      {
-        icon.x += (FlxG.width + icon.width) + 70;
-      }
-
-      if (icon.y > FlxG.height)
-      {
-        icon.y -= (FlxG.height + icon.height) + 30;
-      }
-    }
-
     if (!saveData.preferences.potatoMode)
     {
       for (index in 0...characterWheel.members.length)
       {
         var item:Dynamic = characterWheel.members[index];
-        var characterID:String = bopperCharacterIDs.exists(item) ? bopperCharacterIDs.get(item) : item.characterId;
+        var characterID:String = item.characterId ?? (item.name ?? null);
         if (item == null) continue;
         fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
 
         var xOffset:Float = fs_characterData.characterMenu.position[0];
-        var baseX:Float = (index - (currentCharacterIndex - 1)) * 550;
-        var targetX:Float = baseX + xOffset + 250;
 
-        item.x = MathUtil.smoothLerp(item.x, targetX, elapsed, 0.20);
+        var relativeIndex:Int = index - currentCharacterIndex + 1;
+
+        if (currentCharacterID == 'default' && index == characterWheel.members.length - 1)
+        {
+          relativeIndex = -1;
+        }
+
+        if (relativeIndex < -Math.floor(characterWheel.members.length / 2))
+        {
+          relativeIndex += characterWheel.members.length;
+        }
+        if (relativeIndex > Math.floor(characterWheel.members.length / 2))
+        {
+          relativeIndex -= characterWheel.members.length;
+        }
+
+        var baseX:Float = relativeIndex * 800;
+        var targetX:Float = baseX + xOffset + 500;
+
+        if (!(Math.abs(relativeIndex) <= Math.floor(characterWheel.members.length / 3)) && (currentCharacterID != 'default'))
+        {
+          item.kill();
+        }
+        else
+        {
+          item.revive();
+        }
+
+        if (item.alive)
+        {
+          item.x = MathUtil.smoothLerp(item.x, targetX, elapsed, 0.20);
+        }
       }
-    }
-
-    if (uiCamera != null)
-    {
-      uiCamera.zoom = MathUtil.smoothLerp(uiCamera.zoom, 1, elapsed, 0.45);
     }
   }
 
@@ -410,13 +422,8 @@ class FS_CharacterMenu extends MusicBeatSubState
           characterWheel.add(characterSprite);
         }
       }
-      else
-      {
-        characterWheel.add(null);
-      }
     }
 
-    loadingText.visible = false;
     uiCamera.visible = true;
 
     refresh();
@@ -437,7 +444,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       {
         characterSprite.setAnimationOffsets(animation.name, animation.offsets[0], animation.offsets[1]);
       }
-      bopperCharacterIDs.set(characterSprite, data.characterID);
+      characterSprite.name = data.characterID;
       characterSprite.playAnimation(data.characterMenu.customSpriteData?.startingAnimation ?? 'idle');
       configureCharacterSprite(characterSprite, data);
       return characterSprite;
@@ -466,25 +473,6 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     currentCharacterID = filteredKeys[currentCharacterIndex];
 
-    if (!saveData.preferences.potatoMode)
-    {
-      for (index in 0...characterWheel.members.length)
-      {
-        var item:Dynamic = characterWheel.members[index];
-
-        if (index == currentCharacterIndex - 1)
-        {
-          item.alpha = 1.0;
-          if (item.animation?.paused) item.animation.resume();
-        }
-        else
-        {
-          item.alpha = 0.5;
-          if (item.animation?.curAnim?.looped) item.animation.pause();
-        }
-      }
-    }
-
     if (currentCharacterIndex != prevIndex)
     {
       if (saveData.preferences.preferredSFX == "charSelect")
@@ -501,6 +489,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     characterCount.text = "< " + (currentCharacterIndex + 1) + " / " + filteredKeys.length + " >";
     characterCount.screenCenter(0x01);
+    characterCount.x += 220;
   }
 
   /**
@@ -585,41 +574,41 @@ class FS_CharacterMenu extends MusicBeatSubState
 
   /**
    * Make a super awesome cool icon grid!
-   * @param spacing The spacing of the icons, I guess.
+   * @param spacing The spacing of the icons.
+   * @param alpha The alpha of the icons.
+   * @param rows Optional number of rows.
+   * @param columns Optional number of columns.
    *
    * This is disabled if "Simplify UI" is turned on in the Options Menu.
    */
-  function createIconGrid(spacing:Int, ?alpha:Float = 0.2):Void
+  function createIconGrid(spacing:Int, ?alpha:Float = 0.2, ?rows:Int = -1, ?columns:Int = -1):FlxTypedSpriteGroup<HealthIcon>
   {
     var characterData = CharacterDataParser.fetchCharacterData(currentCharacterID);
-    var columns = Math.ceil(FlxG.width / (spacing * 2));
-    var rows = Math.ceil(FlxG.height / (spacing * 2));
+
+    // Calculate columns and rows if not provided
+    if (columns <= 0) columns = Math.ceil(FlxG.width / (spacing * 2));
+    if (rows <= 0) rows = Math.ceil(FlxG.height / (spacing * 2));
+
     var xStart = (FlxG.width - columns * spacing * 2) / 2;
     var yStart = (FlxG.height - rows * spacing * 2) / 2;
+    var iconGrid:FlxTypedSpriteGroup<HealthIcon> = new FlxTypedSpriteGroup();
 
     for (i in 0...rows)
     {
       for (j in 0...columns)
       {
-        for (k in 0...2)
-        {
-          for (l in 0...2)
-          {
-            var icon = new HealthIcon('dad', 0);
-            icon.x = xStart + (j * 2 + k) * spacing;
-            icon.y = yStart + (i * 2 + l) * spacing;
-            icon.alpha = alpha;
-            icon.zIndex = 200;
+        var icon = new HealthIcon('dad', 0);
+        icon.x = xStart + (j * 2) * spacing;
+        icon.y = yStart + (i * 2) * spacing;
+        icon.alpha = alpha;
 
-            icon.configure(characterData?.healthIcon ?? 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+        icon.configure(characterData?.healthIcon ?? 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 
-            add(icon);
-            iconGrid.push(icon);
-            icon.camera = spriteCamera;
-          }
-        }
+        iconGrid.add(icon);
       }
     }
+
+    return iconGrid;
   }
 
   /**
@@ -656,7 +645,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   }
 
   /**
-   * Set up UI stuff like the BG and text.
+   * Sets up the UI.
    */
   function setupUIStuff():Void
   {
@@ -667,34 +656,53 @@ class FS_CharacterMenu extends MusicBeatSubState
     uiCamera = new FunkinCamera('UIElements');
     FlxG.cameras.add(uiCamera, false);
     uiCamera.bgColor = 0x0;
+    uiCamera.visible = false;
 
-    bg = new FunkinSprite(0, 0);
-    bg.makeSolidColor(FlxG.width, FlxG.height, 0xFF000000);
-    bg.alpha = 0;
-    bg.zIndex = 100;
-    bg.camera = spriteCamera;
-    add(bg);
+    if (_parentState is FreeplayState)
+    {
+      _parentState.ostName.text = 'LOADING CHARACTERS';
+    }
 
-    selectText = configureText(null, null, [170, 10], 50, Paths.font("PhantomMuff.ttf"));
+    blackBack = FunkinSprite.create(-500, -20, 'freeplay/pinkBack');
+    blackBack.color = 0xFF000000;
+    blackBack.alpha = 0;
+    blackBack.zIndex = 200;
+    blackBack.camera = spriteCamera;
+    add(blackBack);
+
+    overlayShit = new FunkinSprite(FlxG.width, 65).makeGraphic(1000, 700, 0xB3FFD4E9);
+    overlayShit.shader = angleMaskShader;
+    overlayShit.camera = spriteCamera;
+    overlayShit.zIndex = 150;
+
+    if (_parentState is StoryMenuState)
+    {
+      overlayShit.y -= 10;
+    }
+
+    add(overlayShit);
+
+    selectText = configureText(null, null, [170, 15], 50, 'VCR OSD Mono');
     selectText.screenCenter(0x01);
     selectText.zIndex = 300;
     selectText.camera = uiCamera;
+    selectText.visible = !(_parentState is StoryMenuState);
     add(selectText);
 
-    characterCount = configureText(null, null, [170, 60], 45, Paths.font("PhantomMuff.ttf"));
+    characterCount = configureText(null, null, [170, 80], 45, Paths.font("PhantomMuff.ttf"));
     characterCount.color = 0xFFE3E1E1;
     characterCount.zIndex = 300;
     characterCount.camera = uiCamera;
     add(characterCount);
 
-    characterDescription = configureText(null, "PLACEHOLDER", [250, 510], null, Paths.font("PhantomMuff.ttf"), true);
+    characterDescription = configureText(null, "PLACEHOLDER", [30, 300], null, Paths.font("PhantomMuff.ttf"), true);
     characterDescription.wordWrap = true;
-    characterDescription.fieldWidth = 800;
+    characterDescription.fieldWidth = 420;
     characterDescription.zIndex = 400;
     characterDescription.camera = uiCamera;
     add(characterDescription);
 
-    selected = configureText(null, '(SELECTED)', [720, 220], 50, Paths.font("PhantomMuff.ttf"));
+    selected = configureText(null, '(SELECTED)', [90, 250], 45, Paths.font("PhantomMuff.ttf"));
     selected.color = 0xFF53FF38;
     selected.visible = false;
     selected.zIndex = 400;
@@ -710,7 +718,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     hotkeyBox.visible = false;
     add(hotkeyBox);
 
-    hotkeyHintText = configureText(null, controls.getDialogueNameFromToken("RESET", true) + ' - Hotkeys', [990, 15], 45, Paths.font("PhantomMuff.ttf"));
+    hotkeyHintText = configureText(null, controls.getDialogueNameFromToken("RESET", true) + ' - Hotkeys', [40, 660], 30, 'VCR OSD Mono');
     hotkeyHintText.color = 0xFFE3E1E1;
     hotkeyHintText.camera = uiCamera;
     hotkeyHintText.zIndex = 300;
@@ -737,18 +745,18 @@ class FS_CharacterMenu extends MusicBeatSubState
     hotkeyBoxText.zIndex = 600;
     add(hotkeyBoxText);
 
-    characterName = configureText(null, null, [170, 110], 70, Paths.font("PhantomMuff.ttf"));
+    characterName = configureText(null, null, [170, 130], 50, Paths.font("PhantomMuff.ttf"));
     characterName.camera = uiCamera;
     characterName.zIndex = 300;
     add(characterName);
 
-    variationText = configureText(null, null, [170, 180], 35, Paths.font("PhantomMuff.ttf"));
+    variationText = configureText(null, null, [170, 180], 30, Paths.font("PhantomMuff.ttf"));
     variationText.color = 0xFFFF8F2E;
     variationText.camera = uiCamera;
     variationText.zIndex = 300;
     add(variationText);
 
-    leftDifficultyArrow = FunkinSprite.createSparrow(20, 300, 'storymenu/ui/arrows');
+    leftDifficultyArrow = FunkinSprite.createSparrow(500, 300, 'storymenu/ui/arrows');
     leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
     leftDifficultyArrow.animation.addByPrefix('press', 'leftConfirm0');
     leftDifficultyArrow.animation.play('idle');
@@ -758,7 +766,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     leftDifficultyArrow.updateHitbox();
     add(leftDifficultyArrow);
 
-    rightDifficultyArrow = FunkinSprite.createSparrow(1200, leftDifficultyArrow.y, 'storymenu/ui/arrows');
+    rightDifficultyArrow = FunkinSprite.createSparrow(1150, leftDifficultyArrow.y, 'storymenu/ui/arrows');
     rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
     rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
     rightDifficultyArrow.animation.play('idle');
@@ -767,6 +775,13 @@ class FS_CharacterMenu extends MusicBeatSubState
     rightDifficultyArrow.zIndex = 500;
     rightDifficultyArrow.updateHitbox();
     add(rightDifficultyArrow);
+
+    if (!saveData.preferences.potatoMode)
+    {
+      characterWheel.zIndex = 170;
+      characterWheel.camera = spriteCamera;
+      add(characterWheel);
+    }
 
     if (saveData.preferences.potatoMode)
     {
@@ -782,40 +797,34 @@ class FS_CharacterMenu extends MusicBeatSubState
       lockedChill.updateHitbox();
       add(lockedChill);
     }
-    else
-    {
-      characterWheel.zIndex = 250;
-      add(characterWheel);
 
-      loadingText = configureText(null, "LOADING\nPLEASE WAIT", [170, 10], 50, Paths.font("PhantomMuff.ttf"));
-      loadingText.screenCenter();
-      loadingText.camera = spriteCamera;
-      loadingText.zIndex = 300;
-      loadingText.visible = false;
-      add(loadingText);
-    }
-
-    newGraphic = FunkinSprite.createSparrow(840, 460, 'freeplay/freeplayCapsule/new');
+    newGraphic = FunkinSprite.createSparrow(200, 255, 'freeplay/freeplayCapsule/new');
     newGraphic.animation.addByPrefix('new', 'NEW notif', 24);
     newGraphic.animation.play('new');
     newGraphic.camera = uiCamera;
-    newGraphic.scale.set(1.8, 1.8);
+    newGraphic.scale.set(1.6, 1.6);
     newGraphic.visible = false;
     newGraphic.zIndex = 300;
     add(newGraphic);
-
-    descriptionBox = new FunkinSprite(0, 500);
-    descriptionBox.makeSolidColor(850, 200, 0xFF000000);
-    descriptionBox.camera = uiCamera;
-    descriptionBox.alpha = 0.6;
-    descriptionBox.screenCenter(0x01);
-    descriptionBox.zIndex = 350;
-    add(descriptionBox);
 
     currentCharacterIcon = new HealthIcon('dad', 0);
     currentCharacterIcon.camera = uiCamera;
     currentCharacterIcon.zIndex = 300;
     add(currentCharacterIcon);
+
+    iconGridTop = createIconGrid(150, 0.2, 1, 10);
+    iconGridTop.zIndex = 160;
+    iconGridTop.y -= 150;
+    iconGridTop.camera = spriteCamera;
+    iconGridTop.visible = false;
+    add(iconGridTop);
+
+    iconGridBottom = createIconGrid(150, 0.2, 1, 10);
+    iconGridBottom.zIndex = 160;
+    iconGridBottom.y += 360;
+    iconGridBottom.camera = spriteCamera;
+    iconGridBottom.visible = false;
+    add(iconGridBottom);
 
     unlockSound = new FunkinSound();
     unlockSound.loadEmbedded(Paths.sound('funkerSelector/charUnlock'));
@@ -829,6 +838,36 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     trace('[Funker Selector] UI has been set up.');
     conductorInUse.forceBPM(songBPM);
+
+    FlxTween.tween(blackBack, {x: -6}, 0.7, {ease: FlxEase.quintOut});
+    FlxTween.tween(overlayShit, {x: 400}, 0.7, {ease: FlxEase.quintOut});
+    FlxTween.tween(blackBack, {alpha: 1}, 1,
+      {
+        ease: FlxEase.quartOut,
+        onComplete: function(twn:FlxTween) {
+          _parentState.persistentUpdate = false;
+          _parentState.persistentDraw = true;
+
+          if (!saveData.preferences.potatoMode)
+          {
+            buildCharacterWheel();
+          }
+          else
+          {
+            uiCamera.visible = true;
+          }
+
+          jumpToCurSelected();
+
+          iconGridTop.visible = true;
+          iconGridBottom.visible = true;
+
+          if (_parentState is FreeplayState)
+          {
+            _parentState.ostName.text = 'FUNKER SELECTOR';
+          }
+        }
+      });
   }
 
   /**
@@ -902,6 +941,8 @@ class FS_CharacterMenu extends MusicBeatSubState
       {
         FunkinSound.playOnce(Paths.sound('cancelMenu'));
 
+        busy = true;
+
         // Scripted characters overwrite the suffixes when
         // they're shown. So we want to manually reset them!
         PauseSubState.musicSuffix = '';
@@ -911,7 +952,22 @@ class FS_CharacterMenu extends MusicBeatSubState
         WindowUtil.setWindowTitle('Friday Night Funkin\'');
         ModuleHandler.callEvent(new ScriptEvent(FS_EXITED_SUBSTATE));
 
-        close();
+        characterWheel.clear();
+        iconGridTop.clear();
+        iconGridBottom.clear();
+        uiCamera.visible = false;
+        _parentState.persistentUpdate = true;
+        _parentState.persistentDraw = true;
+
+        FlxTween.tween(blackBack, {x: -500}, 0.2, {ease: FlxEase.quintIn});
+        FlxTween.tween(overlayShit, {x: FlxG.width}, 0.2, {ease: FlxEase.quintIn});
+        FlxTween.tween(blackBack, {alpha: 0}, 0.2,
+          {
+            ease: FlxEase.quartIn,
+            onComplete: function(twn:FlxTween) {
+              close();
+            }
+          });
       }
     }
 
@@ -1158,31 +1214,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (currentCharacterIcon.hasAnimation('winning'))
     {
-      // Play the winning animation if it's available.
       currentCharacterIcon.playAnimation('winning');
-
-      // I wanted this really cool effect where the icons in the icon grid would also
-      // play the winning animation!
-      // But let's not play that if "Simplify UI" is turned on.
-      if (!saveData.preferences.potatoMode && iconGrid != null)
-      {
-        for (i in 0...iconGrid.length)
-        {
-          var icon = iconGrid[i];
-          new FlxTimer().start(0.01 * i, function() {
-            icon.playAnimation('winning');
-          });
-        }
-        new FlxTimer().start(0.3, function() {
-          for (i in 0...iconGrid.length)
-          {
-            var icon = iconGrid[i];
-            new FlxTimer().start(0.01 * i, function() {
-              icon.playAnimation('idle');
-            });
-          }
-        });
-      }
     }
 
     flashScreen(0xFFFFFFFF, 0.03, 0.1);
@@ -1325,7 +1357,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     busy = false;
     uiCamera.alpha = 1;
 
-    if (FlxG.sound.music != null) FlxG.sound.music.fadeIn();
+    if (FlxG.sound.music != null) FlxG.sound.music.fadeIn(2, 0, 0.8);
   }
 
   /**
@@ -1376,7 +1408,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   {
     if (characterDescription == null) return;
     var currentFontSize = characterDescription.size;
-    var maxHeight = descriptionBox.height - 10;
+    var maxHeight = blackBack.height - 400;
     if (characterDescription.fieldHeight > maxHeight)
     {
       currentFontSize--;
@@ -1398,6 +1430,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     selectText.text = topText[currentPageIndex];
     selectText.color = topTextColor[currentPageIndex];
     selectText.screenCenter(0x01);
+    selectText.x -= 330;
     selected.visible = selectedTextVisibility();
 
     newGraphic.visible = false;
@@ -1415,6 +1448,8 @@ class FS_CharacterMenu extends MusicBeatSubState
         currentCharacterIcon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         characterName.text = "DEFAULT";
         descriptionText = "This is the Default character defined by the song.";
+
+        FlxSpriteUtil.fill(overlayShit, getDominantColor(currentCharacterIcon, 0.5, 0.7));
       default:
         if (lockedCharMap.exists(currentCharacterID))
         {
@@ -1423,15 +1458,19 @@ class FS_CharacterMenu extends MusicBeatSubState
           var unlockHint = "\n\nUnlock Condition: " + fs_characterData.description.unlockCondition;
 
           descriptionText = "This character is locked! I wonder who it could be..." + unlockHint;
+
+          FlxSpriteUtil.fill(overlayShit, 0xB3B8B8B8);
         }
         else
         {
           characterName.text = characterData?.name;
           currentCharacterIcon.configure(characterData?.healthIcon);
-          currentCharacterIcon.size.set(1, 1);
-          currentCharacterIcon.setPosition(270, 380);
+          currentCharacterIcon.size.set(1.2, 1.2);
+          currentCharacterIcon.setPosition(150, 100);
 
           descriptionText = fs_characterData.description.text;
+
+          FlxSpriteUtil.fill(overlayShit, getDominantColor(currentCharacterIcon, 0.5, 0.7));
         }
     }
 
@@ -1445,13 +1484,25 @@ class FS_CharacterMenu extends MusicBeatSubState
     // Making it not look so awkward when "Simplify UI" is turned on.
     if (saveData.preferences.potatoMode || currentCharacterID == 'default')
     {
-      currentCharacterIcon.setPosition(500, 230);
+      currentCharacterIcon.setPosition(750, 250);
       currentCharacterIcon.size.set(1.7, 1.7);
     }
 
     if (!saveData.preferences.potatoMode)
     {
-      for (icon in iconGrid)
+      for (icon in iconGridTop)
+      {
+        if (currentCharacterID == 'default' || lockedCharMap.exists(currentCharacterID))
+        {
+          icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+        }
+        else if (icon.characterId != characterData?.healthIcon.id)
+        {
+          icon.configure(characterData?.healthIcon);
+        }
+      }
+
+      for (icon in iconGridBottom)
       {
         if (currentCharacterID == 'default' || lockedCharMap.exists(currentCharacterID))
         {
@@ -1465,6 +1516,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     }
 
     variationText.screenCenter(0x01);
+    variationText.x += 220;
     variationText.text = "This character has " + variationCount + " available " + (variationCount == 1 ? "variation" : "variations");
 
     if (variationCount > 0 && !lockedCharMap.exists(currentCharacterID))
@@ -1489,8 +1541,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     }
 
     characterName.screenCenter(0x01);
-
-    selected.y = characterDescription.y - 60;
+    characterName.x += 220;
 
     // Do the unlock animation if we haven't seen it yet.
     if (lockedCharMap.exists(currentCharacterID)
@@ -1564,5 +1615,59 @@ class FS_CharacterMenu extends MusicBeatSubState
     }
 
     return object;
+  }
+
+  /**
+   * Gets the dominant color of a `FunkinSprite`.
+   * Taken from this mod: https://gamebanana.com/mods/511342
+   * @param sprite The `FunkinSprite` to get the dominant color of.
+   * @return The dominant color of the sprite.
+   */
+  function getDominantColor(sprite:FunkinSprite, ?resMult:Float = 1.0, alpha:Float = 1.0):Int
+  {
+    var mult:Float = Math.min(1, (150 / sprite.frameWidth) * resMult);
+    var countByColor:Array<Int> = [];
+    var colorById:Array<Int> = [];
+    for (col in 0...(sprite.frameWidth) * mult)
+    {
+      for (row in 0...(sprite.frameHeight) * mult)
+      {
+        var colorOfThisPixel:Int = sprite.pixels.getPixel32(col / mult, row / mult);
+        if (colorOfThisPixel != 0)
+        {
+          var colorId = colorById.indexOf(colorOfThisPixel);
+          if (colorId != -1)
+          {
+            countByColor[colorId] = countByColor[colorId] + 1;
+          }
+          else
+          {
+            var id = colorById.length;
+            colorById[id] = colorOfThisPixel;
+            countByColor[id] = 1;
+          }
+        }
+      }
+    }
+
+    var maxCount:Int = 0;
+    var maxKey:Int = 0;
+    for (color in colorById)
+    {
+      var id = colorById.indexOf(color);
+      var count = countByColor[id] != null ? countByColor[id] : 0;
+      if (id != -1 && count > maxCount && color != 0xFF000000 && color != 0x00FFFFFF)
+      {
+        var alphaChannel = (color >> 24) & 0xff;
+        if (alphaChannel >= 255)
+        {
+          maxCount = count;
+          maxKey = color;
+        }
+      }
+    }
+
+    var newAlpha = Std.int(Math.max(0, Math.min(1, alpha)) * 255);
+    return (maxKey & 0x00FFFFFF) | (newAlpha << 24);
   }
 }

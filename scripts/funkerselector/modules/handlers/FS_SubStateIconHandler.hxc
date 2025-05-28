@@ -80,9 +80,9 @@ class FS_SubStateIconHandler extends Module
         if (characterMenuIcon != null)
         {
           var characterData:FS_CharacterData = CharacterDataParser.fetchCharacterData(ModuleHandler.getModule("FS_SaveDataHandler")
-            .scriptCall('getSaveData')
+            ._asc.getSaveData()
             .characterIDs.bf);
-          currentCharacterIcon = characterMenuIcon.scriptGet('currentCharacterIcon');
+          currentCharacterIcon = characterMenuIcon._asc.currentCharacterIcon;
 
           if (currentCharacterIcon.characterId != characterData?.healthIcon?.id)
           {
@@ -302,7 +302,7 @@ class FS_SubStateIconHandler extends Module
 
     exitMovers.set([
       characterMenuIcon,
-      characterMenuIcon.scriptGet('currentCharacterIcon'),
+      characterMenuIcon._asc.currentCharacterIcon,
       characterMenuHotkey
     ],
       {

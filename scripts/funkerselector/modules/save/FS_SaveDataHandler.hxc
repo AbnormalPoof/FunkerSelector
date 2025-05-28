@@ -48,7 +48,7 @@ class FS_SaveDataHandler extends Module
    */
   function initializeSaveData():Void
   {
-    var defaultSaveData:Dynamic = ModuleHandler.getModule("FS_SaveDataMigrator").scriptCall("getDefaultSaveData");
+    var defaultSaveData:Dynamic = ModuleHandler.getModule("FS_SaveDataMigrator")._asc.getDefaultSaveData();
 
     if (!Save.instance.modOptions.exists("FunkerSelector"))
     {
@@ -74,7 +74,7 @@ class FS_SaveDataHandler extends Module
     }
     else
     {
-      var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataMigrator").scriptCall("checkSaveData", [Save.instance.modOptions.get("FunkerSelector")]);
+      var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataMigrator")._asc.checkSaveData(Save.instance.modOptions.get("FunkerSelector"));
 
       trace('[Funker Selector] Successfully validated save data:\n\n---Character IDs---\n\nBoyfriend: '
         + saveData.characterIDs.bf

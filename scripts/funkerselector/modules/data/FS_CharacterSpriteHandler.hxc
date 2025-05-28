@@ -1,0 +1,142 @@
+import flixel.FlxG;
+import funkin.modding.module.Module;
+import funkin.modding.module.ModuleHandler;
+import funkin.play.character.BaseCharacter;
+import funkin.play.character.CharacterDataParser;
+import funkin.play.stage.Bopper;
+import funkin.util.assets.FlxAnimationUtil;
+import funkin.save.Save;
+import haxe.ds.StringMap;
+import thx.Iterators;
+
+/**
+ * Handles the creation and caching of the character sprites in the menu!
+ */
+class FS_CharacterSpriteHandler extends Module
+{
+  /**
+   * The character sprite cache.
+   */
+  var characterSpriteCache:StringMap<String, FunkinSprite> = new StringMap();
+
+  public function new()
+  {
+    super('FS_CharacterSpriteHandler', 100);
+
+    if (Save.instance.modOptions.get("FunkerSelector").preferences.preloadSprites)
+    {
+      // NOTE: Do not call modules directly in `new()`!
+      FlxG.signals.preStateSwitch.addOnce(function() {
+        if (Iterators.toArray(characterSpriteCache.keys()).length <= 0)
+        {
+          this.buildSpriteCache();
+        }
+      });
+    }
+  }
+
+  /**
+   * Builds a character sprite with the given `FS_characterData`.
+   * @param data The `FS_characterData` to use.
+   * @return The built character sprite.
+   */
+  function buildCharacterSprite(data:FS_characterData):FunkinSprite
+  {
+    trace('[Funker Selector] Building character sprite for ' + data.characterID);
+
+    var baseCharacter:BaseCharacter = CharacterDataParser.fetchCharacter(data.characterID);
+
+    if (data.characterMenu.useCustomSprites && data.characterMenu.customSpriteData != null)
+    {
+      var animationData:Array<Dynamic> = data.characterMenu.customSpriteData.animations;
+      var characterSprite:Bopper = new Bopper(data.characterMenu.customSpriteData?.danceEvery ?? 1.0);
+
+      characterSprite.loadSparrow(data.characterMenu.customSpriteData.assetPath);
+      FlxAnimationUtil.addAtlasAnimations(characterSprite, animationData);
+
+      for (animation in data.characterMenu.customSpriteData?.animations)
+      {
+        characterSprite.setAnimationOffsets(animation.name, animation.offsets[0], animation.offsets[1]);
+      }
+
+      characterSprite.name = data.characterID;
+      characterSprite.playAnimation(data.characterMenu.customSpriteData?.startingAnimation ?? 'idle');
+
+      configureCharacterSprite(characterSprite, data);
+      return characterSprite;
+    }
+    else if (baseCharacter != null)
+    {
+      configureCharacterSprite(baseCharacter, data);
+      return baseCharacter;
+    }
+    else
+    {
+      return null;
+    }
+  }
+
+  /**
+   * Builds the character sprite cache.
+   */
+  function buildSpriteCache():Void
+  {
+    var FS_CharacterDataHandler:FS_CharacterDataHandler = ModuleHandler.getModule("FS_CharacterDataHandler");
+
+    for (characterID in FS_CharacterDataHandler._asc.characterMap.keys())
+    {
+      var data:FS_characterData = FS_CharacterDataHandler._asc.getCharacterData(characterID);
+      characterSpriteCache.set(characterID, buildCharacterSprite(data));
+    }
+  }
+
+  /**
+   * Gets a character sprite with the given ID.
+   * @param characterID The character ID to get.
+   * @return The character sprite.
+   */
+  function getCharacterSprite(characterID:String):Null<FunkinSprite>
+  {
+    var cachedSprite:FunkinSprite = characterSpriteCache.get(characterID);
+    if (cachedSprite != null)
+    {
+      return cachedSprite;
+    }
+    else
+    {
+      return buildCharacterSprite(ModuleHandler.getModule("FS_CharacterDataHandler")._asc.getCharacterData(characterID));
+    }
+  }
+
+  /**
+   * Configuring the JSON character, setting up position, scale, flipping, etc.
+   * @param characterSprite The BaseCharacter to configure.
+   * @param data The character data to use.
+   * @return The configured BaseCharacter.
+   */
+  function configureCharacterSprite(characterSprite:FunkinSprite, data:Dynamic):FunkinSprite
+  {
+    if (data == null)
+    {
+      trace('[Funker Selector] ERROR: Data is null! Can\'t configure characterSprite.');
+      return;
+    }
+    var funkin_characterData:CharacterData = CharacterDataParser.fetchCharacterData(data.characterID);
+    var scaleFactor:Float = data.characterMenu.scale * (funkin_characterData?.isPixel ? 6 : 1);
+
+    characterSprite.y += data.characterMenu.position[1];
+    characterSprite.flipX = data.characterMenu.flipX;
+    if (characterSprite is BaseCharacter)
+    {
+      characterSprite.setScale(scaleFactor);
+    }
+    else
+    {
+      characterSprite.scale.set(scaleFactor, scaleFactor);
+    }
+    characterSprite.antialiasing = !funkin_characterData?.isPixel ? true : false;
+    characterSprite.pixelPerfectRender = funkin_characterData?.isPixel;
+
+    return characterSprite;
+  }
+}

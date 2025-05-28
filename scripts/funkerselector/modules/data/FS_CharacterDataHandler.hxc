@@ -34,11 +34,6 @@ class FS_CharacterDataHandler extends Module
    */
   var lockedCharMap:StringMap<String> = new StringMap();
 
-  /**
-   * A cache of all the characters created by the menu.
-   */
-  var cachedCharacters:StringMap<String, FunkinSprite> = new StringMap();
-
   public function new()
   {
     super('FS_CharacterDataHandler', 100);

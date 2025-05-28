@@ -43,7 +43,6 @@ import funkin.util.ReflectUtil;
 import funkin.util.SortUtil;
 import funkin.util.WindowUtil;
 import funkin.util.assets.DataAssets;
-import funkin.util.assets.FlxAnimationUtil;
 import funkin.util.tools.IteratorTools;
 import openfl.display.BitmapData;
 import openfl.geom.Matrix;
@@ -273,6 +272,11 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   var FS_SaveDataHandler:Module = ModuleHandler.getModule("FS_SaveDataHandler");
 
+  /**
+   * The `FS_CharacterSpriteHandler` module.
+   */
+  var FS_CharacterSpriteHandler:Module = ModuleHandler.getModule("FS_CharacterSpriteHandler");
+
   public function new(songBPM:Float)
   {
     super();
@@ -422,52 +426,13 @@ class FS_CharacterMenu extends MusicBeatSubState
     {
       trace("[Funker Selector] Configuring sprite...");
 
-      var characterSprite:FunkinSprite = null;
-
-      if (!FS_CharacterDataHandler.scriptGet('cachedCharacters').exists(characterID))
-      {
-        characterSprite = buildCharacterSprite(fs_characterData);
-      }
-      else
-      {
-        characterSprite = FS_CharacterDataHandler.scriptGet('cachedCharacters').get(characterID);
-      }
+      var characterSprite:FunkinSprite = FS_CharacterSpriteHandler._asc.getCharacterSprite(characterID);
 
       if (characterSprite != null)
       {
+        characterSprite.camera = spriteCamera;
         characterWheel.add(characterSprite);
-        FS_CharacterDataHandler.scriptGet('cachedCharacters').set(characterID, characterSprite);
       }
-    }
-  }
-
-  function buildCharacterSprite(data:FS_characterData):FunkinSprite
-  {
-    var baseCharacter:BaseCharacter = CharacterDataParser.fetchCharacter(data.characterID);
-
-    if (data.characterMenu.useCustomSprites && data.characterMenu.customSpriteData != null)
-    {
-      var animationData:Array<Dynamic> = data.characterMenu.customSpriteData.animations;
-      characterSprite = new Bopper(data.characterMenu.customSpriteData?.danceEvery ?? 1.0);
-      characterSprite.loadSparrow(data.characterMenu.customSpriteData.assetPath);
-      FlxAnimationUtil.addAtlasAnimations(characterSprite, animationData);
-      for (animation in data.characterMenu.customSpriteData?.animations)
-      {
-        characterSprite.setAnimationOffsets(animation.name, animation.offsets[0], animation.offsets[1]);
-      }
-      characterSprite.name = data.characterID;
-      characterSprite.playAnimation(data.characterMenu.customSpriteData?.startingAnimation ?? 'idle');
-      configureCharacterSprite(characterSprite, data);
-      return characterSprite;
-    }
-    else if (baseCharacter != null)
-    {
-      configureCharacterSprite(baseCharacter, data);
-      return baseCharacter;
-    }
-    else
-    {
-      return null;
     }
   }
 
@@ -623,39 +588,6 @@ class FS_CharacterMenu extends MusicBeatSubState
   }
 
   /**
-   * Configuring the JSON character, setting up position, scale, flipping, etc.
-   * @param characterSprite The BaseCharacter to configure.
-   * @param data The character data to use.
-   * @return The configured BaseCharacter.
-   */
-  function configureCharacterSprite(characterSprite:FunkinSprite, data:Dynamic):FunkinSprite
-  {
-    if (data == null)
-    {
-      trace('[Funker Selector] ERROR: Data is null! Can\'t configure characterSprite.');
-      return;
-    }
-    var funkin_characterData:CharacterData = CharacterDataParser.fetchCharacterData(data.characterID);
-    var scaleFactor:Float = data.characterMenu.scale * (funkin_characterData?.isPixel ? 6 : 1);
-
-    characterSprite.y += data.characterMenu.position[1];
-    characterSprite.flipX = data.characterMenu.flipX;
-    if (characterSprite is BaseCharacter)
-    {
-      characterSprite.setScale(scaleFactor);
-    }
-    else
-    {
-      characterSprite.scale.set(scaleFactor, scaleFactor);
-    }
-    characterSprite.antialiasing = !funkin_characterData?.isPixel ? true : false;
-    characterSprite.pixelPerfectRender = funkin_characterData?.isPixel;
-    characterSprite.camera = spriteCamera;
-
-    return characterSprite;
-  }
-
-  /**
    * Sets up the UI.
    */
   function setupUIStuff():Void
@@ -706,14 +638,14 @@ class FS_CharacterMenu extends MusicBeatSubState
     characterCount.camera = uiCamera;
     add(characterCount);
 
-    characterDescription = configureText(null, "PLACEHOLDER", [30, 300], null, Paths.font("PhantomMuff.ttf"), true);
+    characterDescription = configureText(null, "PLACEHOLDER", [30, 300], 25, Paths.font("PhantomMuff.ttf"), 'left', true);
     characterDescription.wordWrap = true;
-    characterDescription.fieldWidth = 420;
+    characterDescription.fieldWidth = 430;
     characterDescription.zIndex = 400;
     characterDescription.camera = uiCamera;
     add(characterDescription);
 
-    selected = configureText(null, '(SELECTED)', [90, 250], 45, Paths.font("PhantomMuff.ttf"));
+    selected = configureText(null, '(SELECTED)', [110, 250], 40, Paths.font("PhantomMuff.ttf"));
     selected.color = 0xFF53FF38;
     selected.visible = false;
     selected.zIndex = 400;
@@ -1601,11 +1533,12 @@ class FS_CharacterMenu extends MusicBeatSubState
    * @param font The font
    * @return A FlxText object
    */
-  function configureText(object:FlxText, ?text:String = "", ?offsets:Array<Int>, ?size:Int = 38, ?font:String = null, ?typeText:Bool = false):FlxText
+  function configureText(object:FlxText, ?text:String, ?offsets:Array<Int>, ?size:Int, ?font:String, ?alignment:String, ?typeText:Bool):FlxText
   {
     if (text == null) text = "";
     if (offsets == null) offsets = [0, 0];
     if (size == null) size = 35;
+
     if (object == null)
     {
       if (typeText)
@@ -1621,9 +1554,10 @@ class FS_CharacterMenu extends MusicBeatSubState
     object.text = text;
     object.x += offsets[0];
     object.y += offsets[1];
+
     if (font != null)
     {
-      object.setFormat(font, size, null, 'center', FlxTextBorderStyle.OUTLINE, 0xFF000000);
+      object.setFormat(font, size, null, alignment ?? 'center', FlxTextBorderStyle.OUTLINE, 0xFF000000);
       object.borderSize = 2.5;
     }
 

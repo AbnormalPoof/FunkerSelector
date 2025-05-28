@@ -20,7 +20,7 @@ class FS_SaveDataHandler extends Module
   /**
    * The version for save data.
    */
-  var FS_SAVE_DATA_VERSION:String = "1.1.1";
+  var FS_SAVE_DATA_VERSION:String = "1.1.0";
 
   public function new()
   {

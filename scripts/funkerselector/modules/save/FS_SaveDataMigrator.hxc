@@ -12,7 +12,7 @@ class FS_SaveDataMigrator extends Module
   /**
    * The version for save data.
    */
-  var FS_SAVE_DATA_VERSION:String = "1.1.1";
+  var FS_SAVE_DATA_VERSION:String = "1.1.0";
 
   public function new()
   {
@@ -149,37 +149,6 @@ class FS_SaveDataMigrator extends Module
     Save.instance.flush();
     return migratedSave;
   }
-
-  /**
-   * Migrate the save data from 1.1.0.
-   * @param saveData The save data to migrate.
-   */
-  function migrateSaveData_1_1_1(saveData:Dynamic):Dynamic
-  {
-    var saveData:FS_saveData = Save.instance.modOptions.get("FunkerSelector");
-    var migratedSave:FS_saveData =
-      {
-        version: FS_SAVE_DATA_VERSION,
-        characterIDs:
-          {
-            bf: saveData.characterIDs.bf,
-            gf: saveData.characterIDs.gf,
-            dad: saveData.characterIDs.dad
-          },
-        preferences:
-          {
-            potatoMode: saveData.preferences.potatoMode,
-            preferredSFX: saveData.preferences.preferredSFX,
-            djSwapping: saveData.preferences.djSwapping
-          },
-        seenUnlocks: saveData.seenUnlocks
-      };
-
-    // Save the new data.
-    Save.instance.modOptions.set("FunkerSelector", migratedSave);
-    Save.instance.flush();
-    return migratedSave;
-  }
 }
 
 typedef FS_saveData =
@@ -235,6 +204,12 @@ typedef FS_savedPreferences =
    * The preferred SFX for the Character Menu.
    */
   var preferredSFX:String;
+
+  /**
+   * If disabled, character sparrows will not be cached when the game starts.
+   * This will cause stuttering when the Character Menu is opened for the first time.
+   */
+  var preloadSprites:Bool;
 
   /**
    * If disabled, the Freeplay DJ will not be swapped out for the currently selected character's own DJ.

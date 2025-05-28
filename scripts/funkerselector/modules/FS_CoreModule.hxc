@@ -26,7 +26,7 @@ import String;
  *
  * Modules are loaded in the following order:
  * 1. `FS_SaveDataMigrator`
- * 2. `FS_CharacterDataHandler` and `FS_SaveDataHandler`
+ * 2. `FS_CharacterDataHandler`, `FS_SaveDataHandler`, and `FS_CharacterSpriteHandler`
  * 3. `FS_FreeplayDJReplace` and `FS_ResultsHandler`
  * 4. `FS_CoreModule`
  * 5. `FS_SubStateIconHandler`
@@ -311,6 +311,13 @@ class FS_CoreModule extends Module
         saveObject.preferences.potatoMode = value;
         ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('writeSaveData', [saveObject]);
       }, saveObject.preferences.potatoMode);
+
+      fs_preferencePage.createPrefItemCheckbox("Preload Sprites",
+        "If disabled, character sparrows will not be cached when the game starts. This will cause stuttering when the Character Menu is opened for the first time.",
+        (value) -> {
+          saveObject.preferences.preloadSprites = value;
+          ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('writeSaveData', [saveObject]);
+        }, saveObject.preferences.preloadSprites);
 
       fs_preferencePage.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
         ["Funkin' Main Menu" => "funkin", "Funkin' Character Select" => "charSelect"], (key, value) -> {

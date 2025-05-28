@@ -20,7 +20,7 @@ class FS_SaveDataHandler extends Module
   /**
    * The version for save data.
    */
-  var FS_SAVE_DATA_VERSION:String = "1.1.0";
+  var FS_SAVE_DATA_VERSION:String = "1.1.1";
 
   public function new()
   {
@@ -65,8 +65,6 @@ class FS_SaveDataHandler extends Module
         + saveData.characterIDs.dad
         + '\n\n---Settings---\n\nSimplify UI: '
         + saveData.preferences.potatoMode
-        + '\nPreload Sprites: '
-        + saveData.preferences.preloadSprites
         + '\nPreferred SFX: '
         + saveData.preferences.preferredSFX
         + '\nDJ Replacement: '
@@ -86,8 +84,6 @@ class FS_SaveDataHandler extends Module
         + saveData.characterIDs.dad
         + '\n\n---Settings---\n\nSimplify UI: '
         + saveData.preferences.potatoMode
-        + '\nPreload Sprites: '
-        + saveData.preferences.preloadSprites
         + '\nPreferred SFX: '
         + saveData.preferences.preferredSFX
         + '\nDJ Replacement: '
@@ -133,8 +129,6 @@ class FS_SaveDataHandler extends Module
       + saveData.characterIDs.dad
       + '\n\n---Settings---\n\nSimplify UI: '
       + saveData.preferences.potatoMode
-      + '\nPreload Sprites: '
-      + saveData.preferences.preloadSprites
       + '\nPreferred SFX: '
       + saveData.preferences.preferredSFX
       + '\nDJ Replacement: '
@@ -159,7 +153,6 @@ class FS_SaveDataHandler extends Module
       preferences:
         {
           potatoMode: false,
-          preloadSprites: true,
           preferredSFX: "funkin",
           djSwapping: true
         },

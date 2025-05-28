@@ -227,7 +227,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    * If enabled, the menu will stop responding to inputs.
    * This is used for the unlock animation
    */
-  var busy:Bool = false;
+  var busy:Bool = true;
 
   /**
    * Script Event called when this SubState is opened.
@@ -387,47 +387,58 @@ class FS_CharacterMenu extends MusicBeatSubState
   {
     characterWheel.clear();
 
-    for (characterIndex in 0...filteredKeys.length)
+    for (i in 0...filteredKeys.length)
     {
-      var characterID:String = filteredKeys[characterIndex];
-      var characterSprite:Bopper;
-      var lockedChill:FunkinSprite;
+      loadCharacter(filteredKeys[i]);
+    }
 
-      if (characterID != 'default')
+    uiCamera.visible = true;
+    refresh();
+    changeCharacter();
+  }
+
+  function loadCharacter(characterID:String):Void
+  {
+    if (characterID == 'default') return;
+
+    var fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
+
+    if (lockedCharMap.exists(characterID))
+    {
+      var lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
+      lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
+      lockedChill.animation.addByPrefix('denied', 'cannot select0', 24, false);
+      lockedChill.animation.addByPrefix('death', 'locked man explodes0', 24, false);
+      lockedChill.animation.play('idle');
+      lockedChill.animation.finishCallback = function(_) {
+        lockedChill.offset.set();
+        lockedChill.animation.play('idle');
+      };
+      lockedChill.scale.set(1.2, 1.2);
+      lockedChill.camera = spriteCamera;
+      characterWheel.add(lockedChill);
+    }
+    else
+    {
+      trace("[Funker Selector] Configuring sprite...");
+
+      var characterSprite:FunkinSprite = null;
+
+      if (!FS_CharacterDataHandler.scriptGet('cachedCharacters').exists(characterID))
       {
-        fs_characterData = FS_CharacterDataHandler.scriptCall('getCharacterData', [characterID]);
         characterSprite = buildCharacterSprite(fs_characterData);
+      }
+      else
+      {
+        characterSprite = FS_CharacterDataHandler.scriptGet('cachedCharacters').get(characterID);
       }
 
       if (characterSprite != null)
       {
-        if (lockedCharMap.exists(characterID))
-        {
-          lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
-          lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
-          lockedChill.animation.addByPrefix('denied', 'cannot select0', 24, false);
-          lockedChill.animation.addByPrefix('death', 'locked man explodes0', 24, false);
-          lockedChill.animation.play('idle');
-          lockedChill.animation.finishCallback = function(_) {
-            lockedChill.offset.set();
-            lockedChill.animation.play('idle');
-          };
-          lockedChill.scale.set(1.2, 1.2);
-          lockedChill.camera = spriteCamera;
-          characterWheel.add(lockedChill);
-        }
-        else
-        {
-          trace("[Funker Selector] Configuring sprite...");
-          characterWheel.add(characterSprite);
-        }
+        characterWheel.add(characterSprite);
+        FS_CharacterDataHandler.scriptGet('cachedCharacters').set(characterID, characterSprite);
       }
     }
-
-    uiCamera.visible = true;
-
-    refresh();
-    changeCharacter();
   }
 
   function buildCharacterSprite(data:FS_characterData):FunkinSprite
@@ -861,6 +872,8 @@ class FS_CharacterMenu extends MusicBeatSubState
 
           iconGridTop.visible = true;
           iconGridBottom.visible = true;
+
+          busy = false;
 
           if (_parentState is FreeplayState)
           {

@@ -239,17 +239,6 @@ class FS_CoreModule extends Module
    * These are script events that are triggered by the game.
    * Funker Selector uses these for various things.
    */
-  override function onCreate(event:ScriptEvent):Void
-  {
-    super.onCreate(event);
-    // Cache the sprites for JSON characters.
-    // This is only done once.
-    if (ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData').preferences.preloadSprites
-      && !ModuleHandler.getModule('FS_SaveDataHandler')
-        .scriptCall('getSaveData')
-        .preferences.potatoMode) ModuleHandler.getModule('FS_CharacterDataHandler').scriptCall('cacheJSONSparrows');
-  }
-
   override function onUpdate(event:UpdateScriptEvent):Void
   {
     super.onUpdate(event);
@@ -322,22 +311,6 @@ class FS_CoreModule extends Module
         saveObject.preferences.potatoMode = value;
         ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('writeSaveData', [saveObject]);
       }, saveObject.preferences.potatoMode);
-
-      fs_preferencePage.createPrefItemCheckbox("Preload Sprites",
-        "If disabled, character sparrows will not be cached when the game starts. This will cause stuttering when the Character Menu is opened for the first time.",
-        (value) -> {
-          saveObject.preferences.preloadSprites = value;
-          ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('writeSaveData', [saveObject]);
-          if (value)
-          {
-            ModuleHandler.getModule('FS_CharacterDataHandler').scriptCall("cacheJSONSparrows");
-          }
-          else
-          {
-            // Remove the JSON Characters from memory when the user disables the option.
-            ModuleHandler.getModule('FS_CharacterDataHandler').scriptCall("purgeJSONSparrowCache");
-          }
-        }, saveObject.preferences.preloadSprites);
 
       fs_preferencePage.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
         ["Funkin' Main Menu" => "funkin", "Funkin' Character Select" => "charSelect"], (key, value) -> {

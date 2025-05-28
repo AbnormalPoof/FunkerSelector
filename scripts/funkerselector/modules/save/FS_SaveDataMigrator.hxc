@@ -12,7 +12,7 @@ class FS_SaveDataMigrator extends Module
   /**
    * The version for save data.
    */
-  var FS_SAVE_DATA_VERSION:String = "1.1.0";
+  var FS_SAVE_DATA_VERSION:String = "1.1.1";
 
   public function new()
   {
@@ -54,7 +54,7 @@ class FS_SaveDataMigrator extends Module
         }
         else
         {
-          return migrateSaveData_1_0_0(saveData);
+          return migrateSaveData_1_1_0(saveData);
         }
       default:
         saveData.version = FS_SAVE_DATA_VERSION;
@@ -78,7 +78,6 @@ class FS_SaveDataMigrator extends Module
       preferences:
         {
           potatoMode: false,
-          preloadSprites: true,
           preferredSFX: "funkin",
           djSwapping: true
         },
@@ -108,7 +107,6 @@ class FS_SaveDataMigrator extends Module
         preferences:
           {
             potatoMode: oldPrefs?.potatoMode ?? false,
-            preloadSprites: oldPrefs?.preloadSprites ?? false,
             preferredSFX: oldPrefs?.preferredSFX ?? 'funkin',
             djSwapping: oldPrefs?.djSwapping ?? true
           },
@@ -130,7 +128,7 @@ class FS_SaveDataMigrator extends Module
    * Migrate the save data from 1.0.0.
    * @param saveData The save data to migrate.
    */
-  function migrateSaveData_1_0_0(saveData:Dynamic):Dynamic
+  function migrateSaveData_1_1_0(saveData:Dynamic):Dynamic
   {
     var saveData:FS_saveData = Save.instance.modOptions.get("FunkerSelector");
     var migratedSave:FS_saveData =
@@ -143,6 +141,37 @@ class FS_SaveDataMigrator extends Module
             dad: saveData.characterIDs.dad
           },
         preferences: Maps.toObject(saveData.preferences),
+        seenUnlocks: saveData.seenUnlocks
+      };
+
+    // Save the new data.
+    Save.instance.modOptions.set("FunkerSelector", migratedSave);
+    Save.instance.flush();
+    return migratedSave;
+  }
+
+  /**
+   * Migrate the save data from 1.1.0.
+   * @param saveData The save data to migrate.
+   */
+  function migrateSaveData_1_1_1(saveData:Dynamic):Dynamic
+  {
+    var saveData:FS_saveData = Save.instance.modOptions.get("FunkerSelector");
+    var migratedSave:FS_saveData =
+      {
+        version: FS_SAVE_DATA_VERSION,
+        characterIDs:
+          {
+            bf: saveData.characterIDs.bf,
+            gf: saveData.characterIDs.gf,
+            dad: saveData.characterIDs.dad
+          },
+        preferences:
+          {
+            potatoMode: saveData.preferences.potatoMode,
+            preferredSFX: saveData.preferences.preferredSFX,
+            djSwapping: saveData.preferences.djSwapping
+          },
         seenUnlocks: saveData.seenUnlocks
       };
 
@@ -201,12 +230,6 @@ typedef FS_savedPreferences =
    * If enabled, simplifies the UI and disables character sprite caching.
    */
   var potatoMode:Bool;
-
-  /**
-   * If disabled, character sparrows will not be cached when the game starts.
-   * This will cause stuttering when the Character Menu is opened for the first time.
-   */
-  var preloadSprites:Bool;
 
   /**
    * The preferred SFX for the Character Menu.

@@ -42,6 +42,11 @@ class FS_SubStateIconHandler extends Module
   var originalExitMovers:ObjectMap<Array<FunkinSprite>, MoveData> = new ObjectMap();
 
   /**
+   * Should we open the Character Menu?
+   */
+  var shouldOpenMenu:Bool = true;
+
+  /**
    * The position of the icon for Freeplay.
    */
   var ICON_DATA:Dynamic =
@@ -68,6 +73,7 @@ class FS_SubStateIconHandler extends Module
 
       if (FlxG.state?.subState is FreeplayState)
       {
+        shouldOpenMenu = false;
         FlxG.state.subState.busy = false;
         FlxG.state.subState.ostName.text = "OFFICIAL OST";
 
@@ -83,6 +89,8 @@ class FS_SubStateIconHandler extends Module
             currentCharacterIcon.configure(characterData?.healthIcon);
           }
         }
+
+        var longestTimer:Float = 0;
 
         for (grpSpr in originalExitMovers.keys())
         {
@@ -100,6 +108,8 @@ class FS_SubStateIconHandler extends Module
             var moveDataSpeed = funnyMoveShit.speed ?? 0.2;
             var moveDataWait = funnyMoveShit.wait ?? 0.0;
             var capsule = funnyMoveShit.capsule ?? false;
+
+            longestTimer = Math.max(longestTimer, moveDataSpeed + moveDataWait);
 
             if (capsule)
             {
@@ -119,6 +129,10 @@ class FS_SubStateIconHandler extends Module
             }
           }
         }
+
+        new FlxTimer().start(longestTimer, (_) -> {
+          shouldOpenMenu = true;
+        });
       }
     }
   }
@@ -130,7 +144,10 @@ class FS_SubStateIconHandler extends Module
     {
       // Open the CharacterMenu substate.
       // We need to make a new one everytime since it gets destroyed when it's closed.
-      if (FlxG.keys.justPressed.G && (characterMenuHotkey?.visible ?? true) && !(FlxG.state?.subState?.busy ?? false))
+      if (FlxG.keys.justPressed.G
+        && (characterMenuHotkey?.visible ?? true)
+        && !(FlxG.state?.subState?.busy ?? false)
+        && shouldOpenMenu)
       {
         if (characterMenuState == null)
         {

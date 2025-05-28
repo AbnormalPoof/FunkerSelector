@@ -35,11 +35,9 @@ class FS_CharacterDataHandler extends Module
   var lockedCharMap:StringMap<String> = new StringMap();
 
   /**
-   * currentCachedTextures gets cleared everytime we load into a song.
-   * It'd be annoying to have to re-cache everything everytime we exit, so we
-   * keep track of JSON characters in a separate map instead.
+   * A cache of all the characters created by the menu.
    */
-  var cachedJSONSparrows:StringMap<String, FlxGraphic> = new StringMap();
+  var cachedCharacters:StringMap<String, FunkinSprite> = new StringMap();
 
   public function new()
   {
@@ -365,102 +363,6 @@ class FS_CharacterDataHandler extends Module
   function getSaveData():Dynamic
   {
     return Save.instance.modOptions.get("FunkerSelector");
-  }
-
-  /**
-   * We preload the sprites for the JSON characters
-   * when the Module is created in order to reduce lag when
-   * they're shown in the Character Selection screen.
-   *
-   * If "Simplify UI" is enabled, the sprites are not
-   * cached as they won't show up in the menu.
-   */
-  function cacheJSONSparrows():Void
-  {
-    var funkerJSONs:Array<String> = DataAssets.listDataFilesInPath('funkerSelector/');
-    var spriteQueue:StringMap<String> = new StringMap();
-
-    for (funker in funkerJSONs)
-    {
-      var funkerselector_characterData:FS_characterData = getCharacterData(funker);
-      var funkin_characterData:CharacterData = CharacterDataParser.fetchCharacterData(funkerselector_characterData.characterID);
-
-      if (funkerselector_characterData == null) continue;
-
-      if (funkerselector_characterData.characterID == null)
-      {
-        trace('[ERROR] Failed to cache sprite for ' + Assets.getPath(Paths.json('funkerSelector/' + funker)) + '! The "characterID" field does not exist.');
-        continue;
-      }
-
-      if (!charJSONCheck(funkerselector_characterData.characterID))
-      {
-        trace('[ERROR] Failed to cache sprite! The Character ID (' + data.characterID + ') is invalid.');
-        continue;
-      }
-
-      if (funkerselector_characterData.characterMenu.useCustomSprites
-        && funkerselector_characterData.characterMenu.customSpriteData != null)
-      {
-        spriteQueue.set(Paths.image(funkerselector_characterData.characterMenu.customSpriteData.assetPath),
-          Paths.image(funkerselector_characterData.characterMenu.customSpriteData.assetPath));
-        continue;
-      }
-
-      switch (funkin_characterData.renderType)
-      {
-        case 'multisparrow':
-          for (anim in funkin_characterData.animations)
-          {
-            if (anim.assetPath != null) spriteQueue.set(Paths.image(anim.assetPath), Paths.image(anim.assetPath));
-          }
-        case 'animateatlas':
-          spriteQueue.set(Paths.image(funkin_characterData.assetPath + '/spritemap1'), Paths.image(funkin_characterData.assetPath + '/spritemap1'));
-        case 'sparrow':
-          spriteQueue.set(Paths.image(funkin_characterData.assetPath), Paths.image(funkin_characterData.assetPath));
-        default:
-          spriteQueue.set(Paths.image(funkin_characterData.assetPath), Paths.image(funkin_characterData.assetPath));
-      }
-    }
-
-    // Cache the sprites.
-    cacheSprites(spriteQueue);
-  }
-
-  /**
-   * Caches all the sprites in the supplied queue, asynchronously.
-   *
-   * @param spriteQueue The sprite queue.
-   */
-  function cacheSprites(spriteQueue:StringMap<String>):Void
-  {
-    for (sprite in spriteQueue.keys())
-    {
-      if (cachedJSONSparrows.exists(sprite))
-      {
-        continue;
-      }
-
-      if (cachedJSONSparrows.exists(sprite))
-      {
-        trace('[Funker Selector] Graphic is already cached: ' + sprite);
-        continue;
-      }
-
-      trace('[Funker Selector] Caching sprite: ' + sprite);
-      var graphic:FlxGraphic = FlxGraphic.fromAssetKey(sprite, false, null, true);
-      if (graphic == null)
-      {
-        trace('[Funker Selector] Failed to cache graphic: ' + sprite);
-      }
-      else
-      {
-        trace('[Funker Selector] Successfully cached graphic: ' + sprite);
-        graphic.persist = true;
-        graphic.destroyOnNoUse = false;
-        cachedJSONSparrows.set(sprite, graphic);
-      }
-    }
   }
 
   /**

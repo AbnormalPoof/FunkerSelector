@@ -135,11 +135,6 @@ class FS_CharacterMenu extends MusicBeatSubState
   var spriteCamera:FunkinCamera;
 
   /**
-   * A map containing every character.
-   */
-  var characterMap:StringMap<String, Array<String, String>> = ModuleHandler.getModule("FS_CharacterDataHandler")._asc.characterMap;
-
-  /**
    * A filtered character array for the current page.
    * We still use this array since `FS_CharacterMenu` is built around Arrays.
    */
@@ -154,21 +149,6 @@ class FS_CharacterMenu extends MusicBeatSubState
    * The 2nd icon grid that scrolls to the right at the bottom.
    */
   var iconGridBottom:FlxTypedSpriteGroup<HealthIcon> = null;
-
-  /**
-   * The save data for Funker Selector.
-   */
-  var saveData:Dynamic = ModuleHandler.getModule("FS_SaveDataHandler")._asc.getSaveData();
-
-  /**
-   * A map of all the locked characters.
-   */
-  var lockedCharMap:StringMap<String> = ModuleHandler.getModule("FS_CharacterDataHandler")._asc.lockedCharMap;
-
-  /**
-   * The JSON character cache, which is retrieved from `FS_CoreModule`.
-   */
-  var jsonCharacterCache:StringMap<String, Array<Dynamic, Dynamic>, Array> = ModuleHandler.getModule("FS_CharacterDataHandler")._asc.jsonCharacterCache;
 
   /**
    * For the top text in the menu.
@@ -264,17 +244,17 @@ class FS_CharacterMenu extends MusicBeatSubState
   /**
    * The `FS_CharacterDataHandler` module.
    */
-  var FS_CharacterDataHandler:Module = ModuleHandler.getModule("FS_CharacterDataHandler");
+  var FS_CharacterDataHandler:Module = ModuleHandler.getModule("FS_CharacterDataHandler")._asc;
 
   /**
    * The `FS_SaveDataHandler` module.
    */
-  var FS_SaveDataHandler:Module = ModuleHandler.getModule("FS_SaveDataHandler");
+  var FS_SaveDataHandler:Module = ModuleHandler.getModule("FS_SaveDataHandler")._asc;
 
   /**
    * The `FS_CharacterSpriteHandler` module.
    */
-  var FS_CharacterSpriteHandler:Module = ModuleHandler.getModule("FS_CharacterSpriteHandler");
+  var FS_CharacterSpriteHandler:Module = ModuleHandler.getModule("FS_CharacterSpriteHandler")._asc;
 
   public function new(songBPM:Float)
   {
@@ -332,21 +312,21 @@ class FS_CharacterMenu extends MusicBeatSubState
       FlxG.watch.addQuick("currentCharacterIndex", currentCharacterIndex);
       FlxG.watch.addQuick("currentCharacterID", currentCharacterID);
       FlxG.watch.addQuick("filteredKeys", filteredKeys);
-      FlxG.watch.addQuick("bf", FS_SaveDataHandler._asc.getSaveData().characterIDs.bf);
-      FlxG.watch.addQuick("gf", FS_SaveDataHandler._asc.getSaveData().characterIDs.gf);
-      FlxG.watch.addQuick("dad", FS_SaveDataHandler._asc.getSaveData().characterIDs.dad);
+      FlxG.watch.addQuick("bf", FS_SaveDataHandler.getSaveData().characterIDs.bf);
+      FlxG.watch.addQuick("gf", FS_SaveDataHandler.getSaveData().characterIDs.gf);
+      FlxG.watch.addQuick("dad", FS_SaveDataHandler.getSaveData().characterIDs.dad);
     }
 
     if (!busy) handleKeyShit();
 
-    if (!saveData.preferences.potatoMode)
+    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
       for (index in 0...characterWheel.members.length)
       {
         var item:Dynamic = characterWheel.members[index];
         var characterID:String = item.characterId ?? (item.name ?? null);
         if (item == null) continue;
-        fs_characterData = FS_CharacterDataHandler._asc.getCharacterData(characterID);
+        fs_characterData = FS_CharacterDataHandler.getCharacterData(characterID);
 
         var xOffset:Float = fs_characterData.characterMenu.position[0];
 
@@ -404,9 +384,9 @@ class FS_CharacterMenu extends MusicBeatSubState
   {
     if (characterID == 'default') return;
 
-    var fs_characterData = FS_CharacterDataHandler._asc.getCharacterData(characterID);
+    var fs_characterData = FS_CharacterDataHandler.getCharacterData(characterID);
 
-    if (lockedCharMap.exists(characterID))
+    if (FS_CharacterDataHandler.lockedCharMap.exists(characterID))
     {
       var lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
       lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
@@ -425,7 +405,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     {
       trace("[Funker Selector] Configuring sprite...");
 
-      var characterSprite:FunkinSprite = FS_CharacterSpriteHandler._asc.getCharacterSprite(characterID);
+      var characterSprite:FunkinSprite = FS_CharacterSpriteHandler.getCharacterSprite(characterID);
 
       if (characterSprite != null)
       {
@@ -450,7 +430,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (currentCharacterIndex != prevIndex)
     {
-      if (saveData.preferences.preferredSFX == "charSelect")
+      if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
       {
         FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
       }
@@ -480,7 +460,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     currentCharacterIndex = 0;
 
     updateFilteredKeys();
-    if (!saveData.preferences.potatoMode)
+    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
       buildCharacterWheel();
     }
@@ -490,7 +470,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   function beatHit():Void
   {
     bopDaThing();
-    if (!saveData.preferences.potatoMode)
+    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
       for (index in 0...characterWheel.members.length)
       {
@@ -521,8 +501,8 @@ class FS_CharacterMenu extends MusicBeatSubState
   {
     trace('[Funker Selector] Sorting the Character Map...');
 
-    filteredKeys = IteratorTools.array(characterMap.keys()).filter(function(shit) {
-      characterType = characterMap[shit][1];
+    filteredKeys = IteratorTools.array(FS_CharacterDataHandler.characterMap.keys()).filter(function(shit) {
+      characterType = FS_CharacterDataHandler.characterMap[shit][1];
       var types:Array<String> = (characterType is Array) ? characterType : [characterType];
 
       for (pageType in characterSlots[currentPageIndex])
@@ -718,14 +698,14 @@ class FS_CharacterMenu extends MusicBeatSubState
     rightDifficultyArrow.updateHitbox();
     add(rightDifficultyArrow);
 
-    if (!saveData.preferences.potatoMode)
+    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
       characterWheel.zIndex = 170;
       characterWheel.camera = spriteCamera;
       add(characterWheel);
     }
 
-    if (saveData.preferences.potatoMode)
+    if (FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
       lockedChill = new Lock(530, 270, FlxG.random.int(1, 9));
       lockedChill.onAnimationComplete.add(function(name) {
@@ -790,7 +770,7 @@ class FS_CharacterMenu extends MusicBeatSubState
           _parentState.persistentUpdate = false;
           _parentState.persistentDraw = true;
 
-          if (!saveData.preferences.potatoMode)
+          if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
           {
             buildCharacterWheel();
           }
@@ -976,7 +956,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
       if (controls.FREEPLAY_JUMP_TO_BOTTOM)
       {
-        if (!saveData.preferences.potatoMode)
+        if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
         {
           changeCharacter(characterWheel.length - currentCharacterIndex);
         }
@@ -988,7 +968,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
       if (controls.FREEPLAY_CHAR_SELECT)
       {
-        if (saveData.preferences.preferredSFX == "charSelect")
+        if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
         {
           FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
         }
@@ -1002,7 +982,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       if (controls.FREEPLAY_FAVORITE)
       {
         var shouldPlaySound:Bool = false;
-        var saveObject:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler')._asc.getSaveData();
+        var saveObject:Dynamic = FS_SaveDataHandler.getSaveData();
 
         if (saveObject.characterIDs.bf != 'default')
         {
@@ -1023,7 +1003,7 @@ class FS_CharacterMenu extends MusicBeatSubState
         {
           FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
           selected.visible = selectedTextVisibility();
-          FS_SaveDataHandler._asc.writeSaveData(saveObject);
+          FS_SaveDataHandler.writeSaveData(saveObject);
 
           // Jump to default.
           jumpToCurSelected();
@@ -1043,7 +1023,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
       if (controls.ACCEPT)
       {
-        var saveObject:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler')._asc.getSaveData();
+        var saveObject:Dynamic = FS_SaveDataHandler.getSaveData();
         var characterIDs:Dynamic = saveObject.characterIDs;
         var characterSlot:String = characterSlots[currentPageIndex][0];
         var savedCharacterID:String = ReflectUtil.getAnonymousField(characterIDs, characterSlot);
@@ -1051,7 +1031,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
         if (currentCharacterID != savedCharacterID)
         {
-          if (!lockedCharMap.exists(currentCharacterID))
+          if (!FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
           {
             var characterIDs:Dynamic = saveObject.characterIDs;
             var characterSlot:String = characterSlots[currentPageIndex][0];
@@ -1068,11 +1048,11 @@ class FS_CharacterMenu extends MusicBeatSubState
           confirmThing();
           selected.visible = selectedTextVisibility();
           newGraphic.visible = false;
-          FS_SaveDataHandler._asc.writeSaveData(saveObject);
+          FS_SaveDataHandler.writeSaveData(saveObject);
         }
         else
         {
-          if (saveData.preferences.preferredSFX == "charSelect")
+          if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
           {
             FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
           }
@@ -1081,7 +1061,7 @@ class FS_CharacterMenu extends MusicBeatSubState
             FunkinSound.playOnce(Paths.sound('cancelMenu'));
           }
           flashScreen(0xFFFF0000, 0.03, 0.1);
-          if (!saveData.preferences.potatoMode)
+          if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
           {
             for (index in 0...characterWheel.members.length)
             {
@@ -1103,19 +1083,19 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function jumpToCurSelected():Void
   {
-    var saveObject:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler')._asc.getSaveData();
+    var saveObject:Dynamic = FS_SaveDataHandler.getSaveData();
     var characterIDs:Dynamic = saveObject.characterIDs;
     var characterSlot:String = characterSlots[currentPageIndex][0];
     var savedCharacterID:String = ReflectUtil.getAnonymousField(characterIDs, characterSlot);
 
     // In the event that the saved character ID no longer exists, we fallback to default.
-    if (!characterMap.exists(savedCharacterID) && savedCharacterID != 'default')
+    if (!FS_CharacterDataHandler.characterMap.exists(savedCharacterID) && savedCharacterID != 'default')
     {
       trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
       ReflectUtil.setAnonymousField(characterIDs, characterSlot, 'default');
 
       // Save everything
-      FS_SaveDataHandler._asc.writeSaveData(saveObject);
+      FS_SaveDataHandler.writeSaveData(saveObject);
     }
     currentCharacterIndex = filteredKeys.indexOf(savedCharacterID);
     currentCharacterID = savedCharacterID;
@@ -1129,7 +1109,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function confirmThing():Void
   {
-    if (saveData.preferences.preferredSFX == "charSelect")
+    if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
     {
       FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
     }
@@ -1138,9 +1118,9 @@ class FS_CharacterMenu extends MusicBeatSubState
       FunkinSound.playOnce(Paths.sound('confirmMenu'));
     }
 
-    if (!saveData.preferences.potatoMode && currentCharacterID != "default")
+    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode && currentCharacterID != "default")
     {
-      var fs_characterData:FS_characterData = FS_CharacterDataHandler._asc.getCharacterData(currentCharacterID);
+      var fs_characterData:FS_characterData = FS_CharacterDataHandler.getCharacterData(currentCharacterID);
       var animation:String = fs_characterData.characterMenu.selectedAnim;
       var item:Dynamic = characterWheel.members[currentCharacterIndex - 1];
 
@@ -1170,12 +1150,12 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function showVariations(characterID:String):Void
   {
-    var fs_characterData = FS_CharacterDataHandler._asc.getCharacterData(characterID);
-    var variationCount:Int = FS_CharacterDataHandler._asc.getCharacterData(characterID, 1);
+    var fs_characterData = FS_CharacterDataHandler.getCharacterData(characterID);
+    var variationCount:Int = FS_CharacterDataHandler.getCharacterData(characterID, 1);
     var alertBody:String = "";
 
     if (variationCount <= 0) return;
-    if (lockedCharMap.exists(characterID)) return;
+    if (FS_CharacterDataHandler.lockedCharMap.exists(characterID)) return;
     if (characterID == 'default') return;
 
     for (variation in fs_characterData.characterVariations)
@@ -1208,7 +1188,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function doUnlockAnimation(?skip:Bool):Void
   {
-    if (!saveData.preferences.potatoMode)
+    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
       for (index in 0...characterWheel.members.length)
       {
@@ -1248,7 +1228,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (FlxG.sound.music != null) FlxG.sound.music.fadeOut();
 
-    if (!saveData.preferences.potatoMode)
+    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
       lockedChill.offset.set();
       lockedChill.animation.play('idle', true);
@@ -1264,7 +1244,7 @@ class FS_CharacterMenu extends MusicBeatSubState
         onComplete: function(twn:FlxTween) {
           unlockSound.play(true);
           new FlxTimer().start(1.45, function() {
-            if (!saveData.preferences.potatoMode)
+            if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
             {
               lockedChill.offset.set(170, 220);
               lockedChill.animation.play('death');
@@ -1294,7 +1274,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (!simplifyUI)
     {
-      fs_characterData = FS_CharacterDataHandler._asc.getCharacterData(currentCharacterID);
+      fs_characterData = FS_CharacterDataHandler.getCharacterData(currentCharacterID);
       characterWheel.replace(lockedChill, buildCharacterSprite(fs_characterData));
     }
 
@@ -1317,7 +1297,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       lockedChill.animation.curAnim.curFrame = 36;
       lockedChill.animation.resume();
 
-      if (saveData.preferences.preferredSFX == "charSelect")
+      if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
       {
         FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
       }
@@ -1333,7 +1313,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       lockedChill.anim.curFrame = 34;
       lockedChill.anim.resume();
 
-      if (saveData.preferences.preferredSFX == "charSelect")
+      if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
       {
         FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
       }
@@ -1381,9 +1361,9 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (currentCharacterID != 'default')
     {
-      fs_characterData = FS_CharacterDataHandler._asc.getCharacterData(currentCharacterID);
+      fs_characterData = FS_CharacterDataHandler.getCharacterData(currentCharacterID);
       characterData = CharacterDataParser.fetchCharacterData(currentCharacterID);
-      variationCount = FS_CharacterDataHandler._asc.getCharacterData(currentCharacterID, 1);
+      variationCount = FS_CharacterDataHandler.getCharacterData(currentCharacterID, 1);
     }
 
     switch (currentCharacterID)
@@ -1395,7 +1375,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
         FlxSpriteUtil.fill(overlayShit, getDominantColor(currentCharacterIcon, 0.5, 0.7));
       default:
-        if (lockedCharMap.exists(currentCharacterID))
+        if (FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
         {
           characterName.text = "LOCKED";
 
@@ -1426,17 +1406,17 @@ class FS_CharacterMenu extends MusicBeatSubState
     characterDescription.start(0.01);
 
     // Making it not look so awkward when "Simplify UI" is turned on.
-    if (saveData.preferences.potatoMode || currentCharacterID == 'default')
+    if (FS_SaveDataHandler.getSaveData().preferences.potatoMode || currentCharacterID == 'default')
     {
       currentCharacterIcon.setPosition(750, 250);
       currentCharacterIcon.size.set(1.7, 1.7);
     }
 
-    if (!saveData.preferences.potatoMode)
+    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
       for (icon in iconGridTop)
       {
-        if (currentCharacterID == 'default' || lockedCharMap.exists(currentCharacterID))
+        if (currentCharacterID == 'default' || FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
         {
           icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         }
@@ -1448,7 +1428,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
       for (icon in iconGridBottom)
       {
-        if (currentCharacterID == 'default' || lockedCharMap.exists(currentCharacterID))
+        if (currentCharacterID == 'default' || FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
         {
           icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         }
@@ -1463,7 +1443,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     variationText.x += 220;
     variationText.text = "This character has " + variationCount + " available " + (variationCount == 1 ? "variation" : "variations");
 
-    if (variationCount > 0 && !lockedCharMap.exists(currentCharacterID))
+    if (variationCount > 0 && !FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
     {
       trace("[Funker Selector] Variations found for character ID " + currentCharacterID);
       variationText.visible = true;
@@ -1473,33 +1453,32 @@ class FS_CharacterMenu extends MusicBeatSubState
       variationText.visible = false;
     }
 
-    if (lockedCharMap.exists(currentCharacterID))
+    if (FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
     {
       if (currentCharacterIcon != null) currentCharacterIcon.visible = false;
-      if (saveData.preferences.potatoMode) lockedChill.visible = true;
+      if (FS_SaveDataHandler.getSaveData().preferences.potatoMode) lockedChill.visible = true;
     }
     else
     {
       if (currentCharacterIcon != null) currentCharacterIcon.visible = true;
-      if (saveData.preferences.potatoMode) lockedChill.visible = false;
+      if (FS_SaveDataHandler.getSaveData().preferences.potatoMode) lockedChill.visible = false;
     }
 
     characterName.screenCenter(0x01);
     characterName.x += 220;
 
     // Do the unlock animation if we haven't seen it yet.
-    if (lockedCharMap.exists(currentCharacterID)
-      && FS_CharacterDataHandler._asc.isCharacterUnlocked(currentCharacterID, fs_characterData.unlockMethod))
+    if (FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID)
+      && FS_CharacterDataHandler.isCharacterUnlocked(currentCharacterID, fs_characterData.unlockMethod))
     {
-      var saveObject:Dynamic = FS_SaveDataHandler._asc.getSaveData();
+      var saveObject:Dynamic = FS_SaveDataHandler.getSaveData();
 
       if (!saveObject.seenUnlocks.contains(currentCharacterID))
       {
-        lockedCharMap.remove(currentCharacterID);
+        FS_CharacterDataHandler.lockedCharMap.remove(currentCharacterID);
         saveObject.seenUnlocks.push(currentCharacterID);
 
-        FS_SaveDataHandler._asc.writeSaveData(saveObject);
-        FS_CharacterDataHandler._asc.lockedCharMap = lockedCharMap;
+        FS_SaveDataHandler.writeSaveData(saveObject);
 
         busy = true;
         doUnlockAnimation(FlxG.keys.pressed.SHIFT);
@@ -1517,7 +1496,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function selectedTextVisibility():Bool
   {
-    var characterIDs:Dynamic = FS_SaveDataHandler._asc.getSaveData().characterIDs;
+    var characterIDs:Dynamic = FS_SaveDataHandler.getSaveData().characterIDs;
     var characterSlot:String = characterSlots[currentPageIndex][0];
 
     return currentCharacterID == ReflectUtil.getAnonymousField(characterIDs, characterSlot);

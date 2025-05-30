@@ -8,6 +8,7 @@ import lime.app.Application;
 import flixel.FlxG;
 import flixel.addons.text.FlxTypeText;
 import flixel.group.FlxTypedSpriteGroup;
+import flixel.math.FlxMath;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 import flixel.tweens.FlxEase;
@@ -325,31 +326,24 @@ class FS_CharacterMenu extends MusicBeatSubState
       {
         var item:Dynamic = characterWheel.members[index];
         var characterID:String = item.characterId ?? (item.name ?? null);
-        if (item == null) continue;
-        fs_characterData = FS_CharacterDataHandler.getCharacterData(characterID);
+        var fs_characterData:FS_characterData = FS_CharacterDataHandler.getCharacterData(characterID);
 
         var xOffset:Float = fs_characterData.characterMenu.position[0];
+        var relativeIndex:Int = index - currentCharacterIndex;
 
-        var relativeIndex:Int = index - currentCharacterIndex + 1;
-
-        if (currentCharacterID == 'default' && index == characterWheel.members.length - 1)
-        {
-          relativeIndex = -1;
-        }
-
-        if (relativeIndex < -Math.floor(characterWheel.members.length / 2))
-        {
-          relativeIndex += characterWheel.members.length;
-        }
         if (relativeIndex > Math.floor(characterWheel.members.length / 2))
         {
           relativeIndex -= characterWheel.members.length;
+        }
+        else if (relativeIndex < -Math.floor(characterWheel.members.length / 2))
+        {
+          relativeIndex += characterWheel.members.length;
         }
 
         var baseX:Float = relativeIndex * 800;
         var targetX:Float = baseX + xOffset + 500;
 
-        if (!(Math.abs(relativeIndex) <= Math.floor(characterWheel.members.length / 3)) && (currentCharacterID != 'default'))
+        if (!(Math.abs(relativeIndex) <= Math.floor(characterWheel.members.length / 3)))
         {
           item.kill();
         }
@@ -382,11 +376,9 @@ class FS_CharacterMenu extends MusicBeatSubState
 
   function loadCharacter(characterID:String):Void
   {
-    if (characterID == 'default') return;
-
     var fs_characterData = FS_CharacterDataHandler.getCharacterData(characterID);
 
-    if (FS_CharacterDataHandler.lockedCharMap.exists(characterID))
+    if (FS_CharacterDataHandler.lockedCharMap.exists(characterID) || characterID == 'default')
     {
       var lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
       lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
@@ -399,6 +391,12 @@ class FS_CharacterMenu extends MusicBeatSubState
       };
       lockedChill.scale.set(1.2, 1.2);
       lockedChill.camera = spriteCamera;
+
+      if (characterID == 'default')
+      {
+        lockedChill.visible = false;
+      }
+
       characterWheel.add(lockedChill);
     }
     else
@@ -475,12 +473,9 @@ class FS_CharacterMenu extends MusicBeatSubState
       for (index in 0...characterWheel.members.length)
       {
         var item:Dynamic = characterWheel.members[index];
-        if (index == currentCharacterIndex - 1)
+        if (item is Bopper)
         {
-          if (item is Bopper)
-          {
-            item.dance();
-          }
+          item.dance();
         }
       }
     }
@@ -1066,7 +1061,7 @@ class FS_CharacterMenu extends MusicBeatSubState
             for (index in 0...characterWheel.members.length)
             {
               var item = characterWheel.members[index];
-              if (index == currentCharacterIndex - 1 && item is FunkinSprite) item.animation.play('denied', true);
+              if (item is FunkinSprite) item.animation.play('denied', true);
             }
           }
           else
@@ -1118,11 +1113,11 @@ class FS_CharacterMenu extends MusicBeatSubState
       FunkinSound.playOnce(Paths.sound('confirmMenu'));
     }
 
-    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode && currentCharacterID != "default")
+    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
       var fs_characterData:FS_characterData = FS_CharacterDataHandler.getCharacterData(currentCharacterID);
       var animation:String = fs_characterData.characterMenu.selectedAnim;
-      var item:Dynamic = characterWheel.members[currentCharacterIndex - 1];
+      var item:Dynamic = characterWheel.members[currentCharacterIndex];
 
       if (item != null)
       {
@@ -1193,7 +1188,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       for (index in 0...characterWheel.members.length)
       {
         var item = characterWheel.members[index];
-        if (index == currentCharacterIndex - 1 && item is FunkinSprite)
+        if (index == currentCharacterIndex && item is FunkinSprite)
         {
           lockedChill = item;
           break;

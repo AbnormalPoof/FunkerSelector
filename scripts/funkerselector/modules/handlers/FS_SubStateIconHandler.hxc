@@ -217,7 +217,7 @@ class FS_SubStateIconHandler extends Module
 
     exitMovers.set([FlxG.state.subState.albumRoll, FlxG.state.subState.fp],
       {
-        x: 2000,
+        x: FlxG.width,
         y: 0,
         speed: 0.4,
         wait: 0
@@ -382,6 +382,8 @@ class FS_SubStateIconHandler extends Module
         trace("[Funker Selector] Character SubState still exists! Resetting...");
         characterMenuState = null;
       }
+
+      shouldOpenMenu = true;
 
       characterMenuIcon = ScriptedFunkinSprite.init('FS_FreeplayIcon');
       characterMenuIcon.camera = event.targetState.funnyCam;

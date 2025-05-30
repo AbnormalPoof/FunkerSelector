@@ -24,6 +24,7 @@ import funkin.graphics.FunkinCamera;
 import funkin.graphics.FunkinSprite;
 import funkin.graphics.shaders.AngleMask;
 import funkin.modding.PolymodErrorHandler;
+import funkin.modding.base.ScriptedFunkinSprite;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.GameOverSubState;
@@ -36,6 +37,7 @@ import funkin.save.Save;
 import funkin.ui.MusicBeatSubState;
 import funkin.ui.charSelect.Lock;
 import funkin.ui.freeplay.FreeplayState;
+import funkin.ui.freeplay.DifficultySelector;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
 import funkin.ui.story.StoryMenuState;
 import funkin.util.Constants;
@@ -352,7 +354,7 @@ class FS_CharacterMenu extends MusicBeatSubState
           item.revive();
         }
 
-        if (item.alive)
+        if (item.alive && item.x != targetX)
         {
           item.x = MathUtil.smoothLerp(item.x, targetX, elapsed, 0.20);
         }
@@ -674,24 +676,18 @@ class FS_CharacterMenu extends MusicBeatSubState
     variationText.zIndex = 300;
     add(variationText);
 
-    leftDifficultyArrow = FunkinSprite.createSparrow(500, 300, 'storymenu/ui/arrows');
-    leftDifficultyArrow.animation.addByPrefix('idle', 'leftIdle0');
-    leftDifficultyArrow.animation.addByPrefix('press', 'leftConfirm0');
-    leftDifficultyArrow.animation.play('idle');
+    leftDifficultyArrow = ScriptedFunkinSprite.init('FS_DifficultySelectorLeft');
+    leftDifficultyArrow.setPosition(500, 300);
     leftDifficultyArrow.scale.set(1.5, 1.5);
     leftDifficultyArrow.camera = uiCamera;
     leftDifficultyArrow.zIndex = 500;
-    leftDifficultyArrow.updateHitbox();
     add(leftDifficultyArrow);
 
-    rightDifficultyArrow = FunkinSprite.createSparrow(1150, leftDifficultyArrow.y, 'storymenu/ui/arrows');
-    rightDifficultyArrow.animation.addByPrefix('idle', 'rightIdle0');
-    rightDifficultyArrow.animation.addByPrefix('press', 'rightConfirm0');
-    rightDifficultyArrow.animation.play('idle');
+    rightDifficultyArrow = ScriptedFunkinSprite.init('FS_DifficultySelectorRight');
+    rightDifficultyArrow.setPosition(1150, leftDifficultyArrow.y);
     rightDifficultyArrow.scale.set(1.5, 1.5);
     rightDifficultyArrow.camera = uiCamera;
     rightDifficultyArrow.zIndex = 500;
-    rightDifficultyArrow.updateHitbox();
     add(rightDifficultyArrow);
 
     if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
@@ -776,7 +772,7 @@ class FS_CharacterMenu extends MusicBeatSubState
             uiCamera.visible = true;
           }
 
-          jumpToCurSelected();
+          jumpToCurSelected(true);
 
           iconGridTop.visible = true;
           iconGridBottom.visible = true;
@@ -926,8 +922,8 @@ class FS_CharacterMenu extends MusicBeatSubState
         spamTimer = 0;
       }
 
-      leftDifficultyArrow.animation.play(leftPressed ? 'press' : 'idle');
-      rightDifficultyArrow.animation.play(rightPressed ? 'press' : 'idle');
+      if (leftPressed) leftDifficultyArrow._asc.moveShitDown();
+      if (rightPressed) rightDifficultyArrow._asc.moveShitDown();
 
       if (controls.FREEPLAY_LEFT || controls.FREEPLAY_RIGHT)
       {
@@ -1078,7 +1074,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   /**
    * Jumps to the currently selected character.
    */
-  function jumpToCurSelected():Void
+  function jumpToCurSelected(jumpIn:Bool = false):Void
   {
     var saveObject:Dynamic = FS_SaveDataHandler.getSaveData();
     var characterIDs:Dynamic = saveObject.characterIDs;
@@ -1098,6 +1094,16 @@ class FS_CharacterMenu extends MusicBeatSubState
     currentCharacterID = savedCharacterID;
     changeCharacter();
     updateCharInfo();
+
+    // Play the jump in animation if we have it
+    var characterSprite:FunkinSprite = FS_CharacterSpriteHandler.getCharacterSprite(currentCharacterID);
+    if (characterSprite is BaseCharacter)
+    {
+      if (characterSprite.hasAnimation('fallin'))
+      {
+        characterSprite.playAnimation('fallin', true, true);
+      }
+    }
   }
 
   /**

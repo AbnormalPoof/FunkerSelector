@@ -1,0 +1,12 @@
+[
+  {
+    "op": "add",
+    "path": "/animations/-",
+    "value": {
+      "name": "fallin",
+      "assetPath": "characters/FS_extras/BF_Fall",
+      "prefix": "bf fall in",
+      "offsets": [34, 635]
+    }
+  }
+]

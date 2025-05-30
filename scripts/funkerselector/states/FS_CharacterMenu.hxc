@@ -1101,6 +1101,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     {
       if (characterSprite.hasAnimation('fallin'))
       {
+        characterSprite.ignoreExclusionPref.push('fallin');
         characterSprite.playAnimation('fallin', true, true);
       }
     }

@@ -26,10 +26,11 @@ import String;
  *
  * Modules are loaded in the following order:
  * 1. `FS_SaveDataMigrator`
- * 2. `FS_CharacterDataHandler`, `FS_SaveDataHandler`, and `FS_CharacterSpriteHandler`
- * 3. `FS_FreeplayDJReplace` and `FS_ResultsHandler`
- * 4. `FS_CoreModule`
- * 5. `FS_SubStateIconHandler`
+ * 2. `FS_CharacterDataHandler`, `FS_SaveDataHandler`
+ * 3. `FS_SubStateIconHandler` and `FS_CharacterSpriteHandler`
+ * 4. `FS_FreeplayDJReplace` and `FS_ResultsHandler`
+ * 5. `FS_CoreModule`
+ * 6. `FS_SubStateIconHandler`
  *
  * The core module is loaded last to ensure that all the other modules can be accessed properly.
  * NOTE: `FS_FreeplayIcon` and `FS_CharacterMenu` are accessed on demand, so they don't need to be loaded in a specific order.

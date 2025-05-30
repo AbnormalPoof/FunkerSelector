@@ -1279,7 +1279,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     if (!simplifyUI)
     {
       fs_characterData = FS_CharacterDataHandler.getCharacterData(currentCharacterID);
-      characterWheel.replace(lockedChill, buildCharacterSprite(fs_characterData));
+      characterWheel.replace(lockedChill, FS_CharacterSpriteHandler.getCharacterSprite(currentCharacterID));
     }
 
     busy = false;

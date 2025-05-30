@@ -626,6 +626,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     selected.camera = uiCamera;
     add(selected);
 
+    // TODO: Remove this, replace it with a neater UI for hotkeys
     hotkeyBox = new FunkinSprite(0, 0);
     hotkeyBox.makeSolidColor(600, 600, 0xFF000000);
     hotkeyBox.camera = uiCamera;
@@ -762,6 +763,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       {
         ease: FlxEase.quartOut,
         onComplete: function(twn:FlxTween) {
+          // TODO: Have a transition to the ui or something IDK
           _parentState.persistentUpdate = false;
           _parentState.persistentDraw = true;
 

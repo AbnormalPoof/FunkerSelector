@@ -7,11 +7,10 @@ import funkin.modding.module.ModuleHandler;
 import funkin.play.character.CharacterDataParser;
 import funkin.save.Save;
 import funkin.util.MemoryUtil;
+import funkin.util.SerializerUtil;
 import funkin.util.assets.DataAssets;
 import haxe.ds.StringMap;
 import haxe.ds.Either;
-import hxjsonast.Parser;
-import hxjsonast.Tools;
 import thx.Objects;
 
 /**
@@ -142,22 +141,21 @@ class FS_CharacterDataHandler extends Module
    */
   function parseJSONData(characterID:String = 'default'):FS_characterData
   {
-    var filePath = Paths.json('funkerSelector/' + characterID);
+    var filePath:String = Paths.json('funkerSelector/' + characterID);
 
     // Check if the file exists
     if (Assets.exists(filePath))
     {
-      var parsedData = Tools.getValue(Parser.parse(Assets.getText(filePath), filePath));
+      var parsedJSON:Dynamic = SerializerUtil.fromJSON(Assets.getText(filePath));
 
-      if (parsedData == null)
+      if (parsedJSON == null)
       {
-        trace("[Funker Selector] Failed to parse " + Assets.getPath(filePath) + "!");
+        trace('[Funker Selector] Failed to parse JSON file for character ID ' + characterID);
         return null;
       }
 
       // Merge the parsed data with the default character data, basically layering the parsed object on top of the default one.
-      var result:FS_characterData = Objects.deepCombine(getDefaultCharacterData(), parsedData);
-
+      var result:FS_characterData = Objects.deepCombine(getDefaultCharacterData(), parsedJSON);
       return result;
     }
 

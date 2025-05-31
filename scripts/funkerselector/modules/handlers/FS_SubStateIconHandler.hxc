@@ -75,6 +75,7 @@ class FS_SubStateIconHandler extends Module
       {
         shouldOpenMenu = false;
         FlxG.state.subState.busy = false;
+        FlxG.state.subState.letterSort.inputEnabled = true;
         FlxG.state.subState.ostName.text = "OFFICIAL OST";
 
         if (characterMenuIcon != null)
@@ -192,6 +193,7 @@ class FS_SubStateIconHandler extends Module
     originalExitMovers.clear();
 
     FlxG.state.subState.busy = true;
+    FlxG.state.subState.letterSort.inputEnabled = false;
 
     exitMovers.set([FlxG.state.subState.dj],
       {

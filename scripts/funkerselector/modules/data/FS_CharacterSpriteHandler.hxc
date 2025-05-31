@@ -23,7 +23,8 @@ class FS_CharacterSpriteHandler extends Module
   {
     super('FS_CharacterSpriteHandler', 150);
 
-    if (Save.instance.modOptions.get("FunkerSelector")?.preferences?.preloadSprites ?? true)
+    if ((Save.instance.modOptions.get("FunkerSelector")?.preferences?.preloadSprites ?? true)
+      && (!Save.instance.modOptions.get("FunkerSelector")?.preferences?.potatoMode ?? true))
     {
       // NOTE: Do not call modules directly in `new()`!
       FlxG.signals.preStateSwitch.addOnce(function() {

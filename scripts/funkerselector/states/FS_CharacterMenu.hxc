@@ -324,14 +324,12 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
-      for (index in 0...characterWheel.members.length)
-      {
-        var item:Dynamic = characterWheel.members[index];
+      characterWheel.forEach(function(item:Dynamic) {
         var characterID:String = item.characterId ?? (item.name ?? null);
         var fs_characterData:FS_characterData = FS_CharacterDataHandler.getCharacterData(characterID);
 
         var xOffset:Float = fs_characterData.characterMenu.position[0];
-        var relativeIndex:Int = index - currentCharacterIndex;
+        var relativeIndex:Int = characterWheel.members.indexOf(item) - currentCharacterIndex;
 
         if (relativeIndex > Math.floor(characterWheel.members.length / 2))
         {
@@ -342,10 +340,7 @@ class FS_CharacterMenu extends MusicBeatSubState
           relativeIndex += characterWheel.members.length;
         }
 
-        var baseX:Float = relativeIndex * 800;
-        var targetX:Float = baseX + xOffset + 500;
-
-        if (!(Math.abs(relativeIndex) <= Math.floor(characterWheel.members.length / 3)))
+        if (!(relativeIndex == -1 || relativeIndex == 0 || relativeIndex == 1))
         {
           item.kill();
         }
@@ -354,11 +349,14 @@ class FS_CharacterMenu extends MusicBeatSubState
           item.revive();
         }
 
-        if (item.alive && item.x != targetX)
+        if (item.alive)
         {
+          var baseX:Float = relativeIndex * 800;
+          var targetX:Float = baseX + xOffset + 500;
+
           item.x = MathUtil.smoothLerp(item.x, targetX, elapsed, 0.20);
         }
-      }
+      });
     }
   }
 
@@ -699,7 +697,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (FS_SaveDataHandler.getSaveData().preferences.potatoMode)
     {
-      lockedChill = new Lock(530, 270, FlxG.random.int(1, 9));
+      lockedChill = new Lock(750, 270, FlxG.random.int(1, 9));
       lockedChill.onAnimationComplete.add(function(name) {
         if (name != 'selected') lockedChill.playAnimation('selected');
       });
@@ -1095,14 +1093,33 @@ class FS_CharacterMenu extends MusicBeatSubState
     changeCharacter();
     updateCharInfo();
 
-    // Play the jump in animation if we have it
-    var characterSprite:FunkinSprite = FS_CharacterSpriteHandler.getCharacterSprite(currentCharacterID);
-    if (characterSprite is BaseCharacter)
+    if (jumpIn)
     {
-      if (characterSprite.hasAnimation('fallin'))
+      // Play the jump in animation if we have it
+      var characterSprite:FunkinSprite = FS_CharacterSpriteHandler.getCharacterSprite(currentCharacterID);
+
+      if (characterSprite is BaseCharacter)
       {
-        characterSprite.ignoreExclusionPref.push('fallin');
-        characterSprite.playAnimation('fallin', true, true);
+        if (characterSprite.hasAnimation('fallin'))
+        {
+          characterSprite.visible = false;
+
+          new FlxTimer().start(0.2, function() {
+            characterSprite.ignoreExclusionPref.push('fallin');
+            characterSprite.playAnimation('fallin', true, true);
+            characterSprite.visible = true;
+          });
+        }
+      }
+      else
+      {
+        if (characterSprite.animation.getByName('fallin') != null)
+        {
+          new FlxTimer().start(0.2, function() {
+            characterSprite.animation.play('fallin', true, true);
+            characterSprite.visible = true;
+          });
+        }
       }
     }
   }
@@ -1350,6 +1367,8 @@ class FS_CharacterMenu extends MusicBeatSubState
 
   /**
    * Update character information.
+   * 
+   * TODO: This is a performance bottleneck!!!
    */
   function updateCharInfo():Void
   {

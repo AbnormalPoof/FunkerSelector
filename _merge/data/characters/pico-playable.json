@@ -1,0 +1,12 @@
+[
+  {
+    "op": "add",
+    "path": "/animations/-",
+    "value": {
+      "name": "fallin",
+      "assetPath": "characters/FS_extras/Pico_Fall",
+      "prefix": "pico fallin",
+      "offsets": [82, 813]
+    }
+  }
+]

@@ -140,4 +140,26 @@ class FS_CharacterSpriteHandler extends Module
 
     return characterSprite;
   }
+
+  /**
+   * Resets the sprite animations.
+   */
+  function resetAnimations():Void
+  {
+    for (characterID in characterSpriteCache.keys())
+    {
+      var characterSprite:FunkinSprite = characterSpriteCache.get(characterID);
+
+      if (characterSprite.hasAnimation('idle'))
+      {
+        characterSprite.animation.play('idle', true, true);
+        characterSprite.applyAnimationOffsets('idle');
+      }
+      else if (characterSprite.hasAnimation('danceLeft'))
+      {
+        characterSprite.animation.play('danceLeft', true, true);
+        characterSprite.applyAnimationOffsets('danceLeft');
+      }
+    }
+  }
 }

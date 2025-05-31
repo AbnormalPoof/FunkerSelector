@@ -870,6 +870,9 @@ class FS_CharacterMenu extends MusicBeatSubState
         characterWheel.clear();
         iconGridTop.clear();
         iconGridBottom.clear();
+
+        FS_CharacterSpriteHandler.resetAnimations();
+
         uiCamera.visible = false;
         _parentState.persistentUpdate = true;
         _parentState.persistentDraw = true;

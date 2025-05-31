@@ -73,10 +73,12 @@ class DJReplace extends Module
     var freeplayDJ:FreeplayDJ = freeplay.dj;
     var playableCharData:PlayerFreeplayDJData = freeplayDJ.playableCharData;
     var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : freeplay.currentCharacterId;
-    var playableCharId:String = PlayerRegistry.instance.getCharacterOwnerId(characterID);
+    var playableCharId:String = PlayerRegistry.instance.getCharacterOwnerId(characterID) ?? characterID;
 
     if (freeplayDJ.characterId != playableCharId)
     {
+      trace(freeplayDJ.characterId);
+      trace(playableCharId);
       if (!inIntro)
       {
         if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect')))

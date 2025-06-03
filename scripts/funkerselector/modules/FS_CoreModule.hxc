@@ -311,6 +311,13 @@ class FS_CoreModule extends Module
       fs_preferencePage.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI and disables character sprite caching.", (value) -> {
         saveObject.preferences.potatoMode = value;
         ModuleHandler.getModule('FS_SaveDataHandler')._asc.writeSaveData(saveObject);
+
+        // NOTE: "Simplify UI" and "Preload Sprites" are mutually exclusive
+        if (saveObject.preferences.preloadSprites && value)
+        {
+          fs_preferencePage.preferenceItems.members[1].currentValue = true;
+          fs_preferencePage.items.members[1].callback();
+        }
       }, saveObject.preferences.potatoMode);
 
       fs_preferencePage.createPrefItemCheckbox("Preload Sprites",
@@ -318,6 +325,13 @@ class FS_CoreModule extends Module
         (value) -> {
           saveObject.preferences.preloadSprites = value;
           ModuleHandler.getModule('FS_SaveDataHandler')._asc.writeSaveData(saveObject);
+
+          // NOTE: "Simplify UI" and "Preload Sprites" are mutually exclusive
+          if (saveObject.preferences.potatoMode && value)
+          {
+            fs_preferencePage.preferenceItems.members[0].currentValue = true;
+            fs_preferencePage.items.members[0].callback();
+          }
         }, saveObject.preferences.preloadSprites);
 
       fs_preferencePage.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',

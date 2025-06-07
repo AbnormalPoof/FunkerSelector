@@ -346,7 +346,11 @@ class FS_CoreModule extends Module
           {
             FunkinSound.playOnce(Paths.sound('confirmMenu'));
           }
-        }, saveObject.preferences.preferredSFX);
+        }, switch (saveObject.preferences.preferredSFX)
+        {
+          case "funkin": "Funkin' Main Menu";
+          case "charSelect": "Funkin' Character Select";
+        });
 
       fs_preferencePage.createPrefItemCheckbox("DJ Replacement",
         "If disabled, the Freeplay DJ will not be swapped out for the currently selected character's own DJ.", (value) -> {

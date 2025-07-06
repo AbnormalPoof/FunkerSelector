@@ -1,17 +1,29 @@
 import flixel.util.FlxTimer;
 import funkin.graphics.FunkinSprite;
 import funkin.graphics.shaders.PureColor;
+import funkin.PlayerSettings;
 
 /**
  * Modified version of `DifficultySelector` to work with the Character Menu.
  */
-class FS_DifficultySelectorLeft extends FunkinSprite
+class FS_DifficultySelector extends FunkinSprite
 {
   var whiteShader:PureColor;
 
-  public function new(x:Float, y:Float)
+  var parentState:FS_CharacterMenu;
+
+  var controls(get, never):Controls;
+
+  function get_controls():Controls
+  {
+    return PlayerSettings.player1.controls;
+  }
+
+  public function new(parentState:FS_CharacterMenu, x:Float, y:Float)
   {
     super(x, y);
+
+    this.parentState = parentState;
 
     frames = Paths.getSparrowAtlas('freeplay/freeplaySelector');
     animation.addByPrefix('shine', 'arrow pointer loop', 24);
@@ -23,48 +35,15 @@ class FS_DifficultySelectorLeft extends FunkinSprite
 
     scale.set(1.5, 1.5);
 
-    flipX = false;
-
     updateHitbox();
   }
 
-  function moveShitDown():Void
+  override function update(elapsed:Float):Void
   {
-    offset.y -= 5;
+    if (flipX && controls.UI_RIGHT && !parentState.busy && !whiteShader.colorSet) moveShitDown();
+    if (!flipX && controls.UI_LEFT && !parentState.busy && !whiteShader.colorSet) moveShitDown();
 
-    whiteShader.colorSet = true;
-
-    scale.x = scale.y = 1;
-
-    new FlxTimer().start(2 / 24, function(tmr) {
-      scale.x = scale.y = 1.5;
-      whiteShader.colorSet = false;
-      updateHitbox();
-    });
-  }
-}
-
-class FS_DifficultySelectorRight extends FunkinSprite
-{
-  var whiteShader:PureColor;
-
-  public function new(x:Float, y:Float)
-  {
-    super(x, y);
-
-    frames = Paths.getSparrowAtlas('freeplay/freeplaySelector');
-    animation.addByPrefix('shine', 'arrow pointer loop', 24);
-    animation.play('shine');
-
-    whiteShader = new PureColor(0xFFFFFFFF);
-
-    shader = whiteShader;
-
-    scale.set(1.5, 1.5);
-
-    flipX = true;
-
-    updateHitbox();
+    super.update(elapsed);
   }
 
   function moveShitDown():Void

@@ -5,8 +5,6 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
 import funkin.audio.FunkinSound;
 import funkin.data.song.SongRegistry;
-import funkin.modding.base.ScriptedFunkinSprite;
-import funkin.modding.base.ScriptedMusicBeatSubState;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.character.CharacterDataParser;
@@ -76,13 +74,12 @@ class FS_SubStateIconHandler extends Module
         shouldOpenMenu = false;
         FlxG.state.subState.busy = false;
         FlxG.state.subState.letterSort.inputEnabled = true;
+        FlxG.state.subState.charSelectHint.visible = true;
         FlxG.state.subState.ostName.text = "OFFICIAL OST";
 
         if (characterMenuIcon != null)
         {
-          var characterData:FS_CharacterData = CharacterDataParser.fetchCharacterData(ModuleHandler.getModule("FS_SaveDataHandler")
-            ._asc.getSaveData()
-            .characterIDs.bf);
+          var characterData:FS_CharacterData = CharacterDataParser.fetchCharacterData(FS_SaveData.instance.bf);
           currentCharacterIcon = characterMenuIcon._asc.currentCharacterIcon;
 
           if (currentCharacterIcon.characterId != characterData?.healthIcon?.id)
@@ -163,7 +160,7 @@ class FS_SubStateIconHandler extends Module
             freeplayBPM = 120;
           }
 
-          characterMenuState = ScriptedMusicBeatSubState.init('FS_CharacterMenu', [freeplayBPM]);
+          characterMenuState = new FS_CharacterMenu(freeplayBPM);
 
           FunkinSound.playOnce(Paths.sound('confirmMenu'));
 
@@ -212,16 +209,24 @@ class FS_SubStateIconHandler extends Module
         {
           x: 0,
           y: FlxG.height - spr.y,
-          speed: 0.4,
+          speed: 0.45,
           capsule: true
         });
     }
 
-    exitMovers.set([FlxG.state.subState.albumRoll, FlxG.state.subState.fp],
+    exitMovers.set([FlxG.state.subState.fp],
       {
         x: FlxG.width,
         y: 0,
         speed: 0.4,
+        wait: 0
+      });
+
+    exitMovers.set([FlxG.state.subState.albumRoll],
+      {
+        x: FlxG.width,
+        y: 0,
+        speed: 0.5,
         wait: 0
       });
 
@@ -363,6 +368,8 @@ class FS_SubStateIconHandler extends Module
       }
     }
 
+    FlxG.state.subState.charSelectHint.visible = false;
+
     new FlxTimer().start(longestTimer - 0.3, (_) -> {
       FlxG.state.subState.persistentUpdate = true;
       FlxG.state.subState.persistentDraw = true;
@@ -387,7 +394,7 @@ class FS_SubStateIconHandler extends Module
 
       shouldOpenMenu = true;
 
-      characterMenuIcon = ScriptedFunkinSprite.init('FS_FreeplayIcon');
+      characterMenuIcon = new FS_FreeplayIcon();
       characterMenuIcon.camera = event.targetState.funnyCam;
       characterMenuIcon.visible = false;
 
@@ -419,6 +426,8 @@ class FS_SubStateIconHandler extends Module
     super.onStateChangeEnd(event);
     if (event.targetState is StoryMenuState)
     {
+      shouldOpenMenu = true;
+
       if (characterMenuState != null)
       {
         trace("[Funker Selector] Character SubState still exists! Resetting...");

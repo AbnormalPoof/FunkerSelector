@@ -5,7 +5,6 @@ import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.ui.freeplay.FreeplayDJState;
 import funkin.ui.freeplay.FreeplayState;
-import funkin.util.TimerUtil;
 
 /**
  * This is a module that handles Freeplay DJ replacement.
@@ -26,14 +25,12 @@ class DJReplace extends Module
   override function onScriptEvent(event:ScriptEvent):Void
   {
     super.onScriptEvent(event);
-    if (event.type == "FS_EXITED_SUBSTATE" && FlxG.state.subState is FreeplayState)
+
+    if (event.type == "FS_EXITED_SUBSTATE" && (FlxG.state.subState is FreeplayState))
     {
-      var shouldSwap:Bool = ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData').preferences.djSwapping;
-      trace("[Funker Selector] Swapping DJ? " + shouldSwap);
-      if (shouldSwap)
+      if (FS_SaveData.instance.djSwapping)
       {
         trace("[Funker Selector] Switching out DJ...");
-        var saveData:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData');
         transitionToNewDJ(FlxG.state.subState, saveData);
       }
       else
@@ -52,12 +49,10 @@ class DJReplace extends Module
     super.onSubStateOpenEnd(event);
     if (event.targetState is FreeplayState)
     {
-      var shouldSwap:Bool = ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData').preferences.djSwapping;
-      if (shouldSwap)
+      if (FS_SaveData.instance.djSwapping)
       {
         trace("[Funker Selector] Switching out DJ...");
-        var saveData:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData');
-        transitionToNewDJ(FlxG.state.subState, saveData, true);
+        transitionToNewDJ(FlxG.state.subState, true);
       }
     }
   }
@@ -66,19 +61,15 @@ class DJReplace extends Module
    * Swap out the Freeplay DJ.
    * @param freeplay The Freeplay SubState we're using.
    */
-  function transitionToNewDJ(freeplay:FreeplayState, FS_saveData:Dynamic, ?inIntro:Bool = false):Void
+  function transitionToNewDJ(freeplay:FreeplayState, ?inIntro:Bool = false):Void
   {
-    saveData = FS_saveData;
-
     var freeplayDJ:FreeplayDJ = freeplay.dj;
     var playableCharData:PlayerFreeplayDJData = freeplayDJ.playableCharData;
-    var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? saveData.characterIDs.bf : freeplay.currentCharacterId;
+    var characterID:String = PlayerRegistry.instance.isCharacterOwned(FS_SaveData.instance.bf) ? FS_SaveData.instance.bf : freeplay.currentCharacterId;
     var playableCharId:String = PlayerRegistry.instance.getCharacterOwnerId(characterID) ?? characterID;
 
     if (freeplayDJ.characterId != playableCharId)
     {
-      trace(freeplayDJ.characterId);
-      trace(playableCharId);
       if (!inIntro)
       {
         if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect')))
@@ -108,14 +99,12 @@ class DJReplace extends Module
   function replaceDJNoIntro():Void
   {
     var freeplayDJ:FreeplayDJ = FlxG.state.subState.dj;
-    var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf) : FlxG.state.subState.currentCharacterId;
+    var characterID:String = PlayerRegistry.instance.isCharacterOwned(FS_SaveData.instance.bf) ? PlayerRegistry.instance.getCharacterOwnerId(FS_SaveData.instance.bf) : FlxG.state.subState.currentCharacterId;
     var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(characterID);
-    var playableCharData:Dynamic = playableChar.getFreeplayDJData() ?? null;
+    var playableCharData:Dynamic = playableChar?.getFreeplayDJData() ?? null;
 
-    var fs_characterData:Dynamic = ModuleHandler.getModule("FS_CharacterDataHandler").scriptCall('getCharacterData', [saveData.characterIDs.bf]);
+    var fs_characterData:Dynamic = FS_CharacterDataHandler.instance.getCharacterData(FS_SaveData.instance.bf);
     var introFrame:Int = fs_characterData.introSwapFrame;
-
-    var startTime = TimerUtil.start();
 
     if (playableCharData == null)
     {
@@ -140,8 +129,6 @@ class DJReplace extends Module
         playableChar.getFreeplayDJText(3)
       ]);
       FlxG.state.subState.busy = false;
-
-      trace("[Funker Selector] replaceDJNoIntro took " + TimerUtil.seconds(startTime) + " seconds to complete.");
     }
   }
 
@@ -152,11 +139,9 @@ class DJReplace extends Module
   function replaceDJIntro():Void
   {
     var freeplayDJ:FreeplayDJ = FlxG.state.subState.dj;
-    var characterID:String = PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf) ? PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf) : FlxG.state.subState.currentCharacterId;
+    var characterID:String = PlayerRegistry.instance.isCharacterOwned(FS_SaveData.instance.bf) ? PlayerRegistry.instance.getCharacterOwnerId(FS_SaveData.instance.bf) : FlxG.state.subState.currentCharacterId;
     var playableChar:PlayableCharacter = PlayerRegistry.instance.fetchEntry(characterID);
     var playableCharData:Dynamic = playableChar.getFreeplayDJData() ?? null;
-
-    var startTime = TimerUtil.start();
 
     if (playableCharData == null)
     {
@@ -175,8 +160,6 @@ class DJReplace extends Module
       playableChar.getFreeplayDJText(2),
       playableChar.getFreeplayDJText(3)
     ]);
-
-    trace("[Funker Selector] replaceDJNoIntro took " + TimerUtil.seconds(startTime) + " seconds to complete.");
   }
 
   /**

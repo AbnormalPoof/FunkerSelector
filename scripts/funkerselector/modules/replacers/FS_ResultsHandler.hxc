@@ -54,7 +54,7 @@ class ResultsHandler extends Module
 
       if (PlayState.instance.currentStage?.getBoyfriend() == null) return;
 
-      var saveData:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler').scriptCall('getSaveData');
+      var bfCharacter:Dynamic = FS_SaveData.instance.bf;
       var currentCharacterID:String = PlayState.instance.currentStage.getBoyfriend().characterId;
 
       // Save the original ID.
@@ -64,14 +64,14 @@ class ResultsHandler extends Module
       trace("[Funker Selector] Original character ID: " + originalPlayerID);
 
       // Check if the saved character is owned, then check if we're ACTUALLY playing as them.
-      if (PlayerRegistry.instance.isCharacterOwned(saveData.characterIDs.bf))
+      if (PlayerRegistry.instance.isCharacterOwned(bfCharacter))
       {
-        shouldReplace = (currentCharacterID == saveData.characterIDs.bf || isVariation(currentCharacterID, saveData.characterIDs.bf));
+        shouldReplace = (currentCharacterID == bfCharacter || isVariation(currentCharacterID, bfCharacter));
 
         if (shouldReplace)
         {
           replaced = true;
-          event.targetState.params.characterId = PlayerRegistry.instance.getCharacterOwnerId(saveData.characterIDs.bf);
+          event.targetState.params.characterId = PlayerRegistry.instance.getCharacterOwnerId(bfCharacter);
           trace('[Funker Selector] Using character ID ' + event.targetState.params.characterId);
         }
         else
@@ -90,7 +90,7 @@ class ResultsHandler extends Module
    */
   function isVariation(currentID:String, savedID:String):Bool
   {
-    var fs_characterData:Dynamic = ModuleHandler.getModule('FS_CharacterDataHandler').scriptCall('getCharacterData', [savedID]);
+    var fs_characterData:Dynamic = FS_CharacterDataHandler.instance.getCharacterData(savedID);
     if (fs_characterData.characterVariations.length > 0)
     {
       for (variation in fs_characterData.characterVariations)

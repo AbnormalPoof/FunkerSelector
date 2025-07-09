@@ -1,4 +1,3 @@
-import funkin.modding.base.Object;
 import funkin.save.Save;
 import funkin.util.VersionUtil;
 import thx.Maps;
@@ -7,36 +6,26 @@ import thx.Objects;
 /**
  * A module that handles the migration of Funker Selector save data.
  */
-class FS_SaveDataMigrator extends Object
+class FS_SaveDataMigrator
 {
-  /**
-   * The instance of the save data migrator.
-   */
-  static var instance:FS_SaveDataMigrator = null;
-
-  public function new()
-  {
-    super();
-  }
-
   /**
    * Check if the save data is good. If not, migrate it.
    * @param saveData The save data to check.
    * @return The migrated save data, or the original save data if no migration was necessary.
    */
-  function checkSaveData(saveData:Dynamic):Dynamic
+  static function checkSaveData(saveData:Dynamic):Dynamic
   {
-    if (!VersionUtil.validateVersionStr(saveData.version, FS_SaveDataHandler.FS_SAVE_DATA_VERSION))
+    if (!VersionUtil.validateVersionStr(saveData.version, FS_SaveData.FS_SAVE_DATA_VERSION))
     {
       trace('[Funker Selector] Save data is outdated! Migrating...');
       trace("Save data version: " + saveData.version);
-      trace("Expected version: " + FS_SaveDataHandler.FS_SAVE_DATA_VERSION);
+      trace("Expected version: " + FS_SaveData.FS_SAVE_DATA_VERSION);
       saveData = migrateSaveData(saveData);
     }
 
     trace('[Funker Selector] Save data is good!');
 
-    var updatedSaveData:Dynamic = Objects.deepCombine(FS_SaveDataHandler.getDefaultSaveData(), saveData);
+    var updatedSaveData:Dynamic = Objects.deepCombine(FS_SaveData.getDefaultSaveData(), saveData);
     return updatedSaveData;
   }
 
@@ -44,7 +33,7 @@ class FS_SaveDataMigrator extends Object
    * Migrate the save data if necessary.
    * @param saveData The save data to migrate.
    */
-  function migrateSaveData(saveData:Dynamic):Dynamic
+  static function migrateSaveData(saveData:Dynamic):Dynamic
   {
     switch (saveData.version)
     {
@@ -58,7 +47,7 @@ class FS_SaveDataMigrator extends Object
           return migrateSaveData_1_1_0(saveData);
         }
       default:
-        saveData.version = FS_SaveDataHandler.FS_SAVE_DATA_VERSION;
+        saveData.version = FS_SaveData.FS_SAVE_DATA_VERSION;
         return saveData;
     }
   }
@@ -67,7 +56,7 @@ class FS_SaveDataMigrator extends Object
    * Migrate the save data from legacy.
    * @param saveData The save data to migrate.
    */
-  function migrateSaveData_Legacy(saveData:Dynamic):Dynamic
+  static function migrateSaveData_Legacy(saveData:Dynamic):Dynamic
   {
     var oldCharacterIDs:Dynamic = Save.instance.modOptions.get("FunkerSelector");
     var oldPrefs:Dynamic = Save.instance.modOptions.get("FunkerSelectorSettings");
@@ -75,7 +64,7 @@ class FS_SaveDataMigrator extends Object
 
     var migratedSave:Dynamic =
       {
-        version: FS_SaveDataHandler.FS_SAVE_DATA_VERSION,
+        version: FS_SaveData.FS_SAVE_DATA_VERSION,
         characterIDs:
           {
             bf: oldCharacterIDs?.bf ?? 'default',
@@ -106,12 +95,12 @@ class FS_SaveDataMigrator extends Object
    * Migrate the save data from 1.0.0.
    * @param saveData The save data to migrate.
    */
-  function migrateSaveData_1_1_0(saveData:Dynamic):Dynamic
+  static function migrateSaveData_1_1_0(saveData:Dynamic):Dynamic
   {
     var saveData:FS_saveData = Save.instance.modOptions.get("FunkerSelector");
     var migratedSave:FS_saveData =
       {
-        version: FS_SaveDataHandler.FS_SAVE_DATA_VERSION,
+        version: FS_SaveData.FS_SAVE_DATA_VERSION,
         characterIDs:
           {
             bf: saveData.characterIDs.bf,

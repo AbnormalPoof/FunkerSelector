@@ -1050,8 +1050,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function jumpToCurSelected(jumpIn:Bool = false):Void
   {
-    var saveObject:Dynamic = FS_SaveDataHandler.instance.getSaveData();
-    var characterIDs:Dynamic = saveObject.characterIDs;
+    var characterIDs:Dynamic = FS_SaveData.instance.data.characterIDs;
     var characterSlot:String = characterSlots[currentPageIndex][0];
     var savedCharacterID:String = ReflectUtil.getAnonymousField(characterIDs, characterSlot);
 
@@ -1062,7 +1061,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       ReflectUtil.setAnonymousField(characterIDs, characterSlot, 'default');
 
       // Save everything
-      FS_SaveDataHandler.instance.writeSaveData(saveObject);
+      FS_SaveData.instance.flush();
     }
 
     currentCharacterIndex = filteredKeys.indexOf(savedCharacterID);
@@ -1454,21 +1453,13 @@ class FS_CharacterMenu extends MusicBeatSubState
     characterName.screenCenter(0x01);
     characterName.x += 220;
 
-    var seenUnlocks:Array<String> = FS_SaveData.instance.seenUnlocks;
-
     // Do the unlock animation if we haven't seen it yet.
-    if (FS_CharacterDataHandler.instance.lockedCharMap.exists(currentCharacterID)
-      && FS_CharacterDataHandler.instance.isCharacterUnlocked(currentCharacterID, fs_characterData.unlockMethod))
+    if (FS_CharacterDataHandler.instance.showUnlockAnimation(currentCharacterID))
     {
-      if (!seenUnlocks.contains(currentCharacterID))
-      {
-        FS_CharacterDataHandler.instance.lockedCharMap.remove(currentCharacterID);
-        seenUnlocks.push(currentCharacterID);
-        FS_SaveData.instance.seenUnlocks = seenUnlocks;
+      FS_CharacterDataHandler.instance.unlockCharacter(currentCharacterID);
 
-        busy = true;
-        doUnlockAnimation(FlxG.keys.pressed.SHIFT);
-      }
+      busy = true;
+      doUnlockAnimation(FlxG.keys.pressed.SHIFT);
     }
   }
 
@@ -1482,7 +1473,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function selectedTextVisibility():Bool
   {
-    var characterIDs:Dynamic = FS_SaveDataHandler.instance.getSaveData().characterIDs;
+    var characterIDs:Dynamic = FS_SaveData.instance.data.characterIDs;
     var characterSlot:String = characterSlots[currentPageIndex][0];
 
     return currentCharacterID == ReflectUtil.getAnonymousField(characterIDs, characterSlot);

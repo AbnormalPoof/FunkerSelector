@@ -1,16 +1,38 @@
 import funkin.modding.base.Object;
-import flixel.FlxG;
 import funkin.save.Save;
+import funkin.util.FileUtil;
+import funkin.util.FileWriteMode;
+import funkin.util.PlatformUtil;
+import funkin.util.SerializerUtil;
+import flixel.FlxG;
 
 /**
- * A class that hold various save data values for easy access.
+ * A class to handle the save data for Funker Selector.
  */
 class FS_SaveData extends Object
 {
   /**
+   * The version for save data.
+   */
+  static final FS_SAVE_DATA_VERSION:String = "1.1.0";
+
+  /**
    * The instance of this class.
    */
   static var instance:FS_SaveData = null;
+
+  var data:FS_rawSaveData;
+
+  public function new()
+  {
+    super();
+  }
+
+  static function initialize():Void
+  {
+    FS_SaveData.instance = new FS_SaveData();
+    FS_SaveData.instance.initializeSaveData(Save.instance.modOptions.get("FunkerSelector"));
+  }
 
   /**
    * CHARACTER IDS
@@ -22,15 +44,14 @@ class FS_SaveData extends Object
 
   function get_bf():String
   {
-    return FS_SaveDataHandler.instance.getSaveData().characterIDs.bf;
+    return data.characterIDs.bf;
   }
 
   function set_bf(value:String):Void
   {
     trace("[Funker Selector] Saving BF character ID...");
-    var saveData:String = FS_SaveDataHandler.instance.getSaveData();
-    saveData.characterIDs.bf = value;
-    FS_SaveDataHandler.instance.writeSaveData(saveData);
+    data.characterIDs.bf = value;
+    flush();
   }
 
   /**
@@ -40,15 +61,14 @@ class FS_SaveData extends Object
 
   function get_gf():String
   {
-    return FS_SaveDataHandler.instance.getSaveData().characterIDs.gf;
+    return data.characterIDs.gf;
   }
 
   function set_gf(value:String):Void
   {
     trace("[Funker Selector] Saving GF character ID...");
-    var saveData:String = FS_SaveDataHandler.instance.getSaveData();
-    saveData.characterIDs.gf = value;
-    FS_SaveDataHandler.instance.writeSaveData(saveData);
+    data.characterIDs.gf = value;
+    flush();
   }
 
   /**
@@ -58,15 +78,14 @@ class FS_SaveData extends Object
 
   function get_dad():String
   {
-    return FS_SaveDataHandler.instance.getSaveData().characterIDs.dad;
+    return data.characterIDs.dad;
   }
 
   function set_dad(value:String):Void
   {
     trace("[Funker Selector] Saving DAD character ID...");
-    var saveData:String = FS_SaveDataHandler.instance.getSaveData();
-    saveData.characterIDs.dad = value;
-    FS_SaveDataHandler.instance.writeSaveData(saveData);
+    data.characterIDs.dad = value;
+    flush();
   }
 
   /**
@@ -79,15 +98,14 @@ class FS_SaveData extends Object
 
   function get_simplifyUI():String
   {
-    return FS_SaveDataHandler.instance.getSaveData().preferences.potatoMode;
+    return data.preferences.potatoMode;
   }
 
   function set_simplifyUI(value:String):Void
   {
     trace("[Funker Selector] Saving Simplify UI preference...");
-    var saveData:String = FS_SaveDataHandler.instance.getSaveData();
-    saveData.preferences.potatoMode = value;
-    FS_SaveDataHandler.instance.writeSaveData(saveData);
+    data.preferences.potatoMode = value;
+    flush();
   }
 
   /**
@@ -97,15 +115,14 @@ class FS_SaveData extends Object
 
   function get_preferredSFX():String
   {
-    return FS_SaveDataHandler.instance.getSaveData().preferences.preferredSFX;
+    return data.preferences.preferredSFX;
   }
 
   function set_preferredSFX(value:String):Void
   {
     trace("[Funker Selector] Saving Preferred SFX preference...");
-    var saveData:String = FS_SaveDataHandler.instance.getSaveData();
-    saveData.preferences.preferredSFX = value;
-    FS_SaveDataHandler.instance.writeSaveData(saveData);
+    data.preferences.preferredSFX = value;
+    flush();
   }
 
   /**
@@ -115,45 +132,185 @@ class FS_SaveData extends Object
 
   function get_djSwapping():String
   {
-    return FS_SaveDataHandler.instance.getSaveData().preferences.djSwapping;
+    return data.preferences.djSwapping;
   }
 
   function set_djSwapping(value:String):Void
   {
     trace("[Funker Selector] Saving DJ Swapping preference...");
-    var saveData:String = FS_SaveDataHandler.instance.getSaveData();
-    saveData.preferences.djSwapping = value;
-    FS_SaveDataHandler.instance.writeSaveData(saveData);
+    data.preferences.djSwapping = value;
+    flush();
   }
 
   /**
-   * The seen unlock animations for this save data.
+   * Returns `true` if a character's unlock animation has been seen.
+   * @param characterId The character ID to use.
    */
-  public var seenUnlocks(get, set):Array<String>;
-
-  function get_seenUnlocks():String
+  public function isCharacterSeen(characterId:String):Bool
   {
-    return FS_SaveDataHandler.instance.getSaveData().seenUnlocks;
-  }
-
-  function set_seenUnlocks(value:String):Void
-  {
-    trace("[Funker Selector] Saving seen unlocks...");
-    var saveData:String = FS_SaveDataHandler.instance.getSaveData();
-    saveData.seenUnlocks = value;
-    FS_SaveDataHandler.instance.writeSaveData(saveData);
+    return data.seenUnlocks.contains(characterId);
   }
 
   /**
-   * The saved BF character ID.
+   * Adds a character to the seen unlocks list.
+   * @param characterId The character ID to use.
    */
-  public function new()
+  public function addCharacterSeen(characterId:String):Void
   {
-    super();
+    data.seenUnlocks.push(characterId);
+    flush();
   }
 
-  static function initialize():Void
+  /**
+   * Saves the... well, save data.
+   */
+  public function flush():Void
   {
-    FS_SaveData.instance = new FS_SaveData();
+    Save.instance.modOptions.set("FunkerSelector", data);
+  }
+
+  /**
+   * Retrieves the Funker Selector save data.
+   * @return The saved data as a dynamic object.
+   */
+  function initializeSaveData(saveData:FS_saveData, resetSave:Bool = false):Void
+  {
+    if (saveData == null || resetSave)
+    {
+      Save.instance.modOptions.set("FunkerSelector", getDefaultSaveData());
+      Save.instance.flush();
+
+      data = getDefaultSaveData();
+
+      trace('[Funker Selector] Successfully created save data:\n\n---Character IDs---\n\nBoyfriend: '
+        + FS_SaveData.instance.bf
+        + '\nGirlfriend: '
+        + FS_SaveData.instance.gf
+        + '\nOpponent: '
+        + FS_SaveData.instance.dad
+        + '\n\n---Settings---\n\nSimplify UI: '
+        + FS_SaveData.instance.simplifyUI
+        + '\nPreferred SFX: '
+        + FS_SaveData.instance.preferredSFX
+        + '\nDJ Replacement: '
+        + FS_SaveData.instance.djSwapping
+        + '\n\n---Seen Unlock Animations---\n\n'
+        + FS_SaveData.instance.data.seenUnlocks);
+    }
+    else
+    {
+      var updatedSaveData:FS_saveData = FS_SaveDataMigrator.checkSaveData(saveData);
+
+      Save.instance.modOptions.set("FunkerSelector", updatedSaveData);
+      Save.instance.flush();
+
+      data = saveData;
+
+      trace('[Funker Selector] Successfully validated save data:\n\n---Character IDs---\n\nBoyfriend: '
+        + FS_SaveData.instance.bf
+        + '\nGirlfriend: '
+        + FS_SaveData.instance.gf
+        + '\nOpponent: '
+        + FS_SaveData.instance.dad
+        + '\n\n---Settings---\n\nSimplify UI: '
+        + FS_SaveData.instance.simplifyUI
+        + '\nPreferred SFX: '
+        + FS_SaveData.instance.preferredSFX
+        + '\nDJ Replacement: '
+        + FS_SaveData.instance.djSwapping
+        + '\n\n---Seen Unlock Animations---\n\n'
+        + FS_SaveData.instance.data.seenUnlocks);
+    }
+  }
+
+  /**
+   * Returns the default save data.
+   */
+  static function getDefaultSaveData():FS_saveData
+  {
+    return {
+      version: FS_SAVE_DATA_VERSION,
+      characterIDs:
+        {
+          bf: 'default',
+          gf: 'default',
+          dad: 'default'
+        },
+      preferences:
+        {
+          potatoMode: false,
+          preferredSFX: "funkin",
+          djSwapping: true
+        },
+      seenUnlocks: []
+    };
+  }
+
+  /**
+   * DEBUG: Resets all save data.
+   * Useful if it gets corrupt.
+   */
+  function debug_resetSave():Void
+  {
+    initializeSaveData(null, true);
+  }
+
+  /**
+   * DEBUG: Writes Funker Selector save data to a JSON file.
+   */
+  function debug_dumpSave():Void
+  {
+    var fileString:String = PlatformUtil.isMacOS() ? "../../../../../../../" : "../../../../";
+    var filePath:String = fileString + "example_mods/[V-Slice] Funker Selector/data/FS_dumpedSave.json";
+
+    FileUtil.writeStringToPath(filePath, SerializerUtil.toJSON(data, true), FileWriteMode.Force);
+
+    trace("[Funker Selector] DEBUG: Wrote save data to " + filePath);
+  }
+
+  /**
+   * DEBUG: Loads save data from a JSON file.
+   */
+  function debug_loadSaveFromJSON():Void
+  {
+    if (!Assets.exists(Paths.json("FS_dumpedSave")))
+    {
+      trace("[Funker Selector] DEBUG: No JSON save data found!");
+      return;
+    }
+
+    var parsedData:Dynamic = SerializerUtil.fromJSON(Assets.getText(Paths.json("FS_dumpedSave")));
+
+    var saveObject:Dynamic =
+      {
+        version: FS_SAVE_DATA_VERSION,
+        characterIDs:
+          {
+            bf: parsedData.characterIDs.bf ?? 'default',
+            gf: parsedData.characterIDs.gf ?? 'default',
+            dad: parsedData.characterIDs.dad ?? 'default'
+          },
+        preferences: parsedData.preferences ?? {},
+        seenUnlocks: parsedData.seenUnlocks ?? []
+      };
+
+    data = saveObject;
+
+    flush();
+
+    trace('[Funker Selector] DEBUG: Loaded save data from JSON:\n\n---Character IDs---\n\nBoyfriend: '
+      + saveData.characterIDs.bf
+      + '\nGirlfriend: '
+      + saveData.characterIDs.gf
+      + '\nOpponent: '
+      + saveData.characterIDs.dad
+      + '\n\n---Settings---\n\nSimplify UI: '
+      + saveData.preferences.potatoMode
+      + '\nPreferred SFX: '
+      + saveData.preferences.preferredSFX
+      + '\nDJ Replacement: '
+      + saveData.preferences.djSwapping
+      + '\n\n---Seen Unlock Animations---\n\n'
+      + saveData.seenUnlocks);
   }
 }

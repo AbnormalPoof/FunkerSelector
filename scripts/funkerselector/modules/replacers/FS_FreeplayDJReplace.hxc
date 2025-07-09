@@ -155,7 +155,7 @@ class DJReplace extends Module
     freeplayDJ.characterId = characterID;
     freeplayDJ.playableCharData = playableCharData;
 
-    if (FlxG.state.subState.backingCard.funnyScroll != null) reapplyBackingText(FlxG.state.subState, [
+    if (FlxG.state.subState.backingCard.currentCharacter == "bf") reapplyBackingText(FlxG.state.subState, [
       playableChar.getFreeplayDJText(1),
       playableChar.getFreeplayDJText(2),
       playableChar.getFreeplayDJText(3)

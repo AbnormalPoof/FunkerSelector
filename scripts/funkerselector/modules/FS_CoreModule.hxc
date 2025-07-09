@@ -22,7 +22,7 @@ import String;
  * of Funker Selector.
  *
  * It simply handles character replacement and preferences, with ave data and character data being
- * handled by the `FS_SaveDataHandler` and `FS_CharacterDataHandler` classes respectively.
+ * handled by the `FS_SaveData` and `FS_CharacterDataHandler` classes respectively.
  *
  * All Funker Selector modules are independent of each other, so they don't need to be loaded in a specific order.
  */
@@ -47,7 +47,7 @@ class FS_CoreModule extends Module
     }
 
     // Initialize various registry classes.
-    FS_SaveDataHandler.initialize();
+    FS_SaveData.initialize();
     FS_CharacterDataHandler.initialize();
     FS_CharacterSpriteHandler.initialize();
   }
@@ -254,21 +254,21 @@ class FS_CoreModule extends Module
       if (FlxG.keys.justPressed.F7)
       {
         trace("[Funker Selector] Writing save data to JSON...");
-        FS_SaveDataHandler.instance.debug_dumpSave();
+        FS_SaveData.instance.debug_dumpSave();
       }
 
       // Load the save data from a JSON file.
       if (FlxG.keys.justPressed.F8)
       {
         trace("[Funker Selector] Loading save data from JSON...");
-        FS_SaveDataHandler.instance.debug_loadSaveFromJSON();
+        FS_SaveData.instance.debug_loadSaveFromJSON();
       }
 
       // Destroy all save data and reset to default.
       if (FlxG.keys.justPressed.F9)
       {
         trace("[Funker Selector] Resetting save data...");
-        FS_SaveDataHandler.instance.debug_resetSave();
+        FS_SaveData.instance.debug_resetSave();
       }
     }
   }

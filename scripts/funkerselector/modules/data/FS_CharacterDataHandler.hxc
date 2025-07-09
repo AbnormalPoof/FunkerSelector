@@ -81,7 +81,7 @@ class FS_CharacterDataHandler extends Object
     {
       trace('[Funker Selector] Parsing JSON data for ' + funker);
 
-      var data:FS_characterData = parseJSONData(funker);
+      var data:FS_characterData = FS_CharacterDataHandler.parseJSONData(funker);
 
       // If the data is null (Caused by an issue when parsing the json file)
       if (data == null)
@@ -133,7 +133,7 @@ class FS_CharacterDataHandler extends Object
           trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
           lockedCharMap.set(data.characterID, data);
         }
-        else if (!FS_SaveData.instance.seenUnlocks.contains(data.characterID))
+        else if (!FS_SaveData.instance.isCharacterSeen(data.characterID))
         {
           trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
           lockedCharMap.set(data.characterID, data);
@@ -163,7 +163,7 @@ class FS_CharacterDataHandler extends Object
    * @param characterID The character ID to use.
    * @return The character data as `FS_characterData`, or null if parsing fails.
    */
-  function parseJSONData(characterID:String = 'default'):FS_characterData
+  static function parseJSONData(characterID:String = 'default'):FS_characterData
   {
     var filePath:String = Paths.json('funkerSelector/' + characterID);
 
@@ -187,9 +187,36 @@ class FS_CharacterDataHandler extends Object
   }
 
   /**
+   * Whether or not to show the unlock animation.
+   * @param characterId The character ID to use.
+   */
+  function showUnlockAnimation(characterId:String):Bool
+  {
+    return isCharacterLocked(characterId) && isCharacterUnlocked(characterId) && !FS_SaveData.instance.isCharacterSeen(characterId);
+  }
+
+  /**
+   * Whether or not the character is locked.
+   * @param characterId The character ID to use.
+   */
+  function isCharacterLocked(characterId:String):Bool
+  {
+    return lockedCharMap.exists(characterId);
+  }
+
+  /**
+   * Removes a locked character from the map.
+   * @param characterId The character ID to use.
+   */
+  function unlockCharacter(characterId:String):Void
+  {
+    lockedCharMap.remove(characterId);
+    FS_SaveData.instance.addCharacterSeen(characterId);
+  }
+
+  /**
    * Whether or not the character should be shown.
    * @param characterID The character ID we're using.
-   * @param unlockType The method we're using to determine if this character is unlocked.
    * @return Bool
    *
    * Unlock Methods:
@@ -197,9 +224,12 @@ class FS_CharacterDataHandler extends Object
    * - song: Checks if the song has been beaten on the specified difficulty list.
    * - storyWeek: Checks if the week has been beaten on the specified difficulty list.
    */
-  function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool
+  function isCharacterUnlocked(characterID:String):Bool
   {
     trace("[Funker Selector] Checking unlock methods for ID " + characterID + " ...");
+    var fs_characterData:FS_characterData = getCharacterData(characterID);
+    var unlockMethod:Dynamic = fs_characterData.unlockMethod;
+
     switch (unlockMethod.type)
     {
       case 'playableCharacter':
@@ -296,7 +326,7 @@ class FS_CharacterDataHandler extends Object
       introSwapFrame: 4,
       unlockMethod:
         {
-          type: null
+          type: ""
         },
       description:
         {

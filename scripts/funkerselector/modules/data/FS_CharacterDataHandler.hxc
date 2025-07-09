@@ -2,6 +2,7 @@ import flixel.FlxG;
 import flixel.graphics.FlxGraphic;
 import funkin.data.freeplay.player.PlayerRegistry;
 import funkin.modding.PolymodErrorHandler;
+import funkin.modding.base.Object;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.character.CharacterDataParser;
@@ -14,10 +15,16 @@ import haxe.ds.Either;
 import thx.Objects;
 
 /**
- * A module responsible for handling character caches and data.
+ * A class responsible for handling character caches and data.
  */
-class FS_CharacterDataHandler extends Module
+class FS_CharacterDataHandler extends Object
 {
+  /**
+   * The instance of this class.
+   * There should only ever be one instance of this class.
+   */
+  static var instance:FS_CharacterDataHandler = null;
+
   /**
    * A map containing every character.
    */
@@ -35,9 +42,26 @@ class FS_CharacterDataHandler extends Module
 
   public function new()
   {
-    super('FS_CharacterDataHandler', 100);
+    super();
+  }
 
-    loadJSONDataCache();
+  /**
+   * Initializes the character data handler.
+   * This should be called once at the start of the game.
+   */
+  static function initialize():Void
+  {
+    if (FS_CharacterDataHandler.instance == null)
+    {
+      FS_CharacterDataHandler.instance = new FS_CharacterDataHandler();
+      FS_CharacterDataHandler.instance.loadJSONDataCache();
+      trace('[Funker Selector] Character Data Handler initialized.');
+    }
+    else
+    {
+      trace('[Funker Selector] Character Data Handler already initialized.');
+      FS_CharacterDataHandler.instance.loadJSONDataCache();
+    }
   }
 
   /**
@@ -57,7 +81,7 @@ class FS_CharacterDataHandler extends Module
     {
       trace('[Funker Selector] Parsing JSON data for ' + funker);
 
-      var data:FS_characterData = parseJSONData(funker);
+      var data:FS_characterData = FS_CharacterDataHandler.parseJSONData(funker);
 
       // If the data is null (Caused by an issue when parsing the json file)
       if (data == null)
@@ -91,7 +115,7 @@ class FS_CharacterDataHandler extends Module
       }
 
       // If the specified Character ID does not exist in data/characters/
-      if (!charJSONCheck(data.characterID))
+      if (!FS_CharacterDataHandler.charJSONCheck(data.characterID))
       {
         PolymodErrorHandler.showAlert('Funker Selector JSON Parsing Error',
           'In "'
@@ -109,7 +133,7 @@ class FS_CharacterDataHandler extends Module
           trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
           lockedCharMap.set(data.characterID, data);
         }
-        else if (!getSaveData().seenUnlocks.contains(data.characterID))
+        else if (!FS_SaveData.instance.isCharacterSeen(data.characterID))
         {
           trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
           lockedCharMap.set(data.characterID, data);
@@ -120,7 +144,7 @@ class FS_CharacterDataHandler extends Module
 
       for (variation in data.characterVariations)
       {
-        if (charJSONCheck(variation.characterID))
+        if (FS_CharacterDataHandler.charJSONCheck(variation.characterID))
         {
           variationList.push(variation.characterID);
         }
@@ -139,7 +163,7 @@ class FS_CharacterDataHandler extends Module
    * @param characterID The character ID to use.
    * @return The character data as `FS_characterData`, or null if parsing fails.
    */
-  function parseJSONData(characterID:String = 'default'):FS_characterData
+  static function parseJSONData(characterID:String = 'default'):FS_characterData
   {
     var filePath:String = Paths.json('funkerSelector/' + characterID);
 
@@ -155,7 +179,7 @@ class FS_CharacterDataHandler extends Module
       }
 
       // Merge the parsed data with the default character data, basically layering the parsed object on top of the default one.
-      var result:FS_characterData = Objects.deepCombine(getDefaultCharacterData(), parsedJSON);
+      var result:FS_characterData = Objects.deepCombine(FS_CharacterDataHandler.getDefaultCharacterData(), parsedJSON);
       return result;
     }
 
@@ -163,9 +187,36 @@ class FS_CharacterDataHandler extends Module
   }
 
   /**
+   * Whether or not to show the unlock animation.
+   * @param characterId The character ID to use.
+   */
+  function showUnlockAnimation(characterId:String):Bool
+  {
+    return isCharacterLocked(characterId) && isCharacterUnlocked(characterId) && !FS_SaveData.instance.isCharacterSeen(characterId);
+  }
+
+  /**
+   * Whether or not the character is locked.
+   * @param characterId The character ID to use.
+   */
+  function isCharacterLocked(characterId:String):Bool
+  {
+    return lockedCharMap.exists(characterId);
+  }
+
+  /**
+   * Removes a locked character from the map.
+   * @param characterId The character ID to use.
+   */
+  function unlockCharacter(characterId:String):Void
+  {
+    lockedCharMap.remove(characterId);
+    FS_SaveData.instance.addCharacterSeen(characterId);
+  }
+
+  /**
    * Whether or not the character should be shown.
    * @param characterID The character ID we're using.
-   * @param unlockType The method we're using to determine if this character is unlocked.
    * @return Bool
    *
    * Unlock Methods:
@@ -173,9 +224,12 @@ class FS_CharacterDataHandler extends Module
    * - song: Checks if the song has been beaten on the specified difficulty list.
    * - storyWeek: Checks if the week has been beaten on the specified difficulty list.
    */
-  function isCharacterUnlocked(characterID:String, unlockMethod:Dynamic):Bool
+  function isCharacterUnlocked(characterID:String):Bool
   {
     trace("[Funker Selector] Checking unlock methods for ID " + characterID + " ...");
+    var fs_characterData:FS_characterData = getCharacterData(characterID);
+    var unlockMethod:Dynamic = fs_characterData.unlockMethod;
+
     switch (unlockMethod.type)
     {
       case 'playableCharacter':
@@ -206,8 +260,9 @@ class FS_CharacterDataHandler extends Module
             }
             for (difficulty in unlockMethod.difficultyList)
             {
-              var savedRankValue:Int = getRankValue(Save.instance.getSongRank(unlockMethod.songID, difficulty, unlockMethod.songVariation));
-              var minimumRequiredRankValue:Int = getRankValue(unlockMethod?.minimumRequiredRank);
+              var savedRankValue:Int = FS_CharacterDataHandler.getRankValue(Save.instance.getSongRank(unlockMethod.songID, difficulty,
+                unlockMethod.songVariation));
+              var minimumRequiredRankValue:Int = FS_CharacterDataHandler.getRankValue(unlockMethod?.minimumRequiredRank);
 
               if (savedRankValue >= minimumRequiredRankValue)
               {
@@ -260,7 +315,7 @@ class FS_CharacterDataHandler extends Module
   /**
    * Returns the base character data.
    */
-  function getDefaultCharacterData():FS_characterData
+  static function getDefaultCharacterData():FS_characterData
   {
     return {
       version: "1.0.0",
@@ -271,7 +326,7 @@ class FS_CharacterDataHandler extends Module
       introSwapFrame: 4,
       unlockMethod:
         {
-          type: null
+          type: ""
         },
       description:
         {
@@ -323,7 +378,7 @@ class FS_CharacterDataHandler extends Module
     }
     else
     {
-      return getDefaultCharacterData();
+      return FS_CharacterDataHandler.getDefaultCharacterData();
     }
   }
 
@@ -343,7 +398,7 @@ class FS_CharacterDataHandler extends Module
    * @param string The character ID we're comparing.
    * @return Returns a true or false if the file exists.
    */
-  function charJSONCheck(string:String):Bool
+  static function charJSONCheck(string:String):Bool
   {
     if (Assets.exists(Paths.json('characters/' + string)))
     {
@@ -353,38 +408,10 @@ class FS_CharacterDataHandler extends Module
     return false;
   }
 
-  function getSaveData():Dynamic
-  {
-    return Save.instance.modOptions.get("FunkerSelector");
-  }
-
-  /**
-   * Clear the JSON sparrows from memory.
-   */
-  function purgeJSONSparrowCache():Void
-  {
-    for (graphicKey in cachedJSONSparrows.keys())
-    {
-      trace("[Funker Selector] Clearing from memory: " + graphicKey);
-      var graphic = cachedJSONSparrows[graphicKey];
-      if (graphic == null)
-      {
-        trace("[Funker Selector] Graphic is null!!");
-        continue;
-      }
-      FlxG.bitmap.remove(graphic);
-      graphic.persist = false;
-      graphic.destroyOnNoUse = true;
-      graphic.destroy();
-      cachedJSONSparrows.remove(graphicKey);
-    }
-    MemoryUtil.collect(true);
-  }
-
   /**
    * Returns a number based on rank.
    */
-  function getRankValue(rank:String):Int
+  static function getRankValue(rank:String):Int
   {
     switch (rank)
     {

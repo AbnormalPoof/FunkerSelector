@@ -1,6 +1,7 @@
 import Array;
 import Std;
 import haxe.Json;
+import haxe.ds.IntMap;
 import haxe.ds.ObjectMap;
 import haxe.ds.StringMap;
 import haxe.ds.IntMap;
@@ -13,9 +14,9 @@ import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import flixel.util.FlxSpriteUtil;
-import funkin.util.FlxColorUtil;
 import funkin.audio.FunkinSound;
 import funkin.data.animation.AnimationDataUtil;
 import funkin.data.freeplay.player.PlayerRegistry;
@@ -24,7 +25,6 @@ import funkin.graphics.FunkinCamera;
 import funkin.graphics.FunkinSprite;
 import funkin.graphics.shaders.AngleMask;
 import funkin.modding.PolymodErrorHandler;
-import funkin.modding.base.ScriptedFunkinSprite;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.GameOverSubState;
@@ -37,7 +37,6 @@ import funkin.save.Save;
 import funkin.ui.MusicBeatSubState;
 import funkin.ui.charSelect.Lock;
 import funkin.ui.freeplay.FreeplayState;
-import funkin.ui.freeplay.DifficultySelector;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
 import funkin.ui.story.StoryMenuState;
 import funkin.util.Constants;
@@ -213,17 +212,17 @@ class FS_CharacterMenu extends MusicBeatSubState
   /**
    * Script Event called when this SubState is opened.
    */
-  var FS_OPENED_SUBSTATE:String = "FS_OPENED_SUBSTATE";
+  final FS_OPENED_SUBSTATE:String = "FS_OPENED_SUBSTATE";
 
   /**
    * Script Event called when this SubState is closed.
    */
-  var FS_EXITED_SUBSTATE:String = "FS_EXITED_SUBSTATE";
+  final FS_EXITED_SUBSTATE:String = "FS_EXITED_SUBSTATE";
 
   /**
    * The base scroll speed for the icon grid.
    */
-  var ICON_SCROLL_SPEED:Float = 0.3;
+  final ICON_SCROLL_SPEED:Float = 0.3;
 
   /**
    * Stolen from `FreeplayState`.
@@ -239,25 +238,6 @@ class FS_CharacterMenu extends MusicBeatSubState
    * Stolen from `FreeplayState`.
    */
   var angleMaskShader:AngleMask = new AngleMask();
-
-  /**
-   * MODULES
-   * These are modules that are called throughout the menu.
-   */
-  /**
-   * The `FS_CharacterDataHandler` module.
-   */
-  var FS_CharacterDataHandler:Module = ModuleHandler.getModule("FS_CharacterDataHandler")._asc;
-
-  /**
-   * The `FS_SaveDataHandler` module.
-   */
-  var FS_SaveDataHandler:Module = ModuleHandler.getModule("FS_SaveDataHandler")._asc;
-
-  /**
-   * The `FS_CharacterSpriteHandler` module.
-   */
-  var FS_CharacterSpriteHandler:Module = ModuleHandler.getModule("FS_CharacterSpriteHandler")._asc;
 
   public function new(songBPM:Float)
   {
@@ -315,18 +295,18 @@ class FS_CharacterMenu extends MusicBeatSubState
       FlxG.watch.addQuick("currentCharacterIndex", currentCharacterIndex);
       FlxG.watch.addQuick("currentCharacterID", currentCharacterID);
       FlxG.watch.addQuick("filteredKeys", filteredKeys);
-      FlxG.watch.addQuick("bf", FS_SaveDataHandler.getSaveData().characterIDs.bf);
-      FlxG.watch.addQuick("gf", FS_SaveDataHandler.getSaveData().characterIDs.gf);
-      FlxG.watch.addQuick("dad", FS_SaveDataHandler.getSaveData().characterIDs.dad);
+      FlxG.watch.addQuick("bf", FS_SaveData.instance.bf);
+      FlxG.watch.addQuick("gf", FS_SaveData.instance.gf);
+      FlxG.watch.addQuick("dad", FS_SaveData.instance.dad);
     }
 
     if (!busy) handleKeyShit();
 
-    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+    if (!FS_SaveData.instance.simplifyUI)
     {
       characterWheel.forEach(function(item:Dynamic) {
         var characterID:String = item.characterId ?? (item.name ?? null);
-        var fs_characterData:FS_characterData = FS_CharacterDataHandler.getCharacterData(characterID);
+        var fs_characterData:FS_characterData = FS_CharacterDataHandler.instance.getCharacterData(characterID);
 
         var xOffset:Float = fs_characterData.characterMenu.position[0];
         var relativeIndex:Int = characterWheel.members.indexOf(item) - currentCharacterIndex;
@@ -376,9 +356,9 @@ class FS_CharacterMenu extends MusicBeatSubState
 
   function loadCharacter(characterID:String):Void
   {
-    var fs_characterData = FS_CharacterDataHandler.getCharacterData(characterID);
+    var fs_characterData = FS_CharacterDataHandler.instance.getCharacterData(characterID);
 
-    if (FS_CharacterDataHandler.lockedCharMap.exists(characterID) || characterID == 'default')
+    if (FS_CharacterDataHandler.instance.lockedCharMap.exists(characterID) || characterID == 'default')
     {
       var lockedChill = FunkinSprite.createSparrow(200, 250, 'funkerSelector/locked_character');
       lockedChill.animation.addByPrefix('idle', 'LOCKED MAN0', 24, false);
@@ -403,7 +383,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     {
       trace("[Funker Selector] Configuring sprite...");
 
-      var characterSprite:FunkinSprite = FS_CharacterSpriteHandler.getCharacterSprite(characterID);
+      var characterSprite:FunkinSprite = FS_CharacterSpriteHandler.instance.getCharacterSprite(characterID);
 
       if (characterSprite != null)
       {
@@ -428,7 +408,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (currentCharacterIndex != prevIndex)
     {
-      if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
+      if (FS_SaveData.instance.preferredSFX == "charSelect")
       {
         FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
       }
@@ -458,7 +438,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     currentCharacterIndex = 0;
 
     updateFilteredKeys();
-    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+    if (!FS_SaveData.instance.simplifyUI)
     {
       buildCharacterWheel();
     }
@@ -468,7 +448,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   function beatHit():Void
   {
     bopDaThing();
-    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+    if (!FS_SaveData.instance.simplifyUI)
     {
       for (index in 0...characterWheel.members.length)
       {
@@ -496,8 +476,8 @@ class FS_CharacterMenu extends MusicBeatSubState
   {
     trace('[Funker Selector] Sorting the Character Map...');
 
-    filteredKeys = IteratorTools.array(FS_CharacterDataHandler.characterMap.keys()).filter(function(shit) {
-      characterType = FS_CharacterDataHandler.characterMap[shit][1];
+    filteredKeys = IteratorTools.array(FS_CharacterDataHandler.instance.characterMap.keys()).filter(function(shit) {
+      characterType = FS_CharacterDataHandler.instance.characterMap[shit][1];
       var types:Array<String> = (characterType is Array) ? characterType : [characterType];
 
       for (pageType in characterSlots[currentPageIndex])
@@ -599,11 +579,10 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     add(overlayShit);
 
-    selectText = configureText(null, null, [170, 15], 50, 'VCR OSD Mono');
+    selectText = configureText(null, null, [170, (_parentState is StoryMenuState) ? 10 : 15], 50, 'VCR OSD Mono');
     selectText.screenCenter(0x01);
     selectText.zIndex = 300;
     selectText.camera = uiCamera;
-    selectText.visible = !(_parentState is StoryMenuState);
     add(selectText);
 
     characterCount = configureText(null, null, [170, 80], 45, Paths.font("PhantomMuff.ttf"));
@@ -674,28 +653,27 @@ class FS_CharacterMenu extends MusicBeatSubState
     variationText.zIndex = 300;
     add(variationText);
 
-    leftDifficultyArrow = ScriptedFunkinSprite.init('FS_DifficultySelectorLeft');
-    leftDifficultyArrow.setPosition(500, 300);
+    leftDifficultyArrow = new FS_DifficultySelector(this, 500, 300);
     leftDifficultyArrow.scale.set(1.5, 1.5);
     leftDifficultyArrow.camera = uiCamera;
     leftDifficultyArrow.zIndex = 500;
     add(leftDifficultyArrow);
 
-    rightDifficultyArrow = ScriptedFunkinSprite.init('FS_DifficultySelectorRight');
-    rightDifficultyArrow.setPosition(1150, leftDifficultyArrow.y);
+    rightDifficultyArrow = new FS_DifficultySelector(this, 1150, leftDifficultyArrow.y);
+    rightDifficultyArrow.flipX = true;
     rightDifficultyArrow.scale.set(1.5, 1.5);
     rightDifficultyArrow.camera = uiCamera;
     rightDifficultyArrow.zIndex = 500;
     add(rightDifficultyArrow);
 
-    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+    if (!FS_SaveData.instance.simplifyUI)
     {
       characterWheel.zIndex = 170;
       characterWheel.camera = spriteCamera;
       add(characterWheel);
     }
 
-    if (FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+    if (FS_SaveData.instance.simplifyUI)
     {
       lockedChill = new Lock(750, 270, FlxG.random.int(1, 9));
       lockedChill.onAnimationComplete.add(function(name) {
@@ -761,7 +739,7 @@ class FS_CharacterMenu extends MusicBeatSubState
           _parentState.persistentUpdate = false;
           _parentState.persistentDraw = true;
 
-          if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+          if (!FS_SaveData.instance.simplifyUI)
           {
             buildCharacterWheel();
           }
@@ -867,11 +845,11 @@ class FS_CharacterMenu extends MusicBeatSubState
         WindowUtil.setWindowTitle('Friday Night Funkin\'');
         ModuleHandler.callEvent(new ScriptEvent(FS_EXITED_SUBSTATE));
 
+        FlxSpriteUtil.fill(overlayShit, 0xB3FFD4E9);
+
         characterWheel.clear();
         iconGridTop.clear();
         iconGridBottom.clear();
-
-        FS_CharacterSpriteHandler.resetAnimations();
 
         uiCamera.visible = false;
         _parentState.persistentUpdate = true;
@@ -923,9 +901,6 @@ class FS_CharacterMenu extends MusicBeatSubState
         spamTimer = 0;
       }
 
-      if (leftPressed) leftDifficultyArrow._asc.moveShitDown();
-      if (rightPressed) rightDifficultyArrow._asc.moveShitDown();
-
       if (controls.FREEPLAY_LEFT || controls.FREEPLAY_RIGHT)
       {
         changePage(controls.FREEPLAY_LEFT ? -1 : 1);
@@ -950,7 +925,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
       if (controls.FREEPLAY_JUMP_TO_BOTTOM)
       {
-        if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+        if (!FS_SaveData.instance.simplifyUI)
         {
           changeCharacter(characterWheel.length - currentCharacterIndex);
         }
@@ -962,7 +937,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
       if (controls.FREEPLAY_CHAR_SELECT)
       {
-        if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
+        if (FS_SaveData.instance.preferredSFX == "charSelect")
         {
           FunkinSound.playOnce(Paths.sound('CS_select'), 0.2);
         }
@@ -976,28 +951,26 @@ class FS_CharacterMenu extends MusicBeatSubState
       if (controls.FREEPLAY_FAVORITE)
       {
         var shouldPlaySound:Bool = false;
-        var saveObject:Dynamic = FS_SaveDataHandler.getSaveData();
 
-        if (saveObject.characterIDs.bf != 'default')
+        if (FS_SaveData.instance.bf != 'default')
         {
-          saveObject.characterIDs.bf = 'default';
+          FS_SaveData.instance.bf = "default";
           shouldPlaySound = true;
         }
-        if (saveObject.characterIDs.dad != 'default')
+        if (FS_SaveData.instance.dad != 'default')
         {
-          saveObject.characterIDs.dad = 'default';
+          FS_SaveData.instance.dad = "default";
           shouldPlaySound = true;
         }
-        if (saveObject.characterIDs.gf != 'default')
+        if (FS_SaveData.instance.gf != 'default')
         {
-          saveObject.characterIDs.gf = 'default';
+          FS_SaveData.instance.gf = "default";
           shouldPlaySound = true;
         }
         if (shouldPlaySound)
         {
           FunkinSound.playOnce(Paths.sound('ranks/great'), 0.4);
           selected.visible = selectedTextVisibility();
-          FS_SaveDataHandler.writeSaveData(saveObject);
 
           // Jump to default.
           jumpToCurSelected();
@@ -1017,36 +990,36 @@ class FS_CharacterMenu extends MusicBeatSubState
 
       if (controls.ACCEPT)
       {
-        var saveObject:Dynamic = FS_SaveDataHandler.getSaveData();
-        var characterIDs:Dynamic = saveObject.characterIDs;
+        var characterIDs:Dynamic =
+          {
+            bf: FS_SaveData.instance.bf,
+            gf: FS_SaveData.instance.gf,
+            dad: FS_SaveData.instance.dad
+          };
+
         var characterSlot:String = characterSlots[currentPageIndex][0];
         var savedCharacterID:String = ReflectUtil.getAnonymousField(characterIDs, characterSlot);
         var shouldConfirm:Bool = false;
 
-        if (currentCharacterID != savedCharacterID)
+        if (!FS_CharacterDataHandler.instance.lockedCharMap.exists(currentCharacterID))
         {
-          if (!FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
+          if (currentCharacterID != savedCharacterID)
           {
-            var characterIDs:Dynamic = saveObject.characterIDs;
-            var characterSlot:String = characterSlots[currentPageIndex][0];
-
-            if (currentCharacterID != savedCharacterID)
-            {
-              ReflectUtil.setAnonymousField(characterIDs, characterSlot, currentCharacterID);
-              shouldConfirm = true;
-            }
+            shouldConfirm = true;
           }
         }
+
         if (shouldConfirm)
         {
+          FS_SaveData.instance.scriptCall("set_" + characterSlot, [currentCharacterID]);
+
           confirmThing();
           selected.visible = selectedTextVisibility();
           newGraphic.visible = false;
-          FS_SaveDataHandler.writeSaveData(saveObject);
         }
         else
         {
-          if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
+          if (FS_SaveData.instance.preferredSFX == "charSelect")
           {
             FunkinSound.playOnce(Paths.sound('CS_locked'), 0.4);
           }
@@ -1055,7 +1028,7 @@ class FS_CharacterMenu extends MusicBeatSubState
             FunkinSound.playOnce(Paths.sound('cancelMenu'));
           }
           flashScreen(0xFFFF0000, 0.03, 0.1);
-          if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+          if (!FS_SaveData.instance.simplifyUI)
           {
             for (index in 0...characterWheel.members.length)
             {
@@ -1065,7 +1038,7 @@ class FS_CharacterMenu extends MusicBeatSubState
           }
           else
           {
-            if (lockedChill != null) lockedChill.playAnimation("clicked", true);
+            lockedChill?.playAnimation("clicked", true);
           }
         }
       }
@@ -1077,51 +1050,39 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function jumpToCurSelected(jumpIn:Bool = false):Void
   {
-    var saveObject:Dynamic = FS_SaveDataHandler.getSaveData();
-    var characterIDs:Dynamic = saveObject.characterIDs;
+    var characterIDs:Dynamic = FS_SaveData.instance.data.characterIDs;
     var characterSlot:String = characterSlots[currentPageIndex][0];
     var savedCharacterID:String = ReflectUtil.getAnonymousField(characterIDs, characterSlot);
 
     // In the event that the saved character ID no longer exists, we fallback to default.
-    if (!FS_CharacterDataHandler.characterMap.exists(savedCharacterID) && savedCharacterID != 'default')
+    if (!FS_CharacterDataHandler.instance.characterMap.exists(savedCharacterID) && savedCharacterID != 'default')
     {
       trace('[Funker Selector] Saved character ID doesn\'t exist! Resetting to default.');
       ReflectUtil.setAnonymousField(characterIDs, characterSlot, 'default');
 
       // Save everything
-      FS_SaveDataHandler.writeSaveData(saveObject);
+      FS_SaveData.instance.flush();
     }
+
     currentCharacterIndex = filteredKeys.indexOf(savedCharacterID);
     currentCharacterID = savedCharacterID;
+
     changeCharacter();
     updateCharInfo();
 
     if (jumpIn)
     {
       // Play the jump in animation if we have it
-      var characterSprite:FunkinSprite = FS_CharacterSpriteHandler.getCharacterSprite(currentCharacterID);
+      var characterSprite:FunkinSprite = characterWheel.members[currentCharacterIndex];
 
-      if (characterSprite is BaseCharacter)
+      if (characterSprite is Bopper)
       {
         if (characterSprite.hasAnimation('fallin'))
         {
-          characterSprite.visible = false;
-
-          new FlxTimer().start(0.2, function() {
-            characterSprite.ignoreExclusionPref.push('fallin');
-            characterSprite.playAnimation('fallin', true, true);
-            characterSprite.visible = true;
-          });
-        }
-      }
-      else
-      {
-        if (characterSprite.animation.getByName('fallin') != null)
-        {
-          new FlxTimer().start(0.2, function() {
-            characterSprite.animation.play('fallin', true, true);
-            characterSprite.visible = true;
-          });
+          trace("[Funker Selector] Playing jump in animation for " + currentCharacterID);
+          characterSprite.ignoreExclusionPref.push('fallin');
+          characterSprite.playAnimation('fallin', true, true);
+          characterSprite.visible = true;
         }
       }
     }
@@ -1133,7 +1094,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function confirmThing():Void
   {
-    if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
+    if (FS_SaveData.instance.preferredSFX == "charSelect")
     {
       FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
     }
@@ -1142,9 +1103,9 @@ class FS_CharacterMenu extends MusicBeatSubState
       FunkinSound.playOnce(Paths.sound('confirmMenu'));
     }
 
-    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+    if (!FS_SaveData.instance.simplifyUI)
     {
-      var fs_characterData:FS_characterData = FS_CharacterDataHandler.getCharacterData(currentCharacterID);
+      var fs_characterData:FS_characterData = FS_CharacterDataHandler.instance.getCharacterData(currentCharacterID);
       var animation:String = fs_characterData.characterMenu.selectedAnim;
       var item:Dynamic = characterWheel.members[currentCharacterIndex];
 
@@ -1174,12 +1135,12 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function showVariations(characterID:String):Void
   {
-    var fs_characterData = FS_CharacterDataHandler.getCharacterData(characterID);
-    var variationCount:Int = FS_CharacterDataHandler.getCharacterData(characterID, 1);
+    var fs_characterData = FS_CharacterDataHandler.instance.getCharacterData(characterID);
+    var variationCount:Int = FS_CharacterDataHandler.instance.getCharacterData(characterID, 1);
     var alertBody:String = "";
 
     if (variationCount <= 0) return;
-    if (FS_CharacterDataHandler.lockedCharMap.exists(characterID)) return;
+    if (FS_CharacterDataHandler.instance.lockedCharMap.exists(characterID)) return;
     if (characterID == 'default') return;
 
     for (variation in fs_characterData.characterVariations)
@@ -1212,17 +1173,9 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function doUnlockAnimation(?skip:Bool):Void
   {
-    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+    if (!FS_SaveData.instance.simplifyUI)
     {
-      for (index in 0...characterWheel.members.length)
-      {
-        var item = characterWheel.members[index];
-        if (index == currentCharacterIndex && item is FunkinSprite)
-        {
-          lockedChill = item;
-          break;
-        }
-      }
+      lockedChill = characterWheel.members[currentCharacterIndex];
     }
 
     if (lockedChill is FunkinSprite)
@@ -1250,9 +1203,9 @@ class FS_CharacterMenu extends MusicBeatSubState
       return;
     }
 
-    if (FlxG.sound.music != null) FlxG.sound.music.fadeOut();
+    FlxG.sound.music?.fadeOut();
 
-    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+    if (!FS_SaveData.instance.simplifyUI)
     {
       lockedChill.offset.set();
       lockedChill.animation.play('idle', true);
@@ -1268,7 +1221,7 @@ class FS_CharacterMenu extends MusicBeatSubState
         onComplete: function(twn:FlxTween) {
           unlockSound.play(true);
           new FlxTimer().start(1.45, function() {
-            if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+            if (!FS_SaveData.instance.simplifyUI)
             {
               lockedChill.offset.set(170, 220);
               lockedChill.animation.play('death');
@@ -1293,19 +1246,26 @@ class FS_CharacterMenu extends MusicBeatSubState
       if (selected.visible) selected.visible = false;
       newGraphic.visible = true;
       uiCamera.shake(0.01, 0.2);
-      FlxG.state.subState.funnyCam.shake(0.01, 0.2);
+      if (_parentState is StoryMenuState)
+      {
+        FlxG.camera.shake(0.01, 0.2);
+      }
+      else
+      {
+        FlxG.state.subState.funnyCam.shake(0.01, 0.2);
+      }
     });
 
     if (!simplifyUI)
     {
-      fs_characterData = FS_CharacterDataHandler.getCharacterData(currentCharacterID);
-      characterWheel.replace(lockedChill, FS_CharacterSpriteHandler.getCharacterSprite(currentCharacterID));
+      fs_characterData = FS_CharacterDataHandler.instance.getCharacterData(currentCharacterID);
+      characterWheel.replace(lockedChill, FS_CharacterSpriteHandler.instance.getCharacterSprite(currentCharacterID));
     }
 
     busy = false;
     uiCamera.alpha = 1;
 
-    if (FlxG.sound.music != null) FlxG.sound.music.fadeIn(2, 0, 0.8);
+    FlxG.sound.music?.fadeIn(2, 0, 0.8);
   }
 
   /**
@@ -1321,7 +1281,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       lockedChill.animation.curAnim.curFrame = 36;
       lockedChill.animation.resume();
 
-      if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
+      if (FS_SaveData.instance.preferredSFX == "charSelect")
       {
         FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
       }
@@ -1337,7 +1297,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       lockedChill.anim.curFrame = 34;
       lockedChill.anim.resume();
 
-      if (FS_SaveDataHandler.getSaveData().preferences.preferredSFX == "charSelect")
+      if (FS_SaveData.instance.preferredSFX == "charSelect")
       {
         FunkinSound.playOnce(Paths.sound('CS_confirm'), 0.4);
       }
@@ -1370,7 +1330,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
   /**
    * Update character information.
-   * 
+   *
    * TODO: This is a performance bottleneck!!!
    */
   function updateCharInfo():Void
@@ -1387,9 +1347,9 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (currentCharacterID != 'default')
     {
-      fs_characterData = FS_CharacterDataHandler.getCharacterData(currentCharacterID);
+      fs_characterData = FS_CharacterDataHandler.instance.getCharacterData(currentCharacterID);
       characterData = CharacterDataParser.fetchCharacterData(currentCharacterID);
-      variationCount = FS_CharacterDataHandler.getCharacterData(currentCharacterID, 1);
+      variationCount = FS_CharacterDataHandler.instance.getCharacterData(currentCharacterID, 1);
     }
 
     switch (currentCharacterID)
@@ -1399,9 +1359,9 @@ class FS_CharacterMenu extends MusicBeatSubState
         characterName.text = "DEFAULT";
         descriptionText = "This is the Default character defined by the song.";
 
-        FlxSpriteUtil.fill(overlayShit, getDominantColor(currentCharacterIcon, 0.5, 0.7));
+        FlxSpriteUtil.fill(overlayShit, getDominantColor(currentCharacterIcon, 0.05, 0.7));
       default:
-        if (FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
+        if (FS_CharacterDataHandler.instance.lockedCharMap.exists(currentCharacterID))
         {
           characterName.text = "LOCKED";
 
@@ -1420,7 +1380,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
           descriptionText = fs_characterData.description.text;
 
-          FlxSpriteUtil.fill(overlayShit, getDominantColor(currentCharacterIcon, 0.5, 0.7));
+          FlxSpriteUtil.fill(overlayShit, getDominantColor(currentCharacterIcon, 0.05, 0.7));
         }
     }
 
@@ -1432,17 +1392,17 @@ class FS_CharacterMenu extends MusicBeatSubState
     characterDescription.start(0.01);
 
     // Making it not look so awkward when "Simplify UI" is turned on.
-    if (FS_SaveDataHandler.getSaveData().preferences.potatoMode || currentCharacterID == 'default')
+    if (FS_SaveData.instance.simplifyUI || currentCharacterID == 'default')
     {
       currentCharacterIcon.setPosition(750, 250);
       currentCharacterIcon.size.set(1.7, 1.7);
     }
 
-    if (!FS_SaveDataHandler.getSaveData().preferences.potatoMode)
+    if (!FS_SaveData.instance.simplifyUI)
     {
       for (icon in iconGridTop)
       {
-        if (currentCharacterID == 'default' || FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
+        if (currentCharacterID == 'default' || FS_CharacterDataHandler.instance.lockedCharMap.exists(currentCharacterID))
         {
           icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         }
@@ -1454,7 +1414,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
       for (icon in iconGridBottom)
       {
-        if (currentCharacterID == 'default' || FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
+        if (currentCharacterID == 'default' || FS_CharacterDataHandler.instance.lockedCharMap.exists(currentCharacterID))
         {
           icon.configure('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         }
@@ -1469,7 +1429,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     variationText.x += 220;
     variationText.text = "This character has " + variationCount + " available " + (variationCount == 1 ? "variation" : "variations");
 
-    if (variationCount > 0 && !FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
+    if (variationCount > 0 && !FS_CharacterDataHandler.instance.lockedCharMap.exists(currentCharacterID))
     {
       trace("[Funker Selector] Variations found for character ID " + currentCharacterID);
       variationText.visible = true;
@@ -1479,36 +1439,27 @@ class FS_CharacterMenu extends MusicBeatSubState
       variationText.visible = false;
     }
 
-    if (FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID))
+    if (FS_CharacterDataHandler.instance.lockedCharMap.exists(currentCharacterID))
     {
       if (currentCharacterIcon != null) currentCharacterIcon.visible = false;
-      if (FS_SaveDataHandler.getSaveData().preferences.potatoMode) lockedChill.visible = true;
+      if (FS_SaveData.instance.simplifyUI) lockedChill.visible = true;
     }
     else
     {
       if (currentCharacterIcon != null) currentCharacterIcon.visible = true;
-      if (FS_SaveDataHandler.getSaveData().preferences.potatoMode) lockedChill.visible = false;
+      if (FS_SaveData.instance.simplifyUI) lockedChill.visible = false;
     }
 
     characterName.screenCenter(0x01);
     characterName.x += 220;
 
     // Do the unlock animation if we haven't seen it yet.
-    if (FS_CharacterDataHandler.lockedCharMap.exists(currentCharacterID)
-      && FS_CharacterDataHandler.isCharacterUnlocked(currentCharacterID, fs_characterData.unlockMethod))
+    if (FS_CharacterDataHandler.instance.showUnlockAnimation(currentCharacterID))
     {
-      var saveObject:Dynamic = FS_SaveDataHandler.getSaveData();
+      FS_CharacterDataHandler.instance.unlockCharacter(currentCharacterID);
 
-      if (!saveObject.seenUnlocks.contains(currentCharacterID))
-      {
-        FS_CharacterDataHandler.lockedCharMap.remove(currentCharacterID);
-        saveObject.seenUnlocks.push(currentCharacterID);
-
-        FS_SaveDataHandler.writeSaveData(saveObject);
-
-        busy = true;
-        doUnlockAnimation(FlxG.keys.pressed.SHIFT);
-      }
+      busy = true;
+      doUnlockAnimation(FlxG.keys.pressed.SHIFT);
     }
   }
 
@@ -1522,7 +1473,7 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   function selectedTextVisibility():Bool
   {
-    var characterIDs:Dynamic = FS_SaveDataHandler.getSaveData().characterIDs;
+    var characterIDs:Dynamic = FS_SaveData.instance.data.characterIDs;
     var characterSlot:String = characterSlots[currentPageIndex][0];
 
     return currentCharacterID == ReflectUtil.getAnonymousField(characterIDs, characterSlot);
@@ -1570,55 +1521,50 @@ class FS_CharacterMenu extends MusicBeatSubState
 
   /**
    * Gets the dominant color of a `FunkinSprite`.
-   * Taken from this mod: https://gamebanana.com/mods/511342
    * @param sprite The `FunkinSprite` to get the dominant color of.
+   * @param resMult Resolution multiplier for sampling.
+   * @param alpha Alpha value for the returned color.
    * @return The dominant color of the sprite.
    */
   function getDominantColor(sprite:FunkinSprite, ?resMult:Float = 1.0, alpha:Float = 1.0):Int
   {
-    var mult:Float = Math.min(1, (150 / sprite.frameWidth) * resMult);
-    var countByColor:Array<Int> = [];
-    var colorById:Array<Int> = [];
-    for (col in 0...(sprite.frameWidth) * mult)
+    var frameWidth = sprite.frameWidth;
+    var frameHeight = sprite.frameHeight;
+    if (frameWidth <= 0 || frameHeight <= 0) return 0xFF000000;
+
+    var sampleSize:Float = Math.max(1, frameWidth / (150 * resMult));
+    var colorCounts = new IntMap();
+
+    for (y in 0...Std.int(frameHeight / sampleSize))
     {
-      for (row in 0...(sprite.frameHeight) * mult)
+      for (x in 0...Std.int(frameWidth / sampleSize))
       {
-        var colorOfThisPixel:Int = sprite.pixels.getPixel32(col / mult, row / mult);
-        if (colorOfThisPixel != 0)
-        {
-          var colorId = colorById.indexOf(colorOfThisPixel);
-          if (colorId != -1)
-          {
-            countByColor[colorId] = countByColor[colorId] + 1;
-          }
-          else
-          {
-            var id = colorById.length;
-            colorById[id] = colorOfThisPixel;
-            countByColor[id] = 1;
-          }
-        }
+        var px = Std.int(x * sampleSize);
+        var py = Std.int(y * sampleSize);
+        var color = sprite.pixels.getPixel32(px, py);
+
+        // Skip fully transparent
+        if (((color >> 24) & 0xFF) < 255) continue;
+        // Skip black and white
+        if (color == 0xFF000000 || color == 0x00FFFFFF) continue;
+
+        colorCounts[color] = (colorCounts.exists(color) ? colorCounts[color] + 1 : 1);
       }
     }
 
-    var maxCount:Int = 0;
-    var maxKey:Int = 0;
-    for (color in colorById)
+    var dominantColor = 0xFF000000;
+    var maxCount = 0;
+    for (color in colorCounts.keys())
     {
-      var id = colorById.indexOf(color);
-      var count = countByColor[id] != null ? countByColor[id] : 0;
-      if (id != -1 && count > maxCount && color != 0xFF000000 && color != 0x00FFFFFF)
+      var count = colorCounts[color];
+      if (count > maxCount)
       {
-        var alphaChannel = (color >> 24) & 0xff;
-        if (alphaChannel >= 255)
-        {
-          maxCount = count;
-          maxKey = color;
-        }
+        maxCount = count;
+        dominantColor = color;
       }
     }
 
     var newAlpha = Std.int(Math.max(0, Math.min(1, alpha)) * 255);
-    return (maxKey & 0x00FFFFFF) | (newAlpha << 24);
+    return (dominantColor & 0x00FFFFFF) | (newAlpha << 24);
   }
 }

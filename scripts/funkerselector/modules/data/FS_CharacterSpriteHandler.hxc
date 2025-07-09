@@ -1,5 +1,5 @@
 import flixel.FlxG;
-import funkin.modding.module.Module;
+import funkin.modding.base.Object;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.character.BaseCharacter;
 import funkin.play.character.CharacterDataParser;
@@ -12,27 +12,32 @@ import thx.Iterators;
 /**
  * Handles the creation and caching of the character sprites in the menu!
  */
-class FS_CharacterSpriteHandler extends Module
+class FS_CharacterSpriteHandler extends Object
 {
   /**
-   * The character sprite cache.
+   * The instance of the character sprite handler.
+   * There should only be one instance of this class.
    */
-  var characterSpriteCache:StringMap<String, FunkinSprite> = new StringMap();
+  static var instance:FS_CharacterSpriteHandler = null;
 
   public function new()
   {
-    super('FS_CharacterSpriteHandler', 150);
+    super();
+  }
 
-    if ((Save.instance.modOptions.get("FunkerSelector")?.preferences?.preloadSprites ?? true)
-      && (!Save.instance.modOptions.get("FunkerSelector")?.preferences?.potatoMode ?? true))
+  /**
+   * Initializes the character sprite handler.
+   */
+  static function initialize():Void
+  {
+    if (FS_CharacterSpriteHandler.instance == null)
     {
-      // NOTE: Do not call modules directly in `new()`!
-      FlxG.signals.preStateSwitch.addOnce(function() {
-        if (Iterators.toArray(characterSpriteCache.keys()).length <= 0)
-        {
-          this.buildSpriteCache();
-        }
-      });
+      trace('[Funker Selector] Creating a new character sprite handler instance...');
+      FS_CharacterSpriteHandler.instance = new FS_CharacterSpriteHandler();
+    }
+    else
+    {
+      trace('[Funker Selector] An instance of the character sprite handler already exists!');
     }
   }
 
@@ -49,10 +54,45 @@ class FS_CharacterSpriteHandler extends Module
 
     if (data.characterMenu.useCustomSprites && data.characterMenu.customSpriteData != null)
     {
+      trace('[Funker Selector] Using custom sprite data for ' + data.characterID);
       var animationData:Array<Dynamic> = data.characterMenu.customSpriteData.animations;
       var characterSprite:Bopper = new Bopper(data.characterMenu.customSpriteData?.danceEvery ?? 1.0);
+      var assetList:Array<String> = [];
 
-      characterSprite.loadSparrow(data.characterMenu.customSpriteData.assetPath);
+      for (animation in data.characterMenu.customSpriteData?.animations)
+      {
+        if (animation.assetPath != null && !assetList.contains(animation.assetPath))
+        {
+          assetList.push(animation.assetPath);
+        }
+
+        characterSprite.setAnimationOffsets(animation.name, animation.offsets[0], animation.offsets[1]);
+      }
+
+      if (assetList.length <= 0)
+      {
+        characterSprite.loadSparrow(data.characterMenu.customSpriteData.assetPath);
+      }
+      else
+      {
+        trace("Creating multi-sparrow atlas for " + data.characterID + " with " + assetList.length + " assets.");
+
+        var texture:FlxAtlasFrames = Paths.getSparrowAtlas(data.characterMenu.customSpriteData.assetPath);
+        texture.parent.destroyOnNoUse = false;
+
+        for (asset in assetList)
+        {
+          var subTexture:FlxAtlasFrames = Paths.getSparrowAtlas(asset);
+
+          trace('Concatenating multi-sparrow atlas: ' + asset);
+          subTexture.parent.destroyOnNoUse = false;
+
+          texture.addAtlas(subTexture);
+        }
+
+        characterSprite.frames = texture;
+      }
+
       FlxAnimationUtil.addAtlasAnimations(characterSprite, animationData);
 
       for (animation in data.characterMenu.customSpriteData?.animations)
@@ -78,35 +118,13 @@ class FS_CharacterSpriteHandler extends Module
   }
 
   /**
-   * Builds the character sprite cache.
-   */
-  function buildSpriteCache():Void
-  {
-    var FS_CharacterDataHandler:FS_CharacterDataHandler = ModuleHandler.getModule("FS_CharacterDataHandler");
-
-    for (characterID in FS_CharacterDataHandler._asc.characterMap.keys())
-    {
-      var data:FS_characterData = FS_CharacterDataHandler._asc.getCharacterData(characterID);
-      characterSpriteCache.set(characterID, buildCharacterSprite(data));
-    }
-  }
-
-  /**
    * Gets a character sprite with the given ID.
    * @param characterID The character ID to get.
    * @return The character sprite.
    */
   function getCharacterSprite(characterID:String):Null<FunkinSprite>
   {
-    var cachedSprite:FunkinSprite = characterSpriteCache.get(characterID);
-    if (cachedSprite != null)
-    {
-      return cachedSprite;
-    }
-    else
-    {
-      return buildCharacterSprite(ModuleHandler.getModule("FS_CharacterDataHandler")._asc.getCharacterData(characterID));
-    }
+    return buildCharacterSprite(FS_CharacterDataHandler.instance.getCharacterData(characterID));
   }
 
   /**
@@ -141,25 +159,8 @@ class FS_CharacterSpriteHandler extends Module
     return characterSprite;
   }
 
-  /**
-   * Resets the sprite animations.
-   */
-  function resetAnimations():Void
+  override function toString():String
   {
-    for (characterID in characterSpriteCache.keys())
-    {
-      var characterSprite:FunkinSprite = characterSpriteCache.get(characterID);
-
-      if (characterSprite.hasAnimation('idle'))
-      {
-        characterSprite.animation.play('idle', true, true);
-        characterSprite.applyAnimationOffsets('idle');
-      }
-      else if (characterSprite.hasAnimation('danceLeft'))
-      {
-        characterSprite.animation.play('danceLeft', true, true);
-        characterSprite.applyAnimationOffsets('danceLeft');
-      }
-    }
+    return '(FS_CharacterSpriteHandler)';
   }
 }

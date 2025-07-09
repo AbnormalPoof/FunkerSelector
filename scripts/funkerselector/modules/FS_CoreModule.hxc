@@ -21,19 +21,10 @@ import String;
  * This is a Module that's essentially the "core"
  * of Funker Selector.
  *
- * It handles character replacement, the freeplay icon, and preferences.
- * Save data and character data are handled by the `FS_SaveDataHandler` and `FS_CharacterDataHandler` modules respectively.
+ * It simply handles character replacement and preferences, with ave data and character data being
+ * handled by the `FS_SaveData` and `FS_CharacterDataHandler` classes respectively.
  *
- * Modules are loaded in the following order:
- * 1. `FS_SaveDataMigrator`
- * 2. `FS_CharacterDataHandler`, `FS_SaveDataHandler`
- * 3. `FS_SubStateIconHandler` and `FS_CharacterSpriteHandler`
- * 4. `FS_FreeplayDJReplace` and `FS_ResultsHandler`
- * 5. `FS_CoreModule`
- * 6. `FS_SubStateIconHandler`
- *
- * The core module is loaded last to ensure that all the other modules can be accessed properly.
- * NOTE: `FS_FreeplayIcon` and `FS_CharacterMenu` are accessed on demand, so they don't need to be loaded in a specific order.
+ * All Funker Selector modules are independent of each other, so they don't need to be loaded in a specific order.
  */
 class FS_CoreModule extends Module
 {
@@ -42,9 +33,6 @@ class FS_CoreModule extends Module
    */
   var voiceList:Array<String>;
 
-  /**
-   * Check the game version, initialize save data, and build the JSON character cache.
-   */
   function new()
   {
     super('FS_CoreModule', 1000);
@@ -57,6 +45,11 @@ class FS_CoreModule extends Module
     {
       trace("[Funker Selector] Game is a release build.");
     }
+
+    // Initialize various registry classes.
+    FS_SaveData.initialize();
+    FS_CharacterDataHandler.initialize();
+    FS_CharacterSpriteHandler.initialize();
   }
 
   /**
@@ -71,7 +64,7 @@ class FS_CoreModule extends Module
    */
   function replaceCharacter(characterID:String = 'bf', characterType:CharacterType = null):Void
   {
-    var fs_characterData:Dynamic = ModuleHandler.getModule('FS_CharacterDataHandler')._asc.getCharacterData(characterID);
+    var fs_characterData:Dynamic = FS_CharacterDataHandler.instance.getCharacterData(characterID);
     var oldChar:BaseCharacter = null;
     var voiceID:String = fs_characterData?.voiceID ?? characterID;
     var variationSuffix:String = PlayState.instance.currentVariation != 'default' ? '-' + PlayState.instance.currentVariation : '';
@@ -144,9 +137,9 @@ class FS_CoreModule extends Module
 
         if (songMatch && variationMatch)
         {
-          fs_characterData = ModuleHandler.getModule('FS_CharacterDataHandler')._asc.getCharacterData(variation.characterID) ?? fs_characterData;
+          fs_characterData = FS_CharacterDataHandler.instance.getCharacterData(variation.characterID) ?? fs_characterData;
 
-          if (ModuleHandler.getModule('FS_CharacterDataHandler')._asc.charJSONCheck(variation.characterID))
+          if (FS_CharacterDataHandler.charJSONCheck(variation.characterID))
           {
             trace('[Funker Selector] Variation found: ' + variation.characterID);
             characterID = variation.characterID;
@@ -184,7 +177,7 @@ class FS_CoreModule extends Module
               character.x -= 22;
               character.y -= PlayState.instance.currentStageId != 'schoolErect' ? 203 : 153;
               character.originalPosition.set(character.x, character.y);
-              if (PlayState.instance.currentStageId == 'schoolErect') character._asc.addSunsetShaders();
+              if (PlayState.instance.currentStageId == 'schoolErect') character.addSunsetShaders();
             case 'pico-pixel':
               character.x -= -90;
               character.y -= -18;
@@ -254,21 +247,28 @@ class FS_CoreModule extends Module
       if (FlxG.keys.justPressed.F6)
       {
         trace("[Funker Selector] Force reloading JSON cache...");
-        ModuleHandler.getModule('FS_CharacterDataHandler')._asc.loadJSONDataCache();
+        FS_CharacterDataHandler.instance.loadJSONDataCache();
       }
 
       // Write the save data to a JSON file.
       if (FlxG.keys.justPressed.F7)
       {
         trace("[Funker Selector] Writing save data to JSON...");
-        ModuleHandler.getModule('FS_SaveDataHandler')._asc.debug_dumpSave();
+        FS_SaveData.instance.debug_dumpSave();
       }
 
       // Load the save data from a JSON file.
       if (FlxG.keys.justPressed.F8)
       {
         trace("[Funker Selector] Loading save data from JSON...");
-        ModuleHandler.getModule('FS_SaveDataHandler')._asc.debug_loadSaveFromJSON();
+        FS_SaveData.instance.debug_loadSaveFromJSON();
+      }
+
+      // Destroy all save data and reset to default.
+      if (FlxG.keys.justPressed.F9)
+      {
+        trace("[Funker Selector] Resetting save data...");
+        FS_SaveData.instance.debug_resetSave();
       }
     }
   }
@@ -293,8 +293,6 @@ class FS_CoreModule extends Module
     // Options Menu stuff
     if (event.targetState is OptionsState)
     {
-      var saveObject:Dynamic = ModuleHandler.getModule('FS_SaveDataHandler')._asc.getSaveData();
-
       var fs_preferencePage:PreferencesMenu = event.targetState.optionsCodex.addPage('funkerselector', new PreferencesMenu());
       fs_preferencePage.onExit.add(function() {
         FlxG.state.optionsCodex.switchPage('options');
@@ -304,40 +302,18 @@ class FS_CoreModule extends Module
       fs_preferencePage.items.clear();
       fs_preferencePage.preferenceItems.clear();
 
-      var menuItem:TextMenuItem = event.targetState.optionsCodex.pages.get('options')
-        .createItem("FUNKER SELECTOR", function() FlxG.state.optionsCodex.switchPage('funkerselector'));
-      menuItem.y -= 80;
+      event.targetState.optionsCodex.pages.get('options').createItem("FUNKER SELECTOR", function() {
+        FlxG.state.optionsCodex.switchPage('funkerselector');
+      });
 
-      fs_preferencePage.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI and disables character sprite caching.", (value) -> {
-        saveObject.preferences.potatoMode = value;
-        ModuleHandler.getModule('FS_SaveDataHandler')._asc.writeSaveData(saveObject);
-
-        // NOTE: "Simplify UI" and "Preload Sprites" are mutually exclusive
-        if (saveObject.preferences.preloadSprites && value)
-        {
-          fs_preferencePage.preferenceItems.members[1].currentValue = true;
-          fs_preferencePage.items.members[1].callback();
-        }
-      }, saveObject.preferences.potatoMode);
-
-      fs_preferencePage.createPrefItemCheckbox("Preload Sprites",
-        "If disabled, character sparrows will not be cached when the game starts. This will cause stuttering when the Character Menu is opened for the first time.",
-        (value) -> {
-          saveObject.preferences.preloadSprites = value;
-          ModuleHandler.getModule('FS_SaveDataHandler')._asc.writeSaveData(saveObject);
-
-          // NOTE: "Simplify UI" and "Preload Sprites" are mutually exclusive
-          if (saveObject.preferences.potatoMode && value)
-          {
-            fs_preferencePage.preferenceItems.members[0].currentValue = true;
-            fs_preferencePage.items.members[0].callback();
-          }
-        }, saveObject.preferences.preloadSprites);
+      fs_preferencePage.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI to use health icons in place of character sprites.", (value) -> {
+        FS_SaveData.instance.simplifyUI = value;
+      }, FS_SaveData.instance.simplifyUI);
 
       fs_preferencePage.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
         ["Funkin' Main Menu" => "funkin", "Funkin' Character Select" => "charSelect"], (key, value) -> {
-          saveObject.preferences.preferredSFX = value;
-          ModuleHandler.getModule('FS_SaveDataHandler')._asc.writeSaveData(saveObject);
+          FS_SaveData.instance.preferredSFX = value;
+
           if (value == "charSelect")
           {
             FunkinSound.playOnce(Paths.sound('CS_confirm'));
@@ -346,7 +322,7 @@ class FS_CoreModule extends Module
           {
             FunkinSound.playOnce(Paths.sound('confirmMenu'));
           }
-        }, switch (saveObject.preferences.preferredSFX)
+        }, switch (FS_SaveData.instance.preferredSFX)
         {
           case "funkin": "Funkin' Main Menu";
           case "charSelect": "Funkin' Character Select";
@@ -354,9 +330,8 @@ class FS_CoreModule extends Module
 
       fs_preferencePage.createPrefItemCheckbox("DJ Replacement",
         "If disabled, the Freeplay DJ will not be swapped out for the currently selected character's own DJ.", (value) -> {
-          saveObject.preferences.djSwapping = value;
-          ModuleHandler.getModule('FS_SaveDataHandler')._asc.writeSaveData(saveObject);
-        }, saveObject.preferences.djSwapping);
+          FS_SaveData.instance.djSwapping = value;
+        }, FS_SaveData.instance.djSwapping);
     }
   }
 
@@ -367,11 +342,9 @@ class FS_CoreModule extends Module
 
     voiceList = [null, null];
 
-    var saveData:FS_saveData = ModuleHandler.getModule('FS_SaveDataHandler')._asc.getSaveData();
-
-    replaceCharacter(saveData.characterIDs.bf, CharacterType.BF);
-    replaceCharacter(saveData.characterIDs.gf, CharacterType.GF);
-    replaceCharacter(saveData.characterIDs.dad, CharacterType.DAD);
+    replaceCharacter(FS_SaveData.instance.bf, CharacterType.BF);
+    replaceCharacter(FS_SaveData.instance.gf, CharacterType.GF);
+    replaceCharacter(FS_SaveData.instance.dad, CharacterType.DAD);
 
     PlayState.instance.currentStage.refresh();
 

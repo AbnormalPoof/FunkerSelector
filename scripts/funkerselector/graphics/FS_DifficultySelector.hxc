@@ -2,6 +2,8 @@ import flixel.util.FlxTimer;
 import funkin.graphics.FunkinSprite;
 import funkin.graphics.shaders.PureColor;
 import funkin.PlayerSettings;
+import funkin.util.TouchUtil;
+import flixel.FlxG;
 
 /**
  * Modified version of `DifficultySelector` to work with the Character Menu.
@@ -40,8 +42,16 @@ class FS_DifficultySelector extends FunkinSprite
 
   override function update(elapsed:Float):Void
   {
-    if (flipX && controls.UI_RIGHT && !parentState.busy && !whiteShader.colorSet) moveShitDown();
-    if (!flipX && controls.UI_LEFT && !parentState.busy && !whiteShader.colorSet) moveShitDown();
+    if (FlxG.onMobile)
+    {
+      if (flipX && controls.UI_RIGHT && !parentState.busy && !whiteShader.colorSet) moveShitDown();
+      if (!flipX && controls.UI_LEFT && !parentState.busy && !whiteShader.colorSet) moveShitDown();
+    }
+    else
+    {
+      if (flipX && (TouchUtil.overlapsComplex(this) && TouchUtil.pressed) && !parentState.busy && !whiteShader.colorSet) moveShitDown();
+      if (!flipX && (TouchUtil.overlapsComplex(this) && TouchUtil.pressed) && !parentState.busy && !whiteShader.colorSet) moveShitDown();
+    }
 
     super.update(elapsed);
   }

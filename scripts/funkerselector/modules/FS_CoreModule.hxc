@@ -306,9 +306,13 @@ class FS_CoreModule extends Module
         FlxG.state.optionsCodex.switchPage('funkerselector');
       });
 
-      fs_preferencePage.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI to use health icons in place of character sprites.", (value) -> {
-        FS_SaveData.instance.simplifyUI = value;
-      }, FS_SaveData.instance.simplifyUI);
+      if (!FlxG.onMobile)
+      {
+        fs_preferencePage.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI to use health icons in place of character sprites.",
+          (value) -> {
+            FS_SaveData.instance.simplifyUI = value;
+          }, FS_SaveData.instance.simplifyUI);
+      }
 
       fs_preferencePage.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
         ["Funkin' Main Menu" => "funkin", "Funkin' Character Select" => "charSelect"], (key, value) -> {

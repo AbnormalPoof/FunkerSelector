@@ -74,7 +74,7 @@ class DJReplace extends Module
       {
         if (freeplayDJ.hasAnimation(playableCharData.getAnimationPrefix('charSelect')))
         {
-          freeplay.busy = true;
+          freeplay.controls.active = false;
           freeplayDJ.onIntroDone.removeAll();
           freeplayDJ.onAnimationComplete.addOnce(replaceDJNoIntro);
           freeplayDJ.currentState = FreeplayDJState.CharSelect;
@@ -128,7 +128,7 @@ class DJReplace extends Module
         playableChar.getFreeplayDJText(2),
         playableChar.getFreeplayDJText(3)
       ]);
-      FlxG.state.subState.busy = false;
+      FlxG.state.subState.controls.active = true;
     }
   }
 

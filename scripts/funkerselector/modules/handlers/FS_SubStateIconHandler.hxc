@@ -11,6 +11,7 @@ import funkin.play.character.CharacterDataParser;
 import funkin.ui.AtlasText;
 import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.story.StoryMenuState;
+import funkin.util.TouchUtil;
 import haxe.ds.ObjectMap;
 
 /**
@@ -72,7 +73,7 @@ class FS_SubStateIconHandler extends Module
       if (FlxG.state?.subState is FreeplayState)
       {
         shouldOpenMenu = false;
-        FlxG.state.subState.busy = false;
+        FlxG.state.subState.controls.active = true;
         FlxG.state.subState.letterSort.inputEnabled = true;
         FlxG.state.subState.charSelectHint.visible = true;
         FlxG.state.subState.ostName.text = "OFFICIAL OST";
@@ -142,9 +143,9 @@ class FS_SubStateIconHandler extends Module
     {
       // Open the CharacterMenu substate.
       // We need to make a new one everytime since it gets destroyed when it's closed.
-      if (FlxG.keys.justPressed.G
+      if ((FlxG.keys.justPressed.G || TouchUtil.pressAction(characterMenuIcon))
         && (characterMenuHotkey?.visible ?? true)
-        && !(FlxG.state?.subState?.busy ?? false)
+        && (FlxG.state?.subState?.controls?.active ?? true)
         && shouldOpenMenu)
       {
         if (characterMenuState == null)
@@ -189,7 +190,7 @@ class FS_SubStateIconHandler extends Module
 
     originalExitMovers.clear();
 
-    FlxG.state.subState.busy = true;
+    FlxG.state.subState.controls.active = false;
     FlxG.state.subState.letterSort.inputEnabled = false;
 
     exitMovers.set([FlxG.state.subState.dj],

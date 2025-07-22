@@ -44,6 +44,7 @@ import funkin.util.MathUtil;
 import funkin.util.ReflectUtil;
 import funkin.util.SortUtil;
 import funkin.util.WindowUtil;
+import funkin.util.TouchUtil;
 import funkin.util.assets.DataAssets;
 import funkin.util.tools.IteratorTools;
 import openfl.display.BitmapData;
@@ -869,8 +870,8 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (!hotkeyBox.visible)
     {
-      var leftPressed:Bool = controls.UI_LEFT;
-      var rightPressed:Bool = controls.UI_RIGHT;
+      var leftPressed:Bool = controls.UI_LEFT || (TouchUtil.overlapsComplex(leftDifficultyArrow) && TouchUtil.pressed);
+      var rightPressed:Bool = controls.UI_RIGHT || (TouchUtil.overlapsComplex(rightDifficultyArrow) && TouchUtil.pressed);
       var anyPressed:Bool = leftPressed || rightPressed;
 
       if (anyPressed)
@@ -988,7 +989,7 @@ class FS_CharacterMenu extends MusicBeatSubState
         showVariations(currentCharacterID);
       }
 
-      if (controls.ACCEPT)
+      if (controls.ACCEPT || (TouchUtil.pressAction(getCurrentCharacterSprite())))
       {
         var characterIDs:Dynamic =
           {
@@ -1073,7 +1074,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     if (jumpIn)
     {
       // Play the jump in animation if we have it
-      var characterSprite:FunkinSprite = characterWheel.members[currentCharacterIndex];
+      var characterSprite:FunkinSprite = getCurrentCharacterSprite();
 
       if (characterSprite is Bopper)
       {
@@ -1325,6 +1326,18 @@ class FS_CharacterMenu extends MusicBeatSubState
       characterDescription.letterSpacing -= 0.16 * (currentFontSize / 10);
 
       if (currentFontSize <= 8) return;
+    }
+  }
+
+  function getCurrentCharacterSprite():Void
+  {
+    if (!FS_SaveData.instance.simplifyUI)
+    {
+      return characterWheel.members[currentCharacterIndex];
+    }
+    else
+    {
+      return currentCharacterIcon;
     }
   }
 

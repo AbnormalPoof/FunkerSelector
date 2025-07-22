@@ -18,8 +18,9 @@ class FS_SaveData extends Object
 
   /**
    * The instance of this class.
+   * There should only ever be one instance of this class.
    */
-  static var instance:FS_SaveData = null;
+  static var instance:FS_CharacterDataHandler = null;
 
   var data:FS_rawSaveData;
 
@@ -98,6 +99,7 @@ class FS_SaveData extends Object
 
   function get_simplifyUI():String
   {
+    if (FlxG.onMobile) return true;
     return data.preferences.potatoMode;
   }
 
@@ -167,6 +169,7 @@ class FS_SaveData extends Object
   public function flush():Void
   {
     Save.instance.modOptions.set("FunkerSelector", data);
+    Save.instance.flush();
   }
 
   /**

@@ -126,20 +126,6 @@ class FS_CharacterDataHandler extends Object
         continue;
       }
 
-      if (data.mustUnlock)
-      {
-        if (!isCharacterUnlocked(data.characterID, data.unlockMethod))
-        {
-          trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
-          lockedCharMap.set(data.characterID, data);
-        }
-        else if (!FS_SaveData.instance.isCharacterSeen(data.characterID))
-        {
-          trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
-          lockedCharMap.set(data.characterID, data);
-        }
-      }
-
       var variationList:Array = [];
 
       for (variation in data.characterVariations)
@@ -153,6 +139,20 @@ class FS_CharacterDataHandler extends Object
       // NOTE: `jsonCharacterCache` and `characterMap` serve 2 different purposes.
       jsonCharacterCache.set(funker, [data, variationList.length]);
       characterMap.set(data.characterID, [funker, data.characterType]);
+
+      if (data.mustUnlock)
+      {
+        if (!isCharacterUnlocked(data.characterID))
+        {
+          trace('[Funker Selector] Character ID ' + data.characterID + ' is locked!');
+          lockedCharMap.set(data.characterID, data);
+        }
+        else if (!FS_SaveData.instance.isCharacterSeen(data.characterID))
+        {
+          trace('[Funker Selector] Character ID ' + data.characterID + ' was unlocked!');
+          lockedCharMap.set(data.characterID, data);
+        }
+      }
 
       trace("[Funker Selector] " + funker + " has " + variationList.length + " available variation(s).");
     }

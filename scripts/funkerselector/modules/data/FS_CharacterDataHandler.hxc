@@ -8,7 +8,8 @@ import funkin.modding.module.ModuleHandler;
 import funkin.play.character.CharacterDataParser;
 import funkin.save.Save;
 import funkin.util.MemoryUtil;
-import funkin.util.SerializerUtil;
+import hxjsonast.Parser;
+import hxjsonast.Tools;
 import funkin.util.assets.DataAssets;
 import haxe.ds.StringMap;
 import haxe.ds.Either;
@@ -170,9 +171,13 @@ class FS_CharacterDataHandler extends Object
     // Check if the file exists
     if (Assets.exists(filePath))
     {
-      var parsedJSON:Dynamic = SerializerUtil.fromJSON(Assets.getText(filePath));
+      var parsedJSON:Dynamic = null;
 
-      if (parsedJSON == null)
+      try
+      {
+        parsedJSON = Tools.getValue(Parser.parse(Assets.getText(filePath), filePath));
+      }
+      catch (e:Dynamic)
       {
         trace('[Funker Selector] Failed to parse JSON file for character ID ' + characterID);
         return null;

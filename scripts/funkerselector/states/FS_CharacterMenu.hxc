@@ -35,6 +35,7 @@ import funkin.play.components.HealthIcon;
 import funkin.play.stage.Bopper;
 import funkin.save.Save;
 import funkin.ui.MusicBeatSubState;
+import funkin.ui.FullScreenScaleMode;
 import funkin.ui.charSelect.Lock;
 import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.freeplay.charselect.PlayableCharacter;
@@ -561,14 +562,14 @@ class FS_CharacterMenu extends MusicBeatSubState
       _parentState.ostName.text = 'LOADING CHARACTERS';
     }
 
-    blackBack = FunkinSprite.create(-500, -20, 'freeplay/pinkBack');
+    blackBack = FunkinSprite.create(-500 + (FullScreenScaleMode.gameCutoutSize.x / 2), -20, 'freeplay/pinkBack');
     blackBack.color = 0xFF000000;
     blackBack.alpha = 0;
     blackBack.zIndex = 200;
     blackBack.camera = spriteCamera;
     add(blackBack);
 
-    overlayShit = new FunkinSprite(FlxG.width, 65).makeGraphic(1000, 700, 0xB3FFD4E9);
+    overlayShit = new FunkinSprite(FlxG.width + (FullScreenScaleMode.gameCutoutSize.x / 2), 65).makeGraphic(1000, 700, 0xB3FFD4E9);
     overlayShit.shader = angleMaskShader;
     overlayShit.camera = spriteCamera;
     overlayShit.zIndex = 150;
@@ -654,13 +655,13 @@ class FS_CharacterMenu extends MusicBeatSubState
     variationText.zIndex = 300;
     add(variationText);
 
-    leftDifficultyArrow = new FS_DifficultySelector(this, 500, 300);
+    leftDifficultyArrow = new FS_DifficultySelector(this, 500 + (FullScreenScaleMode.gameCutoutSize.x / 2), 300);
     leftDifficultyArrow.scale.set(1.5, 1.5);
     leftDifficultyArrow.camera = uiCamera;
     leftDifficultyArrow.zIndex = 500;
     add(leftDifficultyArrow);
 
-    rightDifficultyArrow = new FS_DifficultySelector(this, 1150, leftDifficultyArrow.y);
+    rightDifficultyArrow = new FS_DifficultySelector(this, 1150 + (FullScreenScaleMode.gameCutoutSize.x / 2), leftDifficultyArrow.y);
     rightDifficultyArrow.flipX = true;
     rightDifficultyArrow.scale.set(1.5, 1.5);
     rightDifficultyArrow.camera = uiCamera;
@@ -676,7 +677,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
     if (FS_SaveData.instance.simplifyUI)
     {
-      lockedChill = new Lock(750, 270, FlxG.random.int(1, 9));
+      lockedChill = new Lock(750 + (FullScreenScaleMode.gameCutoutSize.x / 2), 270, FlxG.random.int(1, 9));
       lockedChill.onAnimationComplete.add(function(name) {
         if (name != 'selected') lockedChill.playAnimation('selected');
       });
@@ -689,7 +690,7 @@ class FS_CharacterMenu extends MusicBeatSubState
       add(lockedChill);
     }
 
-    newGraphic = FunkinSprite.createSparrow(200, 255, 'freeplay/freeplayCapsule/new');
+    newGraphic = FunkinSprite.createSparrow(200 + (FullScreenScaleMode.gameCutoutSize.x / 2), 255, 'freeplay/freeplayCapsule/new');
     newGraphic.animation.addByPrefix('new', 'NEW notif', 24);
     newGraphic.animation.play('new');
     newGraphic.camera = uiCamera;
@@ -730,8 +731,8 @@ class FS_CharacterMenu extends MusicBeatSubState
     trace('[Funker Selector] UI has been set up.');
     conductorInUse.forceBPM(songBPM);
 
-    FlxTween.tween(blackBack, {x: -6}, 0.7, {ease: FlxEase.quintOut});
-    FlxTween.tween(overlayShit, {x: 400}, 0.7, {ease: FlxEase.quintOut});
+    FlxTween.tween(blackBack, {x: -6 + (FullScreenScaleMode.gameCutoutSize.x / 2)}, 0.7, {ease: FlxEase.quintOut});
+    FlxTween.tween(overlayShit, {x: 400 + (FullScreenScaleMode.gameCutoutSize.x / 2)}, 0.7, {ease: FlxEase.quintOut});
     FlxTween.tween(blackBack, {alpha: 1}, 1,
       {
         ease: FlxEase.quartOut,
@@ -1520,7 +1521,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     }
 
     object.text = text;
-    object.x += offsets[0];
+    object.x += offsets[0] + (FullScreenScaleMode.gameCutoutSize.x / 2);
     object.y += offsets[1];
 
     if (font != null)

@@ -9,6 +9,7 @@ import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.character.CharacterDataParser;
 import funkin.ui.AtlasText;
+import funkin.ui.FullScreenScaleMode;
 import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.story.StoryMenuState;
 import funkin.util.TouchUtil;
@@ -26,9 +27,9 @@ class FS_SubStateIconHandler extends Module
   var characterMenuState:MusicBeatSubState = null;
 
   /**
-   * An `AtlasText` object, used for the Character Select button.
+   * The `AtlasText` object, used for the Character Select text in Story Mode.
    */
-  var characterMenuHotkey:AtlasText;
+  var characterMenuText:AtlasText;
 
   /**
    * The Icon as a `FunkinSprite`.
@@ -48,12 +49,12 @@ class FS_SubStateIconHandler extends Module
   /**
    * The position of the icon for Freeplay.
    */
-  var ICON_DATA:Dynamic =
+  final ICON_DATA:Dynamic =
     {
       FREEPLAY:
         {
-          scale: 0.65,
-          position: [-20, 60]
+          scale: 0.7,
+          position: [90, 220]
         }
     };
 
@@ -80,12 +81,9 @@ class FS_SubStateIconHandler extends Module
 
         if (characterMenuIcon != null)
         {
-          var characterData:FS_CharacterData = CharacterDataParser.fetchCharacterData(FS_SaveData.instance.bf);
-          currentCharacterIcon = characterMenuIcon._asc.currentCharacterIcon;
-
-          if (currentCharacterIcon.characterId != characterData?.healthIcon?.id)
+          if (characterMenuIcon.currentCharacterID != FS_SaveData.instance.bf)
           {
-            currentCharacterIcon.configure(characterData?.healthIcon);
+            characterMenuIcon.playAnimation("fs icon char switch", true);
           }
         }
 
@@ -143,10 +141,7 @@ class FS_SubStateIconHandler extends Module
     {
       // Open the CharacterMenu substate.
       // We need to make a new one everytime since it gets destroyed when it's closed.
-      if ((FlxG.keys.justPressed.G || TouchUtil.pressAction(characterMenuIcon))
-        && (characterMenuHotkey?.visible ?? true)
-        && (FlxG.state?.subState?.controls?.active ?? true)
-        && shouldOpenMenu)
+      if (canOpenMenu())
       {
         if (characterMenuState == null)
         {
@@ -182,6 +177,30 @@ class FS_SubStateIconHandler extends Module
         }
       }
     }
+  }
+
+  function canOpenMenu():Bool
+  {
+    if (!shouldOpenMenu) return false;
+
+    if ((FlxG.state?.subState?.controls?.active ?? true))
+    {
+      if (FlxG.keys.justPressed.G) return true;
+
+      if (FlxG.onMobile)
+      {
+        if (characterMenuIcon != null)
+        {
+          if (TouchUtil.pressAction(characterMenuIcon)) return true;
+        }
+        if (characterMenuText != null)
+        {
+          if (TouchUtil.pressAction(characterMenuText) && !(TouchUtil.overlapsComplex(FlxG.state.backButton))) return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   function doTransition():Void
@@ -308,18 +327,6 @@ class FS_SubStateIconHandler extends Module
         wait: 0
       });
 
-    exitMovers.set([
-      characterMenuIcon,
-      characterMenuIcon._asc.currentCharacterIcon,
-      characterMenuHotkey
-    ],
-      {
-        x: -1000,
-        y: 0,
-        speed: 0.5,
-        wait: 0
-      });
-
     var longestTimer:Float = 0;
 
     for (grpSpr in exitMovers.keys())
@@ -395,28 +402,20 @@ class FS_SubStateIconHandler extends Module
 
       shouldOpenMenu = true;
 
-      characterMenuIcon = new FS_FreeplayIcon();
+      characterMenuIcon = new FS_FreeplayIcon((FreeplayState.CUTOUT_WIDTH * FreeplayState.DJ_POS_MULTI) + ICON_DATA.FREEPLAY.position[0],
+        ICON_DATA.FREEPLAY.position[1]);
       characterMenuIcon.camera = event.targetState.funnyCam;
       characterMenuIcon.visible = false;
-
-      characterMenuIcon.x = ICON_DATA.FREEPLAY.position[0];
-      characterMenuIcon.y = ICON_DATA.FREEPLAY.position[1];
       characterMenuIcon.scale.set(ICON_DATA.FREEPLAY.scale, ICON_DATA.FREEPLAY.scale);
-
-      characterMenuHotkey = new AtlasText(characterMenuIcon.x + 190, characterMenuIcon.y + 250, 'G', 'bold');
-      characterMenuHotkey.visible = false;
-      characterMenuHotkey.zIndex = 1001;
-      characterMenuHotkey.camera = event.targetState.funnyCam;
+      characterMenuIcon.updateHealthIcon();
 
       event.targetState.add(characterMenuIcon);
-      event.targetState.add(characterMenuHotkey);
 
       event.targetState.dj.onIntroDone.add(function() {
         characterMenuIcon.visible = true;
-        characterMenuIcon.animation.play('intro');
-        characterMenuIcon.animation.onFinish.add(function(_) {
-          characterMenuIcon.animation.play('idle');
-          characterMenuHotkey.visible = true;
+        characterMenuIcon.playAnimation('fs icon intro');
+        characterMenuIcon.onAnimationComplete.addOnce(function(_) {
+          characterMenuIcon.playAnimation('fs icon idle', false, false, true);
         });
       });
     }
@@ -425,6 +424,10 @@ class FS_SubStateIconHandler extends Module
   override function onStateChangeEnd(event:StateChangeScriptEvent):Void
   {
     super.onStateChangeEnd(event);
+
+    characterMenuIcon = null;
+    characterMenuText = null;
+
     if (event.targetState is StoryMenuState)
     {
       shouldOpenMenu = true;
@@ -435,8 +438,10 @@ class FS_SubStateIconHandler extends Module
         characterMenuState = null;
       }
 
-      // Character Menu icon doesn't show properly in Story Mode, so we just use text instead!
-      var characterMenuText:FlxText = configureText(null, "Press G to open\nthe Funker Selector\nMenu!", [890, 575], 35, Paths.font("PhantomMuff.ttf"));
+      var menuTextPrefix:String = FlxG.onMobile ? "Tap here " : "Press G ";
+
+      var textX:Float = FlxG.state.leftDifficultyArrow.x + 25;
+      characterMenuText = configureText(null, menuTextPrefix + "to open\nthe Funker Selector\nMenu!", [textX, 575], 35, Paths.font("PhantomMuff.ttf"));
 
       event.targetState.add(characterMenuText);
     }
@@ -483,6 +488,7 @@ class FS_SubStateIconHandler extends Module
     }
 
     object.text = text;
+
     object.x += offsets[0];
     object.y += offsets[1];
     if (font != null) object.setFormat(font, size, null, 'center');

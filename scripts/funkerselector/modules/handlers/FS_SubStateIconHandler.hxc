@@ -83,6 +83,7 @@ class FS_SubStateIconHandler extends Module
         {
           if (characterMenuIcon.currentCharacterID != FS_SaveData.instance.bf)
           {
+            trace("[Funker Selector] Switching character icon...");
             characterMenuIcon.playAnimation("fs icon char switch", true);
           }
         }

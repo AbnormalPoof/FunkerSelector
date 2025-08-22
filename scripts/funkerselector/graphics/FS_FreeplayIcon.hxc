@@ -52,6 +52,8 @@ class FS_FreeplayIcon extends FlxAtlasSprite
 
   function updateHealthIcon():Void
   {
+    currentCharacterID = FS_SaveData.instance.bf;
+
     var characterData:Dynamic = CharacterDataParser.fetchCharacterData(FS_SaveData.instance.bf);
 
     var healthIcon:HealthIcon = new HealthIcon('dad', 0);
@@ -59,7 +61,6 @@ class FS_FreeplayIcon extends FlxAtlasSprite
     healthIcon.playAnimation("idle");
     healthIcon.animation.pause();
     healthIcon.updateFramePixels();
-    currentCharacterID = healthIcon.characterId;
 
     var iconGraphic:FlxGraphic = FlxG.bitmap.add(healthIcon.framePixels);
     replaceFrameGraphic(7, iconGraphic);

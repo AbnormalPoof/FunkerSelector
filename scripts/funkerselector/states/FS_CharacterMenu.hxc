@@ -7,6 +7,7 @@ import haxe.ds.StringMap;
 import haxe.ds.IntMap;
 import lime.app.Application;
 import flixel.FlxG;
+import flixel.FlxObject;
 import flixel.addons.text.FlxTypeText;
 import flixel.group.FlxTypedSpriteGroup;
 import flixel.math.FlxMath;
@@ -17,6 +18,7 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import flixel.util.FlxSpriteUtil;
+import funkin.FunkinMemory;
 import funkin.audio.FunkinSound;
 import funkin.data.animation.AnimationDataUtil;
 import funkin.data.freeplay.player.PlayerRegistry;
@@ -48,8 +50,8 @@ import funkin.util.WindowUtil;
 import funkin.util.TouchUtil;
 import funkin.util.assets.DataAssets;
 import funkin.util.tools.IteratorTools;
-import openfl.display.BitmapData;
-import openfl.geom.Matrix;
+
+using StringTools;
 
 /**
  * This is a substate that acts as a Character Selection screen.
@@ -137,6 +139,11 @@ class FS_CharacterMenu extends MusicBeatSubState
    * The camera for sprites.
    */
   var spriteCamera:FunkinCamera;
+
+  /**
+   * Character sprite hitbox is wonky so we do this instead!
+   */
+  var characterHitbox:FlxObject = new FlxObject(FlxG.width - 700, 200, 450, 450);
 
   /**
    * A filtered character array for the current page.
@@ -241,6 +248,11 @@ class FS_CharacterMenu extends MusicBeatSubState
    */
   var angleMaskShader:AngleMask = new AngleMask();
 
+  /**
+   * The asset paths for the character textures.
+   */
+  var currentCharacterTextures:Array<String> = [];
+
   public function new(songBPM:Float)
   {
     super();
@@ -269,12 +281,13 @@ class FS_CharacterMenu extends MusicBeatSubState
     for (icon in iconGridTop)
     {
       var speedFactor:Float = (Math.min(conductorInUse.bpm, 300) / 60) * (FlxG.elapsed / (1 / FlxG.drawFramerate));
+      var gridWidth:Float = iconGridTop.length * icon.width + (iconGridTop.length - 1) * 150 + 120;
 
       icon.x -= ICON_SCROLL_SPEED * speedFactor;
 
       if (icon.x < -icon.width)
       {
-        icon.x += (FlxG.width + icon.width) + 70;
+        icon.x += gridWidth;
       }
     }
 
@@ -286,7 +299,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
       if (icon.x > FlxG.width)
       {
-        icon.x -= (FlxG.width + icon.width) + 70;
+        icon.x -= (FlxG.width + icon.width) + (70 - FullScreenScaleMode.gameCutoutSize.x);
       }
     }
 
@@ -334,11 +347,76 @@ class FS_CharacterMenu extends MusicBeatSubState
         if (item.alive)
         {
           var baseX:Float = relativeIndex * 800;
-          var targetX:Float = baseX + xOffset + 500;
+          var targetX:Float = baseX + xOffset + 500 + (FullScreenScaleMode.gameCutoutSize.x / 2);
 
           item.x = MathUtil.smoothLerp(item.x, targetX, elapsed, 0.20);
         }
       });
+    }
+  }
+
+  /**
+   * Preload the characters!!!
+   * They get cleared when the menu is closed.
+   */
+  function preloadCharacters():Void
+  {
+    for (character in FS_CharacterDataHandler.instance.characterMap.keys())
+    {
+      var fs_characterData:FS_characterData = FS_CharacterDataHandler.instance.getCharacterData(character);
+      var funkin_characterData:CharacterData = CharacterDataParser.fetchCharacterData(fs_characterData.characterID);
+
+      if (fs_characterData.characterMenu.useCustomSprites && fs_characterData.characterMenu.customSpriteData != null)
+      {
+        FunkinMemory.cacheTexture(Paths.image(fs_characterData.characterMenu.customSpriteData.assetPath));
+        currentCharacterTextures.push(fs_characterData.characterMenu.customSpriteData.assetPath);
+        continue;
+      }
+
+      switch (funkin_characterData.renderType)
+      {
+        case 'animateatlas':
+          FunkinMemory.cacheTexture(Paths.image(funkin_characterData.assetPath + '/spritemap1'));
+          currentCharacterTextures.push(funkin_characterData.assetPath + '/spritemap1');
+        case 'sparrow':
+          FunkinMemory.cacheTexture(Paths.image(funkin_characterData.assetPath));
+          currentCharacterTextures.push(funkin_characterData.assetPath);
+        default:
+          FunkinMemory.cacheTexture(Paths.image(funkin_characterData.assetPath));
+          currentCharacterTextures.push(funkin_characterData.assetPath);
+      }
+    }
+  }
+
+  /**
+   * Purges the characters from memory!!
+   */
+  function purgeCharacters():Void
+  {
+    for (graphicKey in currentCharacterTextures)
+    {
+      var graphic:Null<FlxGraphic> = FunkinMemory.currentCachedTextures.get(Paths.image(graphicKey));
+      if (graphic != null)
+      {
+        FlxG.bitmap.remove(graphic);
+        graphic.destroy();
+        FunkinMemory.currentCachedTextures.remove(graphicKey);
+        Assets.cache.clear(graphicKey);
+      }
+    }
+
+    for (key in FlxG.bitmap._cache.keys())
+    {
+      var obj:Null<FlxGraphic> = FlxG.bitmap.get(key);
+
+      for (graphicKey in currentCharacterTextures)
+      {
+        if (key.contains(graphicKey))
+        {
+          FlxG.bitmap.removeKey(key);
+          obj.destroy();
+        }
+      }
     }
   }
 
@@ -562,14 +640,15 @@ class FS_CharacterMenu extends MusicBeatSubState
       _parentState.ostName.text = 'LOADING CHARACTERS';
     }
 
-    blackBack = FunkinSprite.create(-500 + (FullScreenScaleMode.gameCutoutSize.x / 2), -20, 'freeplay/pinkBack');
+    blackBack = FunkinSprite.create((FreeplayState.CUTOUT_WIDTH * FreeplayState.DJ_POS_MULTI) + -500, -20, 'freeplay/pinkBack');
+    blackBack.scale.x *= FullScreenScaleMode.wideScale.x + 0.1;
     blackBack.color = 0xFF000000;
     blackBack.alpha = 0;
     blackBack.zIndex = 200;
     blackBack.camera = spriteCamera;
     add(blackBack);
 
-    overlayShit = new FunkinSprite(FlxG.width + (FullScreenScaleMode.gameCutoutSize.x / 2), 65).makeGraphic(1000, 700, 0xB3FFD4E9);
+    overlayShit = new FunkinSprite((FreeplayState.CUTOUT_WIDTH * FreeplayState.DJ_POS_MULTI) + FlxG.width, 65).makeGraphic(1200, 700, 0xB3FFD4E9);
     overlayShit.shader = angleMaskShader;
     overlayShit.camera = spriteCamera;
     overlayShit.zIndex = 150;
@@ -633,10 +712,17 @@ class FS_CharacterMenu extends MusicBeatSubState
       + controls.getDialogueNameFromToken("FREEPLAY_RIGHT", true)
       + ' - Switch to the next page.\n\n'
       + controls.getDialogueNameFromToken("BACK", true)
-      + ' - Close this.\n\n'
-      + controls.getDialogueNameFromToken("DEBUG_MENU", true)
-      + ' - Show available character variations.',
+      + ' - Close this.',
       [350, 100], 35, Paths.font("PhantomMuff.ttf"));
+
+    if (!FlxG.onMobile)
+    {
+      hotkeyBoxText.text += '\n\n' + controls.getDialogueNameFromToken("DEBUG_MENU", true) + ' - Show
+      available
+      character
+      variations.';
+    }
+
     hotkeyBoxText.camera = uiCamera;
     hotkeyBoxText.wordWrap = true;
     hotkeyBoxText.visible = false;
@@ -655,13 +741,13 @@ class FS_CharacterMenu extends MusicBeatSubState
     variationText.zIndex = 300;
     add(variationText);
 
-    leftDifficultyArrow = new FS_DifficultySelector(this, 500 + (FullScreenScaleMode.gameCutoutSize.x / 2), 300);
+    leftDifficultyArrow = new FS_DifficultySelector(this, FlxG.width - 850, 300);
     leftDifficultyArrow.scale.set(1.5, 1.5);
     leftDifficultyArrow.camera = uiCamera;
     leftDifficultyArrow.zIndex = 500;
     add(leftDifficultyArrow);
 
-    rightDifficultyArrow = new FS_DifficultySelector(this, 1150 + (FullScreenScaleMode.gameCutoutSize.x / 2), leftDifficultyArrow.y);
+    rightDifficultyArrow = new FS_DifficultySelector(this, FlxG.width - 120, leftDifficultyArrow.y);
     rightDifficultyArrow.flipX = true;
     rightDifficultyArrow.scale.set(1.5, 1.5);
     rightDifficultyArrow.camera = uiCamera;
@@ -674,6 +760,11 @@ class FS_CharacterMenu extends MusicBeatSubState
       characterWheel.camera = spriteCamera;
       add(characterWheel);
     }
+
+    characterHitbox.camera = uiCamera;
+    characterHitbox.zIndex = 9999;
+    characterHitbox.active = false;
+    add(characterHitbox);
 
     if (FS_SaveData.instance.simplifyUI)
     {
@@ -731,8 +822,8 @@ class FS_CharacterMenu extends MusicBeatSubState
     trace('[Funker Selector] UI has been set up.');
     conductorInUse.forceBPM(songBPM);
 
-    FlxTween.tween(blackBack, {x: -6 + (FullScreenScaleMode.gameCutoutSize.x / 2)}, 0.7, {ease: FlxEase.quintOut});
-    FlxTween.tween(overlayShit, {x: 400 + (FullScreenScaleMode.gameCutoutSize.x / 2)}, 0.7, {ease: FlxEase.quintOut});
+    FlxTween.tween(blackBack, {x: 0 + (FreeplayState.CUTOUT_WIDTH * FreeplayState.DJ_POS_MULTI)}, 0.7, {ease: FlxEase.quintOut});
+    FlxTween.tween(overlayShit, {x: 400 + (FreeplayState.CUTOUT_WIDTH * FreeplayState.DJ_POS_MULTI)}, 0.7, {ease: FlxEase.quintOut});
     FlxTween.tween(blackBack, {alpha: 1}, 1,
       {
         ease: FlxEase.quartOut,
@@ -743,6 +834,7 @@ class FS_CharacterMenu extends MusicBeatSubState
 
           if (!FS_SaveData.instance.simplifyUI)
           {
+            preloadCharacters();
             buildCharacterWheel();
           }
           else
@@ -760,6 +852,11 @@ class FS_CharacterMenu extends MusicBeatSubState
           if (_parentState is FreeplayState)
           {
             _parentState.ostName.text = 'FUNKER SELECTOR';
+          }
+
+          if (FlxG.onMobile)
+          {
+            addBackButton(FlxG.width - 230, FlxG.height - 200, FlxColor.WHITE, exitToFreeplay, 0.3, true);
           }
         }
       });
@@ -827,52 +924,13 @@ class FS_CharacterMenu extends MusicBeatSubState
   {
     if (controls.BACK)
     {
-      if (hotkeyBox.visible)
-      {
-        hotkeyBox.visible = false;
-        hotkeyBoxText.visible = false;
-      }
-      else
-      {
-        FunkinSound.playOnce(Paths.sound('cancelMenu'));
-
-        busy = true;
-
-        // Scripted characters overwrite the suffixes when
-        // they're shown. So we want to manually reset them!
-        PauseSubState.musicSuffix = '';
-        GameOverSubState.musicSuffix = '';
-        GameOverSubState.blueBallSuffix = '';
-
-        WindowUtil.setWindowTitle('Friday Night Funkin\'');
-        ModuleHandler.callEvent(new ScriptEvent(FS_EXITED_SUBSTATE));
-
-        FlxSpriteUtil.fill(overlayShit, 0xB3FFD4E9);
-
-        characterWheel.clear();
-        iconGridTop.clear();
-        iconGridBottom.clear();
-
-        uiCamera.visible = false;
-        _parentState.persistentUpdate = true;
-        _parentState.persistentDraw = true;
-
-        FlxTween.tween(blackBack, {x: -500}, 0.2, {ease: FlxEase.quintIn});
-        FlxTween.tween(overlayShit, {x: FlxG.width}, 0.2, {ease: FlxEase.quintIn});
-        FlxTween.tween(blackBack, {alpha: 0}, 0.2,
-          {
-            ease: FlxEase.quartIn,
-            onComplete: function(twn:FlxTween) {
-              close();
-            }
-          });
-      }
+      exitToFreeplay();
     }
 
     if (!hotkeyBox.visible)
     {
-      var leftPressed:Bool = controls.UI_LEFT || (TouchUtil.overlapsComplex(leftDifficultyArrow) && TouchUtil.pressed);
-      var rightPressed:Bool = controls.UI_RIGHT || (TouchUtil.overlapsComplex(rightDifficultyArrow) && TouchUtil.pressed);
+      var leftPressed:Bool = controls.UI_LEFT || (FlxG.onMobile && TouchUtil.overlapsComplex(leftDifficultyArrow) && TouchUtil.pressed);
+      var rightPressed:Bool = controls.UI_RIGHT || (FlxG.onMobile && TouchUtil.overlapsComplex(rightDifficultyArrow) && TouchUtil.pressed);
       var anyPressed:Bool = leftPressed || rightPressed;
 
       if (anyPressed)
@@ -903,7 +961,7 @@ class FS_CharacterMenu extends MusicBeatSubState
         spamTimer = 0;
       }
 
-      if (controls.FREEPLAY_LEFT || controls.FREEPLAY_RIGHT)
+      if ((controls.FREEPLAY_LEFT || controls.FREEPLAY_RIGHT) || (FlxG.onMobile && TouchUtil.pressAction(selectText)))
       {
         changePage(controls.FREEPLAY_LEFT ? -1 : 1);
       }
@@ -979,7 +1037,7 @@ class FS_CharacterMenu extends MusicBeatSubState
         }
       }
 
-      if (controls.RESET)
+      if (controls.RESET || (FlxG.onMobile && TouchUtil.pressAction(hotkeyHintText)))
       {
         hotkeyBox.visible = true;
         hotkeyBoxText.visible = true;
@@ -990,7 +1048,7 @@ class FS_CharacterMenu extends MusicBeatSubState
         showVariations(currentCharacterID);
       }
 
-      if (controls.ACCEPT || (TouchUtil.pressAction(getCurrentCharacterSprite())))
+      if (controls.ACCEPT || (FlxG.onMobile && TouchUtil.pressAction(characterHitbox)))
       {
         var characterIDs:Dynamic =
           {
@@ -1044,6 +1102,55 @@ class FS_CharacterMenu extends MusicBeatSubState
           }
         }
       }
+    }
+  }
+
+  /**
+   * Exit to Freeplay.
+   */
+  function exitToFreeplay():Void
+  {
+    if (hotkeyBox.visible)
+    {
+      hotkeyBox.visible = false;
+      hotkeyBoxText.visible = false;
+    }
+    else
+    {
+      FunkinSound.playOnce(Paths.sound('cancelMenu'));
+
+      busy = true;
+
+      // Scripted characters overwrite the suffixes when
+      // they're shown. So we want to manually reset them!
+      PauseSubState.musicSuffix = '';
+      GameOverSubState.musicSuffix = '';
+      GameOverSubState.blueBallSuffix = '';
+
+      WindowUtil.setWindowTitle('Friday Night Funkin\'');
+      ModuleHandler.callEvent(new ScriptEvent(FS_EXITED_SUBSTATE));
+
+      FlxSpriteUtil.fill(overlayShit, 0xB3FFD4E9);
+
+      purgeCharacters();
+
+      characterWheel.clear();
+      iconGridTop.clear();
+      iconGridBottom.clear();
+
+      uiCamera.visible = false;
+      _parentState.persistentUpdate = true;
+      _parentState.persistentDraw = true;
+
+      FlxTween.tween(blackBack, {x: -500}, 0.2, {ease: FlxEase.quintIn});
+      FlxTween.tween(overlayShit, {x: FlxG.width}, 0.2, {ease: FlxEase.quintIn});
+      FlxTween.tween(blackBack, {alpha: 0}, 0.2,
+        {
+          ease: FlxEase.quartIn,
+          onComplete: function(twn:FlxTween) {
+            close();
+          }
+        });
     }
   }
 
@@ -1334,7 +1441,7 @@ class FS_CharacterMenu extends MusicBeatSubState
   {
     if (!FS_SaveData.instance.simplifyUI)
     {
-      return characterWheel.members[currentCharacterIndex];
+      return characterWheel.members[currentCharacterIndex] ?? null;
     }
     else
     {
@@ -1390,7 +1497,7 @@ class FS_CharacterMenu extends MusicBeatSubState
           characterName.text = characterData?.name;
           currentCharacterIcon.configure(characterData?.healthIcon);
           currentCharacterIcon.size.set(1.2, 1.2);
-          currentCharacterIcon.setPosition(150, 100);
+          currentCharacterIcon.setPosition(150 + (FullScreenScaleMode.gameCutoutSize.x / 2), 100);
 
           descriptionText = fs_characterData.description.text;
 
@@ -1408,7 +1515,7 @@ class FS_CharacterMenu extends MusicBeatSubState
     // Making it not look so awkward when "Simplify UI" is turned on.
     if (FS_SaveData.instance.simplifyUI || currentCharacterID == 'default')
     {
-      currentCharacterIcon.setPosition(750, 250);
+      currentCharacterIcon.setPosition(750 + (FullScreenScaleMode.gameCutoutSize.x / 2), 250);
       currentCharacterIcon.size.set(1.7, 1.7);
     }
 

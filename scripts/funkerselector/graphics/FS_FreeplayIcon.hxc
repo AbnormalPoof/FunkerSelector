@@ -1,91 +1,98 @@
 import flixel.FlxG;
-import funkin.graphics.FunkinSprite;
+import funkin.graphics.adobeanimate.FlxAtlasSprite;
 import funkin.modding.module.Module;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.character.CharacterDataParser;
 import funkin.play.components.HealthIcon;
 import funkin.ui.freeplay.FreeplayState;
+import flixel.math.FlxPoint;
+import openfl.geom.Matrix;
+import openfl.display.BitmapData;
 
-class FS_FreeplayIcon extends FunkinSprite
+class FS_FreeplayIcon extends FlxAtlasSprite
 {
   /**
-   * The currently selected character's health icon.
-   * This defaults to BF.
+   * The original matrix data for the icon.
    */
-  var currentCharacterIcon:HealthIcon;
+  final originalMatrixData:Dynamic;
 
-  public function new()
+  /**
+   * The current character ID for the icon.
+   */
+  var currentCharacterID:String = "";
+
+  public function new(x:Float, y:Float)
   {
-    super();
+    super(x, y, Paths.animateAtlas("freeplay/fs_freeplay-icon"),
+      {
+        FrameRate: 24.0,
+        Reversed: false,
+        // ?OnComplete:Void -> Void,
+        ShowPivot: false,
+        Antialiasing: true,
+        ScrollFactor: new FlxPoint(1, 1),
+      });
 
     zIndex = 900;
 
-    scale.set(0.65, 0.65);
-
-    loadSparrow('freeplay/char_select');
-    active = true;
-
-    animation.addByPrefix('intro', 'char select intro', 24, false);
-    animation.addByIndices('idle', 'char select intro', [14], "", 24, true);
-    animation.callback = function(name:String, frameNumber:Int, frameIndex:Int) {
-      if (name == 'intro' && frameNumber == 3)
+    onAnimationFrame.add((animationName:String, frameNumber:Int) -> {
+      if (animationName == "fs icon char switch" && frameNumber == 9)
       {
-        spawnIcon();
+        updateHealthIcon();
       }
-    };
+    });
+
+    onAnimationComplete.add((animationName:String) -> {
+      if (animationName == "fs icon char switch")
+      {
+        playAnimation("fs icon idle", true, false, true);
+      }
+    });
   }
 
-  function spawnIcon():Void
+  function updateHealthIcon():Void
   {
-    if (currentCharacterIcon != null)
-    {
-      if (FlxG.state.subState is FreeplayState)
-      {
-        FlxG.state.subState.remove(currentCharacterIcon);
-      }
-      else
-      {
-        FlxG.state.remove(currentCharacterIcon);
-      }
-    }
-
     var characterData:Dynamic = CharacterDataParser.fetchCharacterData(FS_SaveData.instance.bf);
 
-    currentCharacterIcon = new HealthIcon('dad', 0);
-    currentCharacterIcon.configure(characterData?.healthIcon);
-    currentCharacterIcon.x = this.x + 145;
-    currentCharacterIcon.y = this.y + 135;
+    var healthIcon:HealthIcon = new HealthIcon('dad', 0);
+    healthIcon.configure(characterData?.healthIcon);
+    healthIcon.playAnimation("idle");
+    healthIcon.animation.pause();
+    healthIcon.updateFramePixels();
+    currentCharacterID = healthIcon.characterId;
 
-    if (FlxG.state?.subState is FreeplayState)
-    {
-      currentCharacterIcon.camera = FlxG.state.subState.funnyCam;
-    }
+    var iconGraphic:FlxGraphic = FlxG.bitmap.add(healthIcon.framePixels);
+    replaceFrameGraphic(7, iconGraphic);
 
-    currentCharacterIcon.zIndex = 1000;
+    var element:FlxElement = this.anim.symbolDictionary.get("ICON_GOES_HERE").getElement(0);
+    var scaleFactor:Float = 1.65;
 
-    if (FlxG.state.subState is FreeplayState)
+    if (originalMatrixData == null)
     {
-      FlxG.state.subState.add(currentCharacterIcon);
-      FlxG.state.subState.refresh();
-    }
-    else
-    {
-      FlxG.state.add(currentCharacterIcon);
-      FlxG.state.refresh();
-    }
-
-    if (currentCharacterIcon.width > currentCharacterIcon.height)
-    {
-      currentCharacterIcon.setGraphicSize(Std.int(currentCharacterIcon.width + (150 * currentCharacterIcon.size.x * 0.2)), 0);
+      originalMatrixData =
+        {
+          a: element.matrix.a,
+          b: element.matrix.b,
+          c: element.matrix.c,
+          d: element.matrix.d,
+          tx: element.matrix.tx,
+          ty: element.matrix.ty
+        };
     }
     else
     {
-      currentCharacterIcon.setGraphicSize(0, Std.int(currentCharacterIcon.height + (150 * currentCharacterIcon.size.y * 0.2)));
+      element.matrix.a = originalMatrixData.a;
+      element.matrix.b = originalMatrixData.b;
+      element.matrix.c = originalMatrixData.c;
+      element.matrix.d = originalMatrixData.d;
+      element.matrix.tx = originalMatrixData.tx;
+      element.matrix.ty = originalMatrixData.ty;
     }
 
-    currentCharacterIcon.angle += 1;
+    element.matrix.a *= scaleFactor + 0.2;
+    element.matrix.d *= scaleFactor;
 
-    currentCharacterIcon.updateHitbox();
-    currentCharacterIcon.updatePosition();
+    element.matrix.tx -= 60;
+    element.matrix.ty -= 40;
   }
 }

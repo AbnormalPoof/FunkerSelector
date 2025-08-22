@@ -42,10 +42,10 @@ class FS_DifficultySelector extends FunkinSprite
 
   override function update(elapsed:Float):Void
   {
-    if (FlxG.onMobile)
+    if (!FlxG.onMobile)
     {
-      if (flipX && controls.UI_RIGHT && !parentState.busy && !whiteShader.colorSet) moveShitDown();
-      if (!flipX && controls.UI_LEFT && !parentState.busy && !whiteShader.colorSet) moveShitDown();
+      if (flipX && controls.UI_RIGHT && !parentState?.busy && !whiteShader.colorSet) moveShitDown();
+      if (!flipX && controls.UI_LEFT && !parentState?.busy && !whiteShader.colorSet) moveShitDown();
     }
     else
     {

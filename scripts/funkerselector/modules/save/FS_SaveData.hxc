@@ -99,7 +99,6 @@ class FS_SaveData extends Object
 
   function get_simplifyUI():String
   {
-    if (FlxG.onMobile) return true;
     return data.preferences.potatoMode;
   }
 

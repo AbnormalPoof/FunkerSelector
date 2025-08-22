@@ -276,6 +276,7 @@ class FS_CoreModule extends Module
   override function onStateChangeBegin(event:StateChangeScriptEvent):Void
   {
     super.onStateChangeBegin(event);
+
     if (event.targetState is PlayState)
     {
       // Resetting Game Over and Pause Menu suffixes.
@@ -306,13 +307,9 @@ class FS_CoreModule extends Module
         FlxG.state.optionsCodex.switchPage('funkerselector');
       });
 
-      if (!FlxG.onMobile)
-      {
-        fs_preferencePage.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI to use health icons in place of character sprites.",
-          (value) -> {
-            FS_SaveData.instance.simplifyUI = value;
-          }, FS_SaveData.instance.simplifyUI);
-      }
+      fs_preferencePage.createPrefItemCheckbox("Simplify UI", "If enabled, simplifies the UI to use health icons in place of character sprites.", (value) -> {
+        FS_SaveData.instance.simplifyUI = value;
+      }, FS_SaveData.instance.simplifyUI);
 
       fs_preferencePage.createPrefItemEnum('Menu SFX', 'Change the SFX used for the Character Menu.',
         ["Funkin' Main Menu" => "funkin", "Funkin' Character Select" => "charSelect"], (key, value) -> {

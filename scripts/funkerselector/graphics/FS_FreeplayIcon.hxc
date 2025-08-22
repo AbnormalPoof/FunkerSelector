@@ -21,6 +21,8 @@ class FS_FreeplayIcon extends FlxAtlasSprite
    */
   var currentCharacterID:String = "";
 
+  var _initialized:Bool = false;
+
   public function new(x:Float, y:Float)
   {
     super(x, y, Paths.animateAtlas("freeplay/fs_freeplay-icon"),
@@ -52,6 +54,16 @@ class FS_FreeplayIcon extends FlxAtlasSprite
 
   function updateHealthIcon():Void
   {
+    if (!_initialized)
+    {
+      _initialized = true;
+
+      // Have the speech bubble say "TAP" or "PRESS G" based on platform
+      var layerString:String = FlxG.onMobile ? "PRESS_G" : "TAP";
+      var layer:FlxLayer = this.anim.symbolDictionary.get("fs icon idle").timeline.get(layerString);
+      layer.visible = false;
+    }
+
     currentCharacterID = FS_SaveData.instance.bf;
 
     var characterData:Dynamic = CharacterDataParser.fetchCharacterData(FS_SaveData.instance.bf);
@@ -90,8 +102,8 @@ class FS_FreeplayIcon extends FlxAtlasSprite
       element.matrix.ty = originalMatrixData.ty;
     }
 
-    element.matrix.a *= scaleFactor + 0.2;
-    element.matrix.d *= scaleFactor;
+    element.matrix.a *= scaleFactor;
+    element.matrix.d *= scaleFactor + 0.2;
 
     element.matrix.tx -= 60;
     element.matrix.ty -= 40;
